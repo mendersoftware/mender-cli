@@ -1,0 +1,15 @@
+language: go
+
+# Forces travis to use VM insted container, required to be able to build containers.
+sudo: required
+
+services:
+    - docker
+    - mongodb
+
+# Golang version matrix
+go:
+    - 1.8
+
+script:
+    - go build
