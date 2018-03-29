@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "njxc0scusF/hCQ9ug1BdtKOYyVY=",
+			"path": "github.com/mendersoftware/mendertesting",
+			"revision": "e9053dacfd3aaf2a72d0da030a8f66698bf66cbe",
+			"revisionTime": "2018-03-19T12:20:23Z"
+		}
+	],
+	"rootPath": "github.com/mendersoftware/mender-cli"
+}
