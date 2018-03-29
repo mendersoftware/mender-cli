@@ -3,10 +3,28 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
 			"checksumSHA1": "njxc0scusF/hCQ9ug1BdtKOYyVY=",
 			"path": "github.com/mendersoftware/mendertesting",
 			"revision": "e9053dacfd3aaf2a72d0da030a8f66698bf66cbe",
 			"revisionTime": "2018-03-19T12:20:23Z"
+		},
+		{
+			"checksumSHA1": "12g3NDgLPvSJcPKEKzU42m6GWVI=",
+			"path": "github.com/spf13/cobra",
+			"revision": "a1f051bc3eba734da4772d60e2d677f47cf93ef4",
+			"revisionTime": "2018-03-21T14:39:34Z"
+		},
+		{
+			"checksumSHA1": "23oNQwbiygWh/8Dy8MobarbBtu8=",
+			"path": "github.com/spf13/pflag",
+			"revision": "ad68c28ee799163e627e77fcc6e8ecaa866e3535",
+			"revisionTime": "2018-03-28T15:43:57Z"
 		}
 	],
 	"rootPath": "github.com/mendersoftware/mender-cli"
