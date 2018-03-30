@@ -11,12 +11,27 @@
 //    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
-package main
+package cmd
 
 import (
-	"github.com/mendersoftware/mender-cli/cmd"
+	"fmt"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd.Execute()
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Log in to the Mender backend (required before other operations).",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("login called")
+		cmd.Flags().GetString("server")
+		cmd.Flags().GetString("username")
+	},
+}
+
+func init() {
+	loginCmd.Flags().StringP("username", "", "", "username, format: email (required)")
+	loginCmd.MarkFlagRequired("username")
+
+	loginCmd.Flags().StringP("password", "", "", "password")
 }

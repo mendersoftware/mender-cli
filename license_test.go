@@ -14,9 +14,10 @@
 package main
 
 import (
-	"github.com/mendersoftware/mender-cli/cmd"
+	mt "github.com/mendersoftware/mendertesting"
+	"testing"
 )
 
-func main() {
-	cmd.Execute()
+func TestLicenses(t *testing.T) {
+	mt.CheckLicenses(t)
 }
