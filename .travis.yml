@@ -12,6 +12,13 @@ go:
     - 1.8
 
 env:
+    global:
+        # Binary name to be uploaded to github releases
+        - GITHUB_RELEASE_BINARY=mender-cli
+        - GITHUB_RELEASE_DEPLOY_REPO=mendersoftware/mender-cli
+
+        # - GITHUB_RELEASE_TOKEN=''
+
     matrix:
         - JOB_TYPE=compile_and_basic_tests
 
@@ -44,3 +51,15 @@ script:
 
     # Insert build information into compiled binary using ldflags
     - CGO_ENABLED=0 go build -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`"
+
+deploy:
+    # Push to github releases upon tagging.
+    -
+        provider: releases
+        api_key: $GITHUB_RELEASE_TOKEN
+        file: $GITHUB_RELEASE_BINARY
+        skip_cleanup: true
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: true
+            all_branches: true
