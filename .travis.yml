@@ -12,8 +12,25 @@ go:
     - 1.8
 
 env:
+    global:
+        # Binary name to be uploaded to github releases
+        - GITHUB_RELEASE_BINARY=mender-cli
+        - GITHUB_RELEASE_DEPLOY_REPO=mendersoftware/mender-cli
+        # - GITHUB_RELEASE_TOKEN=''
+
+        - AWS_BUCKET=mender-cli-temp
+        - AWS_REGION=eu-west-1
+        - AWS_S3_ACL=public_read
+        # - AWS_S3_ACCESS_KEY_ID=''
+        # - AWS_S3_SECRET_ACCESS_KEY=''
+
+        - BUILD_DIR=build
+
+    # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
+        - JOB_TYPE=deploy ARCH=amd64 OS=linux
+        - JOB_TYPE=deploy ARCH=amd64 OS=darwin
 
 before_install:
     - go get -u github.com/fzipp/gocyclo
@@ -38,9 +55,75 @@ before_script:
     - gocyclo -over 15 `find . -iname '*.go' | grep -v 'vendor' | grep -v '_test.go'`
 
 script:
-    - if [ "$JOB_TYPE" = compile_and_basic_tests ]; then
+    # needed unconditionally - s3 deploy provider will look for it even if disabled
+    - mkdir "$BUILD_DIR"
+    - if [ "$JOB_TYPE" = compile_and_basic_tests ] && [ -z $TRAVIS_TAG ]; then
         go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
       fi
 
-    # Insert build information into compiled binary using ldflags
-    - CGO_ENABLED=0 go build -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`"
+    # Only build platform/os releases on deploy, and if we're tagging
+    - if [ "$JOB_TYPE" = deploy ]; then
+        CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$BUILD_DIR/$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
+      fi
+
+deploy:
+    # Push to github releases upon tagging.
+    -
+        provider: releases
+        api_key: $GITHUB_RELEASE_TOKEN
+        file: $BUILD_DIR/$GITHUB_RELEASE_BINARY.$OS.$ARCH
+        skip_cleanup: true
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: true
+            all_branches: true
+            condition: $JOB_TYPE=deploy
+
+    # Push a tagged release to s3
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/release/$TRAVIS_TAG
+        local_dir: build
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: true
+            all_branches: true
+            condition: $JOB_TYPE=deploy
+
+    # Push master to s3 upon regular merge
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/master/$TRAVIS_BUILD_NUMBER
+        local_dir: $BUILD_DIR
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: false
+            all_branches: true
+            condition: $JOB_TYPE=deploy
+
+    # Additionally, push as 'latest' s3 upon regular merge
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/latest/$TRAVIS_BRANCH
+        local_dir: $BUILD_DIR
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            condition: $JOB_TYPE=deploy
