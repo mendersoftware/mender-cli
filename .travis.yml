@@ -48,12 +48,14 @@ before_script:
     - gocyclo -over 15 `find . -iname '*.go' | grep -v 'vendor' | grep -v '_test.go'`
 
 script:
-    - if [ "$JOB_TYPE" = compile_and_basic_tests ]; then
+    - if [ "$JOB_TYPE" = compile_and_basic_tests ] && [ -z $TRAVIS_TAG ]; then
         go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
       fi
 
-    # Insert build information into compiled binary using ldflags
-    - CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`"
+    # Only build platform/os releases on deploy, and if we're tagging
+    - if [ "$JOB_TYPE" = deploy ]  && [ -n $TRAVIS_TAG ]; then
+        CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
+      fi
 
 deploy:
     # Push to github releases upon tagging.
