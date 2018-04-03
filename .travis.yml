@@ -16,6 +16,7 @@ env:
         # Binary name to be uploaded to github releases
         - GITHUB_RELEASE_BINARY=mender-cli
         - GITHUB_RELEASE_DEPLOY_REPO=mendersoftware/mender-cli
+        - GLOBAL_VISIBLE_IN_DEPLOY=some_global_var
 
         # - GITHUB_RELEASE_TOKEN=''
 
@@ -36,6 +37,8 @@ before_script:
     - echo $TRAVIS_BUILD_NUMBER
     - echo $TRAVIS_REPO_SLUG
 
+
+    - echo $GLOBAL_VISIBLE_IN_DEPLOY
     - echo $GOOS
     - echo $GOARCH
 
