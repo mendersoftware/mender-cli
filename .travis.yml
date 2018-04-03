@@ -16,7 +16,6 @@ env:
         # Binary name to be uploaded to github releases
         - GITHUB_RELEASE_BINARY=mender-cli
         - GITHUB_RELEASE_DEPLOY_REPO=mendersoftware/mender-cli
-        - GLOBAL_VISIBLE_IN_DEPLOY=some_global_var
 
         # - GITHUB_RELEASE_TOKEN=''
 
@@ -37,11 +36,6 @@ before_script:
     - echo $TRAVIS_BUILD_NUMBER
     - echo $TRAVIS_REPO_SLUG
 
-
-    - echo $GLOBAL_VISIBLE_IN_DEPLOY
-    - echo $GOOS
-    - echo $GOARCH
-
     # Test if code was formatted with 'go fmt'
     # Command will format code and return modified files
     # fail if any have been modified.
@@ -61,7 +55,6 @@ script:
     # Only build platform/os releases on deploy, and if we're tagging
     - if [ "$JOB_TYPE" = deploy ]  && [ -n $TRAVIS_TAG ]; then
         CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
-        ls -la;
       fi
 
 deploy:
