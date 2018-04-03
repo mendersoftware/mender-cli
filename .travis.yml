@@ -62,7 +62,7 @@ deploy:
     -
         provider: releases
         api_key: $GITHUB_RELEASE_TOKEN
-        file: $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH
+        file: $GITHUB_RELEASE_BINARY.$OS.$ARCH
         skip_cleanup: true
         on:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
