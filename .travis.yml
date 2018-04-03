@@ -21,6 +21,8 @@ env:
 
     matrix:
         - JOB_TYPE=compile_and_basic_tests
+        - GOARCH=amd64 GOOS=linux
+        - GOARCH=amd64 GOOS=darwin
 
 before_install:
     - go get -u github.com/fzipp/gocyclo
@@ -50,14 +52,14 @@ script:
       fi
 
     # Insert build information into compiled binary using ldflags
-    - CGO_ENABLED=0 go build -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`"
+    - CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`"
 
 deploy:
     # Push to github releases upon tagging.
     -
         provider: releases
         api_key: $GITHUB_RELEASE_TOKEN
-        file: $GITHUB_RELEASE_BINARY
+        file: $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH
         skip_cleanup: true
         on:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
