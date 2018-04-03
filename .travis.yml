@@ -23,8 +23,8 @@ env:
     # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
-        - JOB_TYPE=deploy GOARCH=amd64 GOOS=linux
-        - JOB_TYPE=deploy GOARCH=amd64 GOOS=darwin
+        - JOB_TYPE=deploy ARCH=amd64 OS=linux
+        - JOB_TYPE=deploy ARCH=amd64 OS=darwin
 
 before_install:
     - go get -u github.com/fzipp/gocyclo
@@ -60,7 +60,7 @@ script:
 
     # Only build platform/os releases on deploy, and if we're tagging
     - if [ "$JOB_TYPE" = deploy ]  && [ -n $TRAVIS_TAG ]; then
-        CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$GITHUB_RELEASE_BINARY.$GOOS.$GOARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
+        CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
         ls -la;
       fi
 
