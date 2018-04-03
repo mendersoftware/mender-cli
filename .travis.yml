@@ -68,3 +68,4 @@ deploy:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
             tags: true
             all_branches: true
+            condition: $JOB_TYPE=deploy
