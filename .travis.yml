@@ -54,7 +54,7 @@ script:
 
     # Only build platform/os releases on deploy, and if we're tagging
     - if [ "$JOB_TYPE" = deploy ]  && [ -n $TRAVIS_TAG ]; then
-        CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o $GITHUB_RELEASE_BINARY.$GOOS.$GOARCH -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
+        CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$GITHUB_RELEASE_BINARY.$GOOS.$GOARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
       fi
 
 deploy:
