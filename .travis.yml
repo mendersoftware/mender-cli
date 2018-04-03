@@ -19,10 +19,11 @@ env:
 
         # - GITHUB_RELEASE_TOKEN=''
 
+    # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
-        - GOARCH=amd64 GOOS=linux
-        - GOARCH=amd64 GOOS=darwin
+        - JOB_TYPE=deploy GOARCH=amd64 GOOS=linux
+        - JOB_TYPE=deploy GOARCH=amd64 GOOS=darwin
 
 before_install:
     - go get -u github.com/fzipp/gocyclo
