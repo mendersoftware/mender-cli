@@ -55,6 +55,7 @@ before_script:
     - gocyclo -over 15 `find . -iname '*.go' | grep -v 'vendor' | grep -v '_test.go'`
 
 script:
+    - mkdir "$BUILD_DIR"
     - if [ "$JOB_TYPE" = compile_and_basic_tests ] && [ -z $TRAVIS_TAG ]; then
         go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
       fi
