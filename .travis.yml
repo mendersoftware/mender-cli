@@ -16,10 +16,16 @@ env:
         # Binary name to be uploaded to github releases
         - GITHUB_RELEASE_BINARY=mender-cli
         - GITHUB_RELEASE_DEPLOY_REPO=mendersoftware/mender-cli
-
         # - GITHUB_RELEASE_TOKEN=''
 
+        - AWS_BUCKET=mender-cli
+        - AWS_REGION=eu-west-1
+        - AWS_S3_ACL=private
+        # - AWS_S3_ACCESS_KEY_ID=''
+        # - AWS_S3_SECRET_ACCESS_KEY=''
+
         - BUILD_DIR=build
+
     # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
@@ -70,3 +76,49 @@ deploy:
             tags: true
             all_branches: true
             condition: $JOB_TYPE=deploy
+
+    # Push a tagged release to s3
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/release/$TRAVIS_TAG
+        local_dir: build
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: true
+            all_branches: true
+
+    # Push master to s3 upon regular merge
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/master/$TRAVIS_BUILD_NUMBER
+        local_dir: $BUILD_DIR
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
+            tags: false
+            all_branches: true
+
+    # Additionally, push as 'latest' s3 upon regular merge
+    -
+        provider: s3
+        access_key_id: $AWS_S3_ACCESS_KEY_ID
+        secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
+        bucket: $AWS_BUCKET
+        region: $AWS_REGION
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/latest/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER
+        local_dir: $BUILD_DIR
+        skip_cleanup: true
+        acl: $AWS_S3_ACL
+        on:
+            repo: $GITHUB_RELEASE_DEPLOY_REPO
