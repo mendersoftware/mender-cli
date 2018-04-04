@@ -93,6 +93,7 @@ deploy:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
             tags: true
             all_branches: true
+            condition: $JOB_TYPE=deploy
 
     # Push master to s3 upon regular merge
     -
@@ -109,6 +110,7 @@ deploy:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
             tags: false
             all_branches: true
+            condition: $JOB_TYPE=deploy
 
     # Additionally, push as 'latest' s3 upon regular merge
     -
@@ -123,3 +125,4 @@ deploy:
         acl: $AWS_S3_ACL
         on:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
+            condition: $JOB_TYPE=deploy
