@@ -19,6 +19,7 @@ env:
 
         # - GITHUB_RELEASE_TOKEN=''
 
+        - BUILD_DIR=build
     # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
@@ -54,7 +55,7 @@ script:
 
     # Only build platform/os releases on deploy, and if we're tagging
     - if [ "$JOB_TYPE" = deploy ]  && [ -n $TRAVIS_TAG ]; then
-        CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
+        CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$BUILD_DIR/$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $TRAVIS_COMMIT` -X main.Tag=`echo $TRAVIS_TAG` -X main.Branch=`echo $TRAVIS_BRANCH` -X main.BuildNumber=`echo $TRAVIS_BUILD_NUMBER`";
       fi
 
 deploy:
@@ -62,7 +63,7 @@ deploy:
     -
         provider: releases
         api_key: $GITHUB_RELEASE_TOKEN
-        file: $GITHUB_RELEASE_BINARY.$OS.$ARCH
+        file: $BUILD_DIR/$GITHUB_RELEASE_BINARY.$OS.$ARCH
         skip_cleanup: true
         on:
             repo: $GITHUB_RELEASE_DEPLOY_REPO
