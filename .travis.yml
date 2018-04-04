@@ -120,7 +120,7 @@ deploy:
         secret_access_key: $AWS_S3_SECRET_ACCESS_KEY
         bucket: $AWS_BUCKET
         region: $AWS_REGION
-        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/latest/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER
+        upload-dir: $GITHUB_RELEASE_DEPLOY_REPO/latest/$TRAVIS_BRANCH
         local_dir: $BUILD_DIR
         skip_cleanup: true
         acl: $AWS_S3_ACL
