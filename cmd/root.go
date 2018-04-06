@@ -14,12 +14,16 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
+
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
 	argRootServer     = "server"
 	argRootSkipVerify = "skip-verify"
+	argRootVerbose    = "verbose"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -27,9 +31,16 @@ var rootCmd = &cobra.Command{
 	Use:   "mender-cli",
 	Short: "A general-purpose CLI for the Mender backend.",
 
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	//setup global stuff, will run regardless of (sub)command
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		verbose, err := cmd.Flags().GetBool(argRootVerbose)
+		CheckErr(err)
+		log.Setup(verbose)
+
+		if verbose {
+			log.Verb(fmt.Sprintf("verbose output is ON"))
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -46,4 +57,5 @@ func init() {
 	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root backend URL, e.g. 'https://hosted.mender.io' (required)")
 	rootCmd.MarkPersistentFlagRequired(argRootServer)
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
+	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
 }
