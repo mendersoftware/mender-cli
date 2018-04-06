@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	argRootServer = "server"
+	argRootServer     = "server"
+	argRootSkipVerify = "skip-verify"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -44,4 +45,5 @@ func init() {
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root backend URL, e.g. 'https://hosted.mender.io' (required)")
 	rootCmd.MarkPersistentFlagRequired(argRootServer)
+	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 }
