@@ -17,6 +17,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	argRootServer = "server"
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "mender-cli",
@@ -38,6 +42,6 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringP("server", "", "", "root backend URL, e.g. 'https://hosted.mender.io' (required)")
-	rootCmd.MarkPersistentFlagRequired("server")
+	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root backend URL, e.g. 'https://hosted.mender.io' (required)")
+	rootCmd.MarkPersistentFlagRequired(argRootServer)
 }
