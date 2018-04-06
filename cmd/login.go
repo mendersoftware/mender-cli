@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mendersoftware/mender-cli/client/useradm"
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
@@ -137,6 +138,8 @@ func (c *LoginCmd) maybeGetPassword() error {
 
 func (c *LoginCmd) saveToken(t []byte) error {
 	dir := filepath.Dir(c.tokenPath)
+	log.Verbf("creating directory: %v\n", dir)
+
 	err := os.MkdirAll(dir, os.ModeDir|os.ModePerm)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create directory %s", dir)
@@ -147,6 +150,9 @@ func (c *LoginCmd) saveToken(t []byte) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
 	}
+
+	log.Verb("saved token to: " + c.tokenPath)
+	log.Info("login successful")
 
 	return nil
 }
