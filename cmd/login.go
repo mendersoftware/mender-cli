@@ -15,23 +15,138 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
+	"github.com/howeyc/gopass"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/mendersoftware/mender-cli/client/useradm"
+)
+
+const (
+	argLoginUsername = "username"
+	argLoginPassword = "password"
+	argLoginToken    = "token"
+
+	defaultTokenPath = "/tmp/mendersoftware/authtoken"
 )
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Log in to the Mender backend (required before other operations).",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("login called")
-		cmd.Flags().GetString("server")
-		cmd.Flags().GetString("username")
+	Run: func(c *cobra.Command, args []string) {
+		cmd, err := NewLoginCmd(c, args)
+		CheckErr(err)
+
+		CheckErr(cmd.Run())
 	},
 }
 
 func init() {
-	loginCmd.Flags().StringP("username", "", "", "username, format: email (required)")
-	loginCmd.MarkFlagRequired("username")
+	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (required)")
+	loginCmd.MarkFlagRequired(argLoginUsername)
 
-	loginCmd.Flags().StringP("password", "", "", "password")
+	loginCmd.Flags().StringP(argLoginPassword, "", "", "password")
+	loginCmd.Flags().StringP(argLoginToken, "", "", "token file path")
+}
+
+type LoginCmd struct {
+	server     string
+	skipVerify bool
+	username   string
+	password   string
+	tokenPath  string
+}
+
+func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
+	server, err := cmd.Flags().GetString(argRootServer)
+	if err != nil {
+		return nil, err
+	}
+
+	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
+	if err != nil {
+		return nil, err
+	}
+
+	username, err := cmd.Flags().GetString(argLoginUsername)
+	if err != nil {
+		return nil, err
+	}
+
+	password, err := cmd.Flags().GetString(argLoginPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := cmd.Flags().GetString(argLoginToken)
+	if err != nil {
+		return nil, err
+	}
+
+	if token == "" {
+		token = defaultTokenPath
+	}
+
+	return &LoginCmd{
+		server:     server,
+		username:   username,
+		password:   password,
+		tokenPath:  token,
+		skipVerify: skipVerify,
+	}, nil
+}
+
+func (c *LoginCmd) Run() error {
+	err := c.maybeGetPassword()
+	if err != nil {
+		return err
+	}
+
+	client := useradm.NewClient(c.server, c.skipVerify)
+	res, err := client.Login(c.username, c.password)
+	if err != nil {
+		return err
+	}
+
+	err = c.saveToken(res)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *LoginCmd) maybeGetPassword() error {
+	if c.password == "" {
+		fmt.Printf("Password:")
+
+		p, err := gopass.GetPasswdMasked()
+		if err != nil {
+			return err
+		}
+
+		c.password = string(p)
+	}
+
+	return nil
+}
+
+func (c *LoginCmd) saveToken(t []byte) error {
+	dir := filepath.Dir(c.tokenPath)
+	err := os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create directory %s", dir)
+
+	}
+
+	err = ioutil.WriteFile(c.tokenPath, t, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
+	}
+
+	return nil
 }
