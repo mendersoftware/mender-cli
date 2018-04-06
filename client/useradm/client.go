@@ -16,12 +16,16 @@ package useradm
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
@@ -57,19 +61,25 @@ func (c *Client) Login(user, pass string) ([]byte, error) {
 
 	req.SetBasicAuth(user, pass)
 
+	reqDump, _ := httputil.DumpRequest(req, true)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
 	rsp, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "POST /auth/login request failed")
 	}
 	defer rsp.Body.Close()
 
-	if rsp.StatusCode != http.StatusOK {
-		return nil, errors.New("login failed")
-	}
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
 
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read request body")
+	}
+
+	if rsp.StatusCode != http.StatusOK {
+		return nil, errors.New(fmt.Sprintf("login failed wih status %d", rsp.StatusCode))
 	}
 
 	return body, nil
