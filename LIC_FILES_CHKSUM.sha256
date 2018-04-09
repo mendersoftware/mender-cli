@@ -4,3 +4,10 @@ c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4  LICENSE
 f42d670262f9aed37a33c97d93fa2c1324f439ee03d7690710c5fe002561b0b5  vendor/github.com/inconshreveable/mousetrap/LICENSE
 5e3400b93bbb099e83e52bab885e7441750673c21f97988ca3f1240639b63283  vendor/github.com/spf13/cobra/LICENSE.txt
 b8514c577c1c4b46cee454d5a882b15fa411e72c5bd7f801f241591789fce61a  vendor/github.com/spf13/pflag/LICENSE
+
+#ISC
+f06d8d6fe9e7dca9cd1c6385eab60b67c34f59a7871ee794553904b0d5cfcd2c  vendor/github.com/howeyc/gopass/LICENSE.txt
+
+#BSD-3-Clause
+2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/sys/LICENSE
+2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/crypto/LICENSE

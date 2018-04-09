@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "K6exl2ouL7d8cR2i378EzZOdRVI=",
+			"path": "github.com/howeyc/gopass",
+			"revision": "bf9dde6d0d2c004a008c27aaee91170c786f6db8",
+			"revisionTime": "2017-01-09T16:22:49Z"
+		},
+		{
 			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
@@ -25,6 +31,24 @@
 			"path": "github.com/spf13/pflag",
 			"revision": "ad68c28ee799163e627e77fcc6e8ecaa866e3535",
 			"revisionTime": "2018-03-28T15:43:57Z"
+		},
+		{
+			"checksumSHA1": "BGm8lKZmvJbf/YOJLeL1rw2WVjA=",
+			"path": "golang.org/x/crypto/ssh/terminal",
+			"revision": "b2aa35443fbc700ab74c586ae79b81c171851023",
+			"revisionTime": "2018-04-03T08:00:15Z"
+		},
+		{
+			"checksumSHA1": "rViW/iebE6UbpQYmSkw1r9bmd6E=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e",
+			"revisionTime": "2018-04-04T17:59:11Z"
+		},
+		{
+			"checksumSHA1": "Dfz4tGItokMvHZENCsBmPPB8FGQ=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e",
+			"revisionTime": "2018-04-04T17:59:11Z"
 		}
 	],
 	"rootPath": "github.com/mendersoftware/mender-cli"
