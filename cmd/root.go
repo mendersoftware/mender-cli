@@ -29,7 +29,7 @@ const (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "mender-cli",
-	Short: "A general-purpose CLI for the Mender backend.",
+	Short: "A general-purpose CLI for the Mender server.",
 
 	//setup global stuff, will run regardless of (sub)command
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -54,7 +54,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root backend URL, e.g. 'https://hosted.mender.io' (required)")
+	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root server URL, e.g. 'https://hosted.mender.io' (required)")
 	rootCmd.MarkPersistentFlagRequired(argRootServer)
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")

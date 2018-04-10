@@ -37,7 +37,7 @@ const (
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Log in to the Mender backend (required before other operations).",
+	Short: "Log in to the Mender server (required before other operations).",
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewLoginCmd(c, args)
 		CheckErr(err)

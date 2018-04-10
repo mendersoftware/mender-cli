@@ -1,2 +1,2 @@
 # mender-cli
-A general-purpose CLI for the Mender backend
+A general-purpose CLI for the Mender server
