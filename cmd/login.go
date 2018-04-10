@@ -50,7 +50,7 @@ func init() {
 	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (required)")
 	loginCmd.MarkFlagRequired(argLoginUsername)
 
-	loginCmd.Flags().StringP(argLoginPassword, "", "", "password")
+	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "token file path")
 }
 
