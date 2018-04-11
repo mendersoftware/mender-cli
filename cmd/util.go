@@ -16,6 +16,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/user"
+	"path/filepath"
 )
 
 func CheckErr(e error) {
@@ -23,4 +25,15 @@ func CheckErr(e error) {
 		fmt.Fprintf(os.Stderr, "FAILURE: %s\n", e.Error())
 		os.Exit(1)
 	}
+}
+
+func getDefaultAuthTokenPath() (string, error) {
+	user, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+
+	token := filepath.Join(user.HomeDir, ".mendersoftware", "authtoken")
+
+	return token, nil
 }

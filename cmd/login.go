@@ -31,8 +31,6 @@ const (
 	argLoginUsername = "username"
 	argLoginPassword = "password"
 	argLoginToken    = "token"
-
-	defaultTokenPath = "/tmp/mendersoftware/authtoken"
 )
 
 var loginCmd = &cobra.Command{
@@ -52,6 +50,7 @@ func init() {
 
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "token file path")
+
 }
 
 type LoginCmd struct {
@@ -89,7 +88,10 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	if token == "" {
-		token = defaultTokenPath
+		token, err = getDefaultAuthTokenPath()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &LoginCmd{
