@@ -142,13 +142,13 @@ func (c *LoginCmd) saveToken(t []byte) error {
 	dir := filepath.Dir(c.tokenPath)
 	log.Verbf("creating directory: %v\n", dir)
 
-	err := os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+	err := os.MkdirAll(dir, os.ModeDir|0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create directory %s", dir)
 
 	}
 
-	err = ioutil.WriteFile(c.tokenPath, t, os.ModePerm)
+	err = ioutil.WriteFile(c.tokenPath, t, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
 	}
