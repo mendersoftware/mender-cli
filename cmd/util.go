@@ -33,7 +33,7 @@ func getDefaultAuthTokenPath() (string, error) {
 		return "", err
 	}
 
-	token := filepath.Join(user.HomeDir, ".mendersoftware", "authtoken")
+	token := filepath.Join(user.HomeDir, ".mender", "authtoken")
 
 	return token, nil
 }
