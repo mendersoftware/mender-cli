@@ -31,13 +31,11 @@ const (
 	argLoginUsername = "username"
 	argLoginPassword = "password"
 	argLoginToken    = "token"
-
-	defaultTokenPath = "/tmp/mendersoftware/authtoken"
 )
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Log in to the Mender backend (required before other operations).",
+	Short: "Log in to the Mender server (required before other operations).",
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewLoginCmd(c, args)
 		CheckErr(err)
@@ -50,8 +48,9 @@ func init() {
 	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (required)")
 	loginCmd.MarkFlagRequired(argLoginUsername)
 
-	loginCmd.Flags().StringP(argLoginPassword, "", "", "password")
+	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "token file path")
+
 }
 
 type LoginCmd struct {
@@ -89,7 +88,10 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	if token == "" {
-		token = defaultTokenPath
+		token, err = getDefaultAuthTokenPath()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &LoginCmd{
@@ -140,13 +142,13 @@ func (c *LoginCmd) saveToken(t []byte) error {
 	dir := filepath.Dir(c.tokenPath)
 	log.Verbf("creating directory: %v\n", dir)
 
-	err := os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+	err := os.MkdirAll(dir, os.ModeDir|0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create directory %s", dir)
 
 	}
 
-	err = ioutil.WriteFile(c.tokenPath, t, os.ModePerm)
+	err = ioutil.WriteFile(c.tokenPath, t, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
 	}
