@@ -23,7 +23,10 @@ import (
 const (
 	argRootServer     = "server"
 	argRootSkipVerify = "skip-verify"
+	argRootToken      = "token"
 	argRootVerbose    = "verbose"
+
+	defaultTokenPath = "/tmp/mendersoftware/authtoken"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -47,6 +50,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(artifactsCmd)
 	CheckErr(rootCmd.Execute())
 }
 
@@ -57,5 +61,6 @@ func init() {
 	rootCmd.PersistentFlags().StringP(argRootServer, "", "", "root server URL, e.g. 'https://hosted.mender.io' (required)")
 	rootCmd.MarkPersistentFlagRequired(argRootServer)
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
+	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
 }

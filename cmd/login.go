@@ -30,7 +30,6 @@ import (
 const (
 	argLoginUsername = "username"
 	argLoginPassword = "password"
-	argLoginToken    = "token"
 )
 
 var loginCmd = &cobra.Command{
@@ -49,8 +48,6 @@ func init() {
 	loginCmd.MarkFlagRequired(argLoginUsername)
 
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
-	loginCmd.Flags().StringP(argLoginToken, "", "", "token file path")
-
 }
 
 type LoginCmd struct {
@@ -82,7 +79,7 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argLoginToken)
+	token, err := cmd.Flags().GetString(argRootToken)
 	if err != nil {
 		return nil, err
 	}

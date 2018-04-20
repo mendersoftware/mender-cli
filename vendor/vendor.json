@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "+ak03juoc4Eg+1VFhsajVQmSNXI=",
+			"path": "github.com/cheggaaa/pb",
+			"revision": "75a8cbd866a7bad0d4a3b2b8cb6cab48a1475155",
+			"revisionTime": "2018-03-05T16:37:58Z"
+		},
+		{
 			"checksumSHA1": "K6exl2ouL7d8cR2i378EzZOdRVI=",
 			"path": "github.com/howeyc/gopass",
 			"revision": "bf9dde6d0d2c004a008c27aaee91170c786f6db8",
@@ -13,6 +19,12 @@
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
 			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "KGCifxxR5cm2gz94i2iha+RIZlk=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb",
+			"revisionTime": "2018-04-08T05:53:51Z"
 		},
 		{
 			"checksumSHA1": "njxc0scusF/hCQ9ug1BdtKOYyVY=",
@@ -49,6 +61,10 @@
 			"path": "golang.org/x/sys/windows",
 			"revision": "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e",
 			"revisionTime": "2018-04-04T17:59:11Z"
+		},
+		{
+			"path": "https://github.com/cheggaaa/pb.git",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/mendersoftware/mender-cli"
