@@ -34,11 +34,13 @@ import (
 
 const (
 	artifactUploadUrl = "/api/management/v1/deployments/artifacts"
+	getReleasesUrl    = "/api/management/v1/deployments/deployments/releases"
 )
 
 type Client struct {
 	url               string
 	artifactUploadUrl string
+	getReleasesUrl    string
 	client            *http.Client
 }
 
@@ -50,6 +52,7 @@ func NewClient(url string, skipVerify bool) *Client {
 	return &Client{
 		url:               url,
 		artifactUploadUrl: JoinURL(url, artifactUploadUrl),
+		getReleasesUrl:    JoinURL(url, getReleasesUrl),
 		client: &http.Client{
 			Transport: tr,
 		},
@@ -146,6 +149,49 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 	}
 
 	return nil
+}
+
+func (c *Client) GetReleases(tokenPath string) ([]byte, error) {
+
+	var body []byte
+
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "Please Login first")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, c.getReleasesUrl, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET deployments/releases request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	body, err = ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't read request body")
+	}
+
+	if rsp.StatusCode != http.StatusOK {
+		if rsp.StatusCode == http.StatusUnauthorized {
+			log.Verbf("cannot get releases; response status %d, reason: %s", rsp.StatusCode, body)
+			return nil, errors.New("Unauthorized. Please Login first")
+		}
+		return nil, errors.New(fmt.Sprintf("cannot get releases: status %d, reason: %s", rsp.StatusCode, body))
+	}
+
+	return body, nil
 }
 
 func JoinURL(base, url string) string {
