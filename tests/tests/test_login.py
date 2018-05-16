@@ -12,9 +12,118 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+from pathlib import Path
+import os
 
-MENDER_CLI = '/testing/mender-cli'
+import pytest
+
+import cli
+import docker
+
+USER_HOME = str(Path.home())
+DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.mender', 'authtoken')
+
+@pytest.yield_fixture(scope="class")
+def single_user():
+    r = docker.exec('mender-useradm', \
+                    docker.BASE_COMPOSE_FILES, \
+                    '/usr/bin/useradm', \
+                    'create-user', \
+                    '--username' , 'user@tenant.com',\
+                    '--password' , 'youcantguess')
+
+    assert r.returncode == 0, r.stderr
+    yield
+    clean_useradm_db()
+
+def clean_useradm_db():
+    r = docker.exec('mender-mongo-useradm', \
+                    docker.BASE_COMPOSE_FILES, \
+                    'mongo', 'useradm', '--eval', 'db.dropDatabase()')
+
+    assert r.returncode == 0, r.stderr
+
 
 class TestLogin:
-    def test_ok(self):
-        pass
+    def test_ok(self, single_user):
+        c = cli.Cli()
+
+        r = c.run('login', \
+                  '--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  '--username', 'user@tenant.com', \
+                  '--password', 'youcantguess')
+
+        assert r.returncode == 0, r.stderr
+
+        self.__check_token_at(DEFAULT_TOKEN_PATH)
+        self.__expect_output(r.stdout, \
+                             'login successful')
+
+    def test_ok_custom_path(self, single_user):
+        c = cli.Cli()
+
+        custom_path = '/tests/authtoken'
+
+        r = c.run('login', \
+                  '--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  '--token', '/tests/authtoken', \
+                  '--username', 'user@tenant.com', \
+                  '--password', 'youcantguess')
+
+        assert r.returncode == 0, r.stderr
+
+        self.__check_token_at(custom_path)
+        self.__expect_output(r.stdout, \
+                             'login successful')
+
+    def test_ok_verbose(self, single_user):
+        c = cli.Cli()
+
+        r = c.run('login', \
+                  '--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  '--verbose', \
+                  '--username', 'user@tenant.com', \
+                  '--password', 'youcantguess')
+
+        assert r.returncode == 0, r.stderr
+
+        self.__check_token_at(DEFAULT_TOKEN_PATH)
+        self.__expect_output(r.stdout, \
+                             'creating directory',
+                             'saved token to',
+                             'login successful')
+
+    def test_error_wrong_creds(self, single_user):
+        c = cli.Cli()
+
+        r = c.run('login', \
+                  '--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  '--username', 'notfound@tenant.com', \
+                  '--password', 'youcantguess')
+
+        assert r.returncode != 0
+
+        self.__expect_output(r.stderr, 'FAILURE: login failed with status 401')
+
+    def test_error_no_server(self, single_user):
+        c = cli.Cli()
+
+        r = c.run('login', \
+                  '--skip-verify', \
+                  '--username', 'user@tenant.com', \
+                  '--password', 'youcantguess')
+
+        assert r.returncode != 0
+
+        self.__expect_output(r.stderr, '"server" not set')
+
+    def __check_token_at(self, path):
+        assert os.path.isfile(path)
+
+    def __expect_output(self, stream, *expected):
+        for e in expected:
+            assert e in stream, 'expected string {} not found in stream'.format(e)
