@@ -1,8 +1,9 @@
 version: '2'
 services:
     acceptance:
-        image: tests
+        image: testing
         networks:
             - mender
         volumes:
             - "${TESTS_DIR}:/tests"
+            - /var/run/docker.sock:/var/run/docker.sock
