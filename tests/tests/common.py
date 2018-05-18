@@ -12,8 +12,15 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+from pathlib import Path
+import os
+
 import pytest
+
 import docker
+
+USER_HOME = str(Path.home())
+DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.mender', 'authtoken')
 
 @pytest.yield_fixture(scope="class")
 def single_user():
@@ -35,3 +42,7 @@ def clean_useradm_db():
                     'mongo', 'useradm', '--eval', 'db.dropDatabase()')
 
     assert r.returncode == 0, r.stderr
+
+def expect_output(stream, *expected):
+        for e in expected:
+            assert e in stream, 'expected string {} not found in stream'.format(e)
