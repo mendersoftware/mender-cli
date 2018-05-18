@@ -12,40 +12,21 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-from pathlib import Path
 import os
 
 import pytest
 
+from common import single_user, expect_output, DEFAULT_TOKEN_PATH
 import cli
-import docker
 
-USER_HOME = str(Path.home())
-DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.mender', 'authtoken')
-
-@pytest.yield_fixture(scope="class")
-def single_user():
-    r = docker.exec('mender-useradm', \
-                    docker.BASE_COMPOSE_FILES, \
-                    '/usr/bin/useradm', \
-                    'create-user', \
-                    '--username' , 'user@tenant.com',\
-                    '--password' , 'youcantguess')
-
-    assert r.returncode == 0, r.stderr
+@pytest.yield_fixture(scope="function")
+def cleanup_token(request):
     yield
-    clean_useradm_db()
-
-def clean_useradm_db():
-    r = docker.exec('mender-mongo-useradm', \
-                    docker.BASE_COMPOSE_FILES, \
-                    'mongo', 'useradm', '--eval', 'db.dropDatabase()')
-
-    assert r.returncode == 0, r.stderr
-
+    os.remove(request.param)
 
 class TestLogin:
-    def test_ok(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', [DEFAULT_TOKEN_PATH], indirect=True)
+    def test_ok(self, single_user, cleanup_token):
         c = cli.Cli()
 
         r = c.run('login', \
@@ -57,10 +38,11 @@ class TestLogin:
         assert r.returncode == 0, r.stderr
 
         self.__check_token_at(DEFAULT_TOKEN_PATH)
-        self.__expect_output(r.stdout, \
+        expect_output(r.stdout, \
                              'login successful')
 
-    def test_ok_custom_path(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', ['/tests/authtoken'], indirect=True)
+    def test_ok_custom_path(self, single_user, cleanup_token):
         c = cli.Cli()
 
         custom_path = '/tests/authtoken'
@@ -75,10 +57,11 @@ class TestLogin:
         assert r.returncode == 0, r.stderr
 
         self.__check_token_at(custom_path)
-        self.__expect_output(r.stdout, \
+        expect_output(r.stdout, \
                              'login successful')
 
-    def test_ok_verbose(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', [DEFAULT_TOKEN_PATH], indirect=True)
+    def test_ok_verbose(self, single_user, cleanup_token):
         c = cli.Cli()
 
         r = c.run('login', \
@@ -91,7 +74,7 @@ class TestLogin:
         assert r.returncode == 0, r.stderr
 
         self.__check_token_at(DEFAULT_TOKEN_PATH)
-        self.__expect_output(r.stdout, \
+        expect_output(r.stdout, \
                              'creating directory',
                              'saved token to',
                              'login successful')
@@ -107,7 +90,7 @@ class TestLogin:
 
         assert r.returncode != 0
 
-        self.__expect_output(r.stderr, 'FAILURE: login failed with status 401')
+        expect_output(r.stderr, 'FAILURE: login failed with status 401')
 
     def test_error_no_server(self, single_user):
         c = cli.Cli()
@@ -119,11 +102,7 @@ class TestLogin:
 
         assert r.returncode != 0
 
-        self.__expect_output(r.stderr, '"server" not set')
+        expect_output(r.stderr, '"server" not set')
 
     def __check_token_at(self, path):
         assert os.path.isfile(path)
-
-    def __expect_output(self, stream, *expected):
-        for e in expected:
-            assert e in stream, 'expected string {} not found in stream'.format(e)

@@ -7,6 +7,8 @@ services:
         depends_on:
             - mender-useradm
             - mender-api-gateway
+            - mender-deployments
+            - storage-proxy
         volumes:
             - "${TESTS_DIR}:/tests"
             - /var/run/docker.sock:/var/run/docker.sock
