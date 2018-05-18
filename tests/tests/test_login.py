@@ -19,9 +19,14 @@ import pytest
 from common import single_user, expect_output, DEFAULT_TOKEN_PATH
 import cli
 
+@pytest.yield_fixture(scope="function")
+def cleanup_token(request):
+    yield
+    os.remove(request.param)
 
 class TestLogin:
-    def test_ok(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', [DEFAULT_TOKEN_PATH], indirect=True)
+    def test_ok(self, single_user, cleanup_token):
         c = cli.Cli()
 
         r = c.run('login', \
@@ -36,7 +41,8 @@ class TestLogin:
         expect_output(r.stdout, \
                              'login successful')
 
-    def test_ok_custom_path(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', ['/tests/authtoken'], indirect=True)
+    def test_ok_custom_path(self, single_user, cleanup_token):
         c = cli.Cli()
 
         custom_path = '/tests/authtoken'
@@ -54,7 +60,8 @@ class TestLogin:
         expect_output(r.stdout, \
                              'login successful')
 
-    def test_ok_verbose(self, single_user):
+    @pytest.mark.parametrize('cleanup_token', [DEFAULT_TOKEN_PATH], indirect=True)
+    def test_ok_verbose(self, single_user, cleanup_token):
         c = cli.Cli()
 
         r = c.run('login', \
