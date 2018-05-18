@@ -63,13 +63,7 @@ script:
       fi
 
     - if [ "$JOB_TYPE" = acceptance_tests ]; then
-        git clone -b master https://github.com/mendersoftware/integration.git;
-        mv integration ./tests
-
-        go build ;
-        cp mender-cli ./tests ;
-
-        sudo docker build -f ./tests/Dockerfile -t testing .;
+        ./tests/build-acceptance $PWD/tests
 
         TESTS_DIR=$PWD/tests ./tests/integration/extra/travis-testing/run-test-environment "acceptance" ./tests/integration ./tests/docker-compose.acceptance.yml ;
 
