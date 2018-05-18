@@ -17,31 +17,11 @@ import os
 
 import pytest
 
+from common import single_user
 import cli
-import docker
 
 USER_HOME = str(Path.home())
 DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.mender', 'authtoken')
-
-@pytest.yield_fixture(scope="class")
-def single_user():
-    r = docker.exec('mender-useradm', \
-                    docker.BASE_COMPOSE_FILES, \
-                    '/usr/bin/useradm', \
-                    'create-user', \
-                    '--username' , 'user@tenant.com',\
-                    '--password' , 'youcantguess')
-
-    assert r.returncode == 0, r.stderr
-    yield
-    clean_useradm_db()
-
-def clean_useradm_db():
-    r = docker.exec('mender-mongo-useradm', \
-                    docker.BASE_COMPOSE_FILES, \
-                    'mongo', 'useradm', '--eval', 'db.dropDatabase()')
-
-    assert r.returncode == 0, r.stderr
 
 
 class TestLogin:
