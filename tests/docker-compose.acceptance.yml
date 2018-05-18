@@ -1,0 +1,12 @@
+version: '2'
+services:
+    acceptance:
+        image: testing
+        networks:
+            - mender
+        depends_on:
+            - mender-useradm
+            - mender-api-gateway
+        volumes:
+            - "${TESTS_DIR}:/tests"
+            - /var/run/docker.sock:/var/run/docker.sock

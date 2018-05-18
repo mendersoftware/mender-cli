@@ -29,6 +29,7 @@ env:
     # Run test task(s) and platform/arch builds separately
     matrix:
         - JOB_TYPE=compile_and_basic_tests
+        - JOB_TYPE=acceptance_tests
         - JOB_TYPE=deploy ARCH=amd64 OS=linux
         - JOB_TYPE=deploy ARCH=amd64 OS=darwin
 
@@ -59,6 +60,19 @@ script:
     - mkdir "$BUILD_DIR"
     - if [ "$JOB_TYPE" = compile_and_basic_tests ] && [ -z $TRAVIS_TAG ]; then
         go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
+      fi
+
+    - if [ "$JOB_TYPE" = acceptance_tests ]; then
+        git clone -b master https://github.com/mendersoftware/integration.git;
+        mv integration ./tests
+
+        go build ;
+        cp mender-cli ./tests ;
+
+        sudo docker build -f ./tests/Dockerfile -t testing .;
+
+        TESTS_DIR=$PWD/tests ./tests/integration/extra/travis-testing/run-test-environment "acceptance" ./tests/integration ./tests/docker-compose.acceptance.yml ;
+
       fi
 
     # Only build platform/os releases on deploy, and if we're tagging

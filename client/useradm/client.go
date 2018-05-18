@@ -79,7 +79,7 @@ func (c *Client) Login(user, pass string) ([]byte, error) {
 	}
 
 	if rsp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("login failed wih status %d", rsp.StatusCode))
+		return nil, errors.New(fmt.Sprintf("login failed with status %d", rsp.StatusCode))
 	}
 
 	return body, nil
