@@ -139,10 +139,10 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 			return errors.Wrap(err, "can't read request body")
 		}
 		if rsp.StatusCode == http.StatusUnauthorized {
-			log.Verbf("artifact upload failed wih status %d, reason: %s", rsp.StatusCode, body)
+			log.Verbf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body)
 			return errors.New("Unauthorized. Please Login first")
 		}
-		return errors.New(fmt.Sprintf("artifact upload failed wih status %d, reason: %s", rsp.StatusCode, body))
+		return errors.New(fmt.Sprintf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body))
 	}
 
 	return nil
