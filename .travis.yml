@@ -34,7 +34,7 @@ env:
         - JOB_TYPE=deploy ARCH=amd64 OS=darwin
 
 before_install:
-    - go get -u github.com/fzipp/gocyclo
+    - make get-tools
 
 before_script:
     # Print build info that binary is compiled with.
@@ -44,16 +44,7 @@ before_script:
     - echo $TRAVIS_BUILD_NUMBER
     - echo $TRAVIS_REPO_SLUG
 
-    # Test if code was formatted with 'go fmt'
-    # Command will format code and return modified files
-    # fail if any have been modified.
-    - if [ -n "$(go fmt)" ]; then echo 'Code is not formatted with "go fmt"'; false; fi
-
-    # Perform static code analysys
-    - go vet `go list ./... | grep -v vendor`
-
-    # Fail builds when the cyclomatic complexity reaches 15 or more
-    - gocyclo -over 15 `find . -iname '*.go' | grep -v 'vendor' | grep -v '_test.go'`
+    - make check
 
 script:
     # needed unconditionally - s3 deploy provider will look for it even if disabled
@@ -68,6 +59,8 @@ script:
         TESTS_DIR=$PWD/tests ./tests/integration/extra/travis-testing/run-test-environment "acceptance" ./tests/integration ./tests/docker-compose.acceptance.yml ;
 
       fi
+
+    - make install
 
     # Only build platform/os releases on deploy, and if we're tagging
     - if [ "$JOB_TYPE" = deploy ]; then
