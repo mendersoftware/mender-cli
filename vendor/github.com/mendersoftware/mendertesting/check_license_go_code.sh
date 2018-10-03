@@ -15,14 +15,14 @@ cat > license.tmp <<EOF
 EOF
 lines=$(cat license.tmp | wc -l)
 # we need to add two extra lines missing from the license preamble
-# // Copyright <copyrigt_year> Northern.tech AS
+# // Copyright <copyright_year> Northern.tech AS
 # //
 lines=$(($lines + 2))
 
 ret=0
 for each in $(find . -type f \( ! -regex '.*/\..*' ! -path "./Godeps/*" ! -path "./vendor/*" -name '*.go' \)); do
   modified_year=$(git log -n1 --format=%ad --date=format:%Y -- $each)
-
+  
   echo "Checking $each for correct license header; last modified in $modified_year"
 
   head -n $lines $each | tail -n +3 | diff -qu license.tmp - > /dev/null
@@ -36,6 +36,7 @@ for each in $(find . -type f \( ! -regex '.*/\..*' ! -path "./Godeps/*" ! -path 
       echo "License check passed on $each"
     else
       echo "!!! FAILED license check on $each; make sure copyright year matches last modified year of the file"
+      ret=1
     fi
   fi
 done
