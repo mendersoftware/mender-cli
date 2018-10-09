@@ -27,46 +27,46 @@
 			"revisionTime": "2018-04-08T05:53:51Z"
 		},
 		{
-			"checksumSHA1": "njxc0scusF/hCQ9ug1BdtKOYyVY=",
+			"checksumSHA1": "WmpOFyg1DBnN21SjR8ayRqIcL4U=",
 			"path": "github.com/mendersoftware/mendertesting",
-			"revision": "e9053dacfd3aaf2a72d0da030a8f66698bf66cbe",
-			"revisionTime": "2018-03-19T12:20:23Z"
+			"revision": "9e728b524c29827ba75d4f4abac494b8ecdffe9f",
+			"revisionTime": "2018-04-10T09:51:58Z"
 		},
 		{
-			"checksumSHA1": "ljd3FhYRJ91cLZz3wsH9BQQ2JbA=",
+			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
 			"path": "github.com/pkg/errors",
-			"revision": "816c9085562cd7ee03e7f8188a1cfd942858cded",
-			"revisionTime": "2018-03-11T21:45:15Z"
+			"revision": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb",
+			"revisionTime": "2017-09-10T13:46:14Z"
 		},
 		{
-			"checksumSHA1": "12g3NDgLPvSJcPKEKzU42m6GWVI=",
+			"checksumSHA1": "1nDHkiFm79ufUiLc80zG1Y/L9cg=",
 			"path": "github.com/spf13/cobra",
-			"revision": "a1f051bc3eba734da4772d60e2d677f47cf93ef4",
-			"revisionTime": "2018-03-21T14:39:34Z"
+			"revision": "8d114be902bc9f08717804830a55c48378108a28",
+			"revisionTime": "2018-09-15T22:22:04Z"
 		},
 		{
-			"checksumSHA1": "23oNQwbiygWh/8Dy8MobarbBtu8=",
+			"checksumSHA1": "WVKhLVXQFxXwmuRX+IRzebUmxjE=",
 			"path": "github.com/spf13/pflag",
-			"revision": "ad68c28ee799163e627e77fcc6e8ecaa866e3535",
-			"revisionTime": "2018-03-28T15:43:57Z"
+			"revision": "298182f68c66c05229eb03ac171abe6e309ee79a",
+			"revisionTime": "2018-08-31T15:14:32Z"
 		},
 		{
-			"checksumSHA1": "BGm8lKZmvJbf/YOJLeL1rw2WVjA=",
+			"checksumSHA1": "nqWNlnMmVpt628zzvyo6Yv2CX5Q=",
 			"path": "golang.org/x/crypto/ssh/terminal",
-			"revision": "b2aa35443fbc700ab74c586ae79b81c171851023",
-			"revisionTime": "2018-04-03T08:00:15Z"
+			"revision": "faadfbdc035307d901e69eea569f5dda451a3ee3",
+			"revisionTime": "2017-09-12T19:17:24Z"
 		},
 		{
-			"checksumSHA1": "rViW/iebE6UbpQYmSkw1r9bmd6E=",
+			"checksumSHA1": "A+9lemYS6e/BXlyFTsm9CeK5dKU=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e",
-			"revisionTime": "2018-04-04T17:59:11Z"
+			"revision": "062cd7e4e68206d8bab9b18396626e855c992658",
+			"revisionTime": "2017-09-12T16:19:26Z"
 		},
 		{
-			"checksumSHA1": "Dfz4tGItokMvHZENCsBmPPB8FGQ=",
+			"checksumSHA1": "pBPFzDGt3AVSRffB7ffiUnruFUk=",
 			"path": "golang.org/x/sys/windows",
-			"revision": "1d206c9fa8975fb4cf00df1dc8bf3283dc24ba0e",
-			"revisionTime": "2018-04-04T17:59:11Z"
+			"revision": "062cd7e4e68206d8bab9b18396626e855c992658",
+			"revisionTime": "2017-09-12T16:19:26Z"
 		},
 		{
 			"path": "https://github.com/cheggaaa/pb.git",
