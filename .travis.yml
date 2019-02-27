@@ -8,7 +8,7 @@ services:
 
 # Golang version matrix
 go:
-    - 1.8
+    - "1.10"
 
 env:
     global:
