@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "+ak03juoc4Eg+1VFhsajVQmSNXI=",
+			"checksumSHA1": "hSK6You5Xn3THAK6FaYoIyQe3H0=",
 			"path": "github.com/cheggaaa/pb",
-			"revision": "75a8cbd866a7bad0d4a3b2b8cb6cab48a1475155",
-			"revisionTime": "2018-03-05T16:37:58Z"
+			"revision": "1cc5bbe20449079337944d56292c7383510c534c",
+			"revisionTime": "2018-12-10T10:21:58Z"
 		},
 		{
 			"checksumSHA1": "K6exl2ouL7d8cR2i378EzZOdRVI=",
@@ -21,52 +21,52 @@
 			"revisionTime": "2014-10-17T20:07:13Z"
 		},
 		{
-			"checksumSHA1": "KGCifxxR5cm2gz94i2iha+RIZlk=",
+			"checksumSHA1": "qR7D38Zmn9TPUvGn64k+r0+Kq1c=",
 			"path": "github.com/mattn/go-runewidth",
-			"revision": "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb",
-			"revisionTime": "2018-04-08T05:53:51Z"
+			"revision": "703b5e6b11ae25aeb2af9ebb5d5fdf8fa2575211",
+			"revisionTime": "2018-12-18T00:06:49Z"
 		},
 		{
-			"checksumSHA1": "WmpOFyg1DBnN21SjR8ayRqIcL4U=",
+			"checksumSHA1": "ejd45Osyku2FoOhTMPRgk3eAqlE=",
 			"path": "github.com/mendersoftware/mendertesting",
-			"revision": "9e728b524c29827ba75d4f4abac494b8ecdffe9f",
-			"revisionTime": "2018-04-10T09:51:58Z"
+			"revision": "3bac1d21f97d99a4bd5c111a246177e6e3bea254",
+			"revisionTime": "2019-02-20T11:57:00Z"
 		},
 		{
-			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
+			"checksumSHA1": "I7hloldMJZTqUx6hbVDp5nk9fZQ=",
 			"path": "github.com/pkg/errors",
-			"revision": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb",
-			"revisionTime": "2017-09-10T13:46:14Z"
+			"revision": "27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7",
+			"revisionTime": "2019-02-27T00:00:51Z"
 		},
 		{
-			"checksumSHA1": "1nDHkiFm79ufUiLc80zG1Y/L9cg=",
+			"checksumSHA1": "WYd7aI5YkeiRSv5pqr12emezBIg=",
 			"path": "github.com/spf13/cobra",
-			"revision": "8d114be902bc9f08717804830a55c48378108a28",
-			"revisionTime": "2018-09-15T22:22:04Z"
+			"revision": "7547e83b2d85fd1893c7d76916f67689d761fecb",
+			"revisionTime": "2019-01-09T00:34:09Z"
 		},
 		{
-			"checksumSHA1": "WVKhLVXQFxXwmuRX+IRzebUmxjE=",
+			"checksumSHA1": "VK+UsykzUMkaKl2ankiyutolraE=",
 			"path": "github.com/spf13/pflag",
-			"revision": "298182f68c66c05229eb03ac171abe6e309ee79a",
-			"revisionTime": "2018-08-31T15:14:32Z"
+			"revision": "24fa6976df40757dce6aea913e7b81ade90530e1",
+			"revisionTime": "2018-12-23T18:29:23Z"
 		},
 		{
-			"checksumSHA1": "nqWNlnMmVpt628zzvyo6Yv2CX5Q=",
+			"checksumSHA1": "CVmt+DETeuUZkKC6MUJbTqc/iYU=",
 			"path": "golang.org/x/crypto/ssh/terminal",
-			"revision": "faadfbdc035307d901e69eea569f5dda451a3ee3",
-			"revisionTime": "2017-09-12T19:17:24Z"
+			"revision": "7f87c0fbb88b590338857bcb720678c2583d4dea",
+			"revisionTime": "2019-01-29T19:25:17Z"
 		},
 		{
-			"checksumSHA1": "A+9lemYS6e/BXlyFTsm9CeK5dKU=",
+			"checksumSHA1": "orZAQ0202lQ/f5OUw/+UudKXruE=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "062cd7e4e68206d8bab9b18396626e855c992658",
-			"revisionTime": "2017-09-12T16:19:26Z"
+			"revision": "775f8194d0f9e65c46913c7be783d3d95a29333c",
+			"revisionTime": "2019-02-15T22:40:24Z"
 		},
 		{
-			"checksumSHA1": "pBPFzDGt3AVSRffB7ffiUnruFUk=",
+			"checksumSHA1": "Hu8GoQK1euwtE4UjrhXepmk2NM8=",
 			"path": "golang.org/x/sys/windows",
-			"revision": "062cd7e4e68206d8bab9b18396626e855c992658",
-			"revisionTime": "2017-09-12T16:19:26Z"
+			"revision": "775f8194d0f9e65c46913c7be783d3d95a29333c",
+			"revisionTime": "2019-02-15T22:40:24Z"
 		},
 		{
 			"path": "https://github.com/cheggaaa/pb.git",
