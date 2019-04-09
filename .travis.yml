@@ -3,6 +3,10 @@ language: go
 # Forces travis to use VM insted container, required to be able to build containers.
 sudo: required
 
+# Disable git shallow clone. We need full history for validating copyright year of each file.
+git:
+    depth: false
+
 services:
     - docker
 
