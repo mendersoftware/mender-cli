@@ -1,12 +1,7 @@
-FROM ubuntu:16.04
+FROM tiangolo/docker-with-compose
 
-RUN apt-get -y -qq update && apt-get -qq -y install \
-    python3-pip \
-    python3-pytest \
-    docker.io \
-    docker-compose
-
-RUN pip3 install requests minio
+RUN apk add bash python3 libc6-compat xz-dev
+RUN pip3 install requests minio pytest
 
 RUN mkdir -p /tests
 ENTRYPOINT ["bash", "/tests/run.sh"]

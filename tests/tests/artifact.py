@@ -17,7 +17,7 @@ import logging
 
 import cli
 
-MENDER_ARTIFACT_TOOL = 'tests/mender-artifact'
+MENDER_ARTIFACT_TOOL='tests/mender-artifact'
 
 def create_artifact_file(outpath):
     with tempfile.NamedTemporaryFile(prefix='menderin') as infile:

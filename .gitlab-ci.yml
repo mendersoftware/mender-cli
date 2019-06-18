@@ -1,0 +1,152 @@
+# This file is a template, and might need editing before it works on your project.
+image: golang:1.11.4
+
+variables:
+  # Please edit to your GitLab project
+  REPO_NAME: github.com/mendersoftware/mender-cli
+  GITHUB_RELEASE_BINARY: mender-cli
+  GITHUB_RELEASE_DEPLOY_REPO: mendersoftware/mender-cli
+  AWS_BUCKET: mender-cli
+  AWS_REGION: eu-west-1
+  AWS_S3_ACL: public_read
+  BUILD_DIR: build
+
+before_script:
+  - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
+  - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
+  # - ln -s /go/src/github.com/mendersoftware /go/src/_/builds/mendersoftware
+  - cd /go/src/$(dirname $REPO_NAME)/mender-cli
+  - apt-get update && apt-get install -yyq liblzma-dev
+
+stages:
+  - test_prep
+  - test_fast
+  - test
+  - build
+  - publish
+
+test:build_acceptance:tools:
+  stage: test_prep
+  script:
+    - go build -o $CI_PROJECT_DIR/mender-cli
+    - chmod +x $CI_PROJECT_DIR/mender-cli
+    - wget -q -O $CI_PROJECT_DIR/mender-artifact https://d1b0l86ne08fsf.cloudfront.net/mender-artifact/master/mender-artifact
+    - chmod +x $CI_PROJECT_DIR/mender-artifact
+  artifacts:
+    untracked: true
+    paths:
+      - mender-cli
+      - mender-artifact
+
+test:build_acceptance:image:
+  stage: test_prep
+  image: docker
+  services:
+    - docker:dind
+  script:
+    - docker build -t testing -f tests/Dockerfile .
+    - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
+  artifacts:
+    expire_in: 2w
+    paths:
+      - acceptance_testing_image.tar
+
+test:format:
+  stage: test
+  allow_failure: true
+  script:
+    - go fmt $(go list ./... | grep -v /vendor/)
+    - go vet $(go list ./... | grep -v /vendor/)
+    - go test -race $(go list ./... | grep -v /vendor/)
+
+test:checks:
+  stage: test
+  script:
+    - apt-get -qq update && apt-get -qqy install --allow-unauthenticated e2tools
+    # Install code coverage tooling
+    - go get -u github.com/axw/gocov/gocov
+    - go get -u golang.org/x/tools/cmd/cover
+    - make get-tools
+    - make check
+
+test:unit:
+  stage: test
+  script:
+    - go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
+    - mkdir -p tests/unit-coverage && find . -name 'coverage.txt' -exec cp --parents {} ./tests/unit-coverage \;
+    - tar -cvf $CI_PROJECT_DIR/unit-coverage.tar tests/unit-coverage
+  artifacts:
+    expire_in: 2w
+    paths:
+      - unit-coverage.tar
+
+test:acceptance:
+  stage: test_fast
+  image: tiangolo/docker-with-compose
+  dependencies:
+    - test:build_acceptance:tools
+    - test:build_acceptance:image
+  services:
+    - docker:dind
+  script:
+    - apk add git bash
+    - docker load -i acceptance_testing_image.tar
+    - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
+    - mkdir -p ${SHARED_PATH} && mv mender-artifact mender-cli tests/* ${SHARED_PATH}
+    - git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
+    # this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
+    # to allow the tests to be run, as the composition is now generated during test image build
+    - sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
+    - sed -e 's/DOWNLOAD_SPEED/#DOWNLOAD_SPEED/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
+    - sed -e 's/ALLOWED_HOSTS:\ .*/ALLOWED_HOSTS:\ _/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
+    - TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
+  tags:
+    - docker
+
+compile:linux:
+  stage: build
+  variables:
+    OS: linux
+    ARCH: amd64
+  script:
+    - make install
+    - CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $CI_COMMIT_SHA` -X main.Tag=`echo $CI_COMMIT_TAG` -X main.Branch=`echo $CI_COMMIT_REF_NAME` -X main.BuildNumber=`echo $CI_JOB_ID`";
+  artifacts:
+    paths:
+      - $GITHUB_RELEASE_BINARY.$OS.$ARCH
+
+compile:osx:
+  stage: build
+  variables:
+    OS: darwin
+    ARCH: amd64
+  script:
+    - make install
+    - CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $CI_COMMIT_SHA` -X main.Tag=`echo $CI_COMMIT_TAG` -X main.Branch=`echo $CI_COMMIT_REF_NAME` -X main.BuildNumber=`echo $CI_JOB_ID`";
+  artifacts:
+    paths:
+      - $GITHUB_RELEASE_BINARY.$OS.$ARCH
+
+publish:tests:
+  stage: publish
+  dependencies:
+    - test:unit
+  script:
+    - tar -xvf unit-coverage.tar
+    # - bash <(curl -s https://codecov.io/bash) -F unittests -s ./tests/unit-coverage;
+
+publish:github:
+  stage: publish
+  dependencies:
+    - compile:linux
+    - compile:osx
+  script:
+    - echo "publish mender-cli binary to github here"
+
+publish:s3:
+  stage: publish
+  dependencies:
+    - compile:linux
+    - compile:osx
+  script:
+    - echo "publish mender-cli binary to github here"
