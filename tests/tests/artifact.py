@@ -29,7 +29,7 @@ def create_artifact_file(outpath):
         c = cli.Cli(MENDER_ARTIFACT_TOOL)
         r = c.run('write', 'rootfs-image',
                   '--device-type', 'device-foo',\
-                  '--update', infile.name, \
+                  '--file', infile.name, \
                   '--artifact-name', 'artifact-foo',\
                   '--output-path', outpath)
 
