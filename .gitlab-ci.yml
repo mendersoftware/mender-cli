@@ -3,9 +3,8 @@ image: golang:1.11.4
 variables:
   REPO_NAME: github.com/mendersoftware/mender-cli
   GITHUB_RELEASE_BINARY: mender-cli
-  AWS_BUCKET: mender-cli
-  AWS_REGION: eu-west-1
-  AWS_S3_ACL: public_read
+  S3_BUCKET_NAME: "mender"
+  S3_BUCKET_PATH: "mender-cli"
   BUILD_DIR: build
 
 before_script:
@@ -136,8 +135,14 @@ publish:tests:
 
 publish:s3:
   stage: publish
+  image: debian:buster
   dependencies:
     - compile:linux
-    - compile:osx
+  before_script:
+    - apt update && apt install -yyq awscli
   script:
-    - echo "publish mender-cli binary to github here"
+    - echo "Publishing ${CI_COMMIT_REF_NAME} version for linux to S3"
+    - aws s3 cp $GITHUB_RELEASE_BINARY.linux.amd64
+        s3://$S3_BUCKET_NAME/$S3_BUCKET_PATH/${CI_COMMIT_REF_NAME}/mender-cli
+  only:
+    - /^(master|[0-9]+\.[0-9]+\.x)$/
