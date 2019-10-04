@@ -98,29 +98,26 @@ test:acceptance:
   tags:
     - docker
 
-compile:linux:
+.template_compile: &compile
   stage: build
-  variables:
-    OS: linux
-    ARCH: amd64
   script:
-    - make install
-    - CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $CI_COMMIT_SHA` -X main.Tag=`echo $CI_COMMIT_TAG` -X main.Branch=`echo $CI_COMMIT_REF_NAME` -X main.BuildNumber=`echo $CI_JOB_ID`";
+    - CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $CI_COMMIT_SHA` -X main.Tag=`echo $CI_COMMIT_TAG` -X main.Branch=`echo $CI_COMMIT_REF_NAME` -X main.BuildNumber=`echo $CI_JOB_ID`"
+    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/$GITHUB_RELEASE_BINARY.$OS.$ARCH $CI_PROJECT_DIR/
   artifacts:
     paths:
       - $GITHUB_RELEASE_BINARY.$OS.$ARCH
 
+compile:linux:
+  <<: *compile
+  variables:
+    OS: linux
+    ARCH: amd64
+
 compile:osx:
-  stage: build
+  <<: *compile
   variables:
     OS: darwin
     ARCH: amd64
-  script:
-    - make install
-    - CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -o "$GITHUB_RELEASE_BINARY.$OS.$ARCH" -ldflags "-X main.Commit=`echo $CI_COMMIT_SHA` -X main.Tag=`echo $CI_COMMIT_TAG` -X main.Branch=`echo $CI_COMMIT_REF_NAME` -X main.BuildNumber=`echo $CI_JOB_ID`";
-  artifacts:
-    paths:
-      - $GITHUB_RELEASE_BINARY.$OS.$ARCH
 
 publish:tests:
   image: alpine
