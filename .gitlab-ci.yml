@@ -1,11 +1,8 @@
-# This file is a template, and might need editing before it works on your project.
 image: golang:1.11.4
 
 variables:
-  # Please edit to your GitLab project
   REPO_NAME: github.com/mendersoftware/mender-cli
   GITHUB_RELEASE_BINARY: mender-cli
-  GITHUB_RELEASE_DEPLOY_REPO: mendersoftware/mender-cli
   AWS_BUCKET: mender-cli
   AWS_REGION: eu-west-1
   AWS_S3_ACL: public_read
@@ -14,7 +11,6 @@ variables:
 before_script:
   - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
   - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
-  # - ln -s /go/src/github.com/mendersoftware /go/src/_/builds/mendersoftware
   - cd /go/src/$(dirname $REPO_NAME)/mender-cli
   - apt-get update && apt-get install -yyq liblzma-dev
 
@@ -137,14 +133,6 @@ publish:tests:
   script:
     - tar -xf unit-coverage.tar
     - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F unittests -s ./tests/unit-coverage"
-
-publish:github:
-  stage: publish
-  dependencies:
-    - compile:linux
-    - compile:osx
-  script:
-    - echo "publish mender-cli binary to github here"
 
 publish:s3:
   stage: publish
