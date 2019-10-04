@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mendersoftware/mender-cli.svg?branch=master)](https://travis-ci.org/mendersoftware/mender-cli)
+[![Build Status](https://gitlab.com/Northern.tech/Mender/mender-cli/badges/master/pipeline.svg)](https://gitlab.com/Northern.tech/Mender/mender-cli/pipelines)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mendersoftware/mender-cli)](https://goreportcard.com/report/github.com/mendersoftware/mender-cli)
 
 
