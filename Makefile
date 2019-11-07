@@ -7,9 +7,6 @@ PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
 GOCYCLO ?= 15
 
-CGO_ENABLED=1
-export CGO_ENABLED
-
 TOOLS = \
 	github.com/fzipp/gocyclo \
 	github.com/opennota/check/cmd/varcheck \
@@ -34,10 +31,16 @@ BUILDTAGS = -tags '$(TAGS)'
 endif
 
 build:
-	$(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	CGO_ENABLED=0 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+
+build-multiplatform:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
+	     -o mender-cli.linux.amd64
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
+	     -o mender-cli.darwin.amd64
 
 install:
-	$(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	CGO_ENABLED=0 $(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
 
 clean:
 	$(GO) clean
