@@ -25,6 +25,11 @@ To start using `mender-cli`, we recommend that you begin with the
 [documentation section to set up mender-cli](https://docs.mender.io/server-integration/using-the-apis#set-up-mender-cli).
 
 
+## Downloading the binaries
+
+You can find the latest `mender-cli` binaries in the [Downloads page on Mender
+Docs](https://docs.mender.io/downloads).
+
 ## Contributing
 
 We welcome and ask for your contribution. If you would like to contribute to
