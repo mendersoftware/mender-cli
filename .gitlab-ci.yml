@@ -37,7 +37,7 @@ test:build_acceptance:image:
   stage: test_prep
   image: docker
   services:
-    - docker:dind
+    - docker:19.03.5-dind
   script:
     - docker build -t testing -f tests/Dockerfile .
     - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
@@ -82,7 +82,7 @@ test:acceptance:
     - test:build_acceptance:tools
     - test:build_acceptance:image
   services:
-    - docker:dind
+    - docker:19.03.5-dind
   script:
     - apk add git bash
     - docker load -i acceptance_testing_image.tar
