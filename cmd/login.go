@@ -1,4 +1,4 @@
-// Copyright 2018 Northern.tech AS
+// Copyright 2020 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import (
 const (
 	argLoginUsername = "username"
 	argLoginPassword = "password"
+	argLoginToken    = "token"
 )
 
 var loginCmd = &cobra.Command{
@@ -48,6 +49,7 @@ func init() {
 	loginCmd.MarkFlagRequired(argLoginUsername)
 
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
+	loginCmd.Flags().StringP(argLoginToken, "", "", "two-factor authentication token")
 }
 
 type LoginCmd struct {
@@ -55,6 +57,7 @@ type LoginCmd struct {
 	skipVerify bool
 	username   string
 	password   string
+	token      string
 	tokenPath  string
 }
 
@@ -79,6 +82,11 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 		return nil, err
 	}
 
+	tfaToken, err := cmd.Flags().GetString(argLoginToken)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := cmd.Flags().GetString(argRootToken)
 	if err != nil {
 		return nil, err
@@ -95,6 +103,7 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 		server:     server,
 		username:   username,
 		password:   password,
+		token:      tfaToken,
 		tokenPath:  token,
 		skipVerify: skipVerify,
 	}, nil
@@ -107,7 +116,7 @@ func (c *LoginCmd) Run() error {
 	}
 
 	client := useradm.NewClient(c.server, c.skipVerify)
-	res, err := client.Login(c.username, c.password)
+	res, err := client.Login(c.username, c.password, c.token)
 	if err != nil {
 		return err
 	}

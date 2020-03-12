@@ -1,4 +1,4 @@
-// Copyright 2018 Northern.tech AS
+// Copyright 2020 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 package useradm
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -53,13 +54,25 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) Login(user, pass string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodPost, c.loginUrl, nil)
+func (c *Client) Login(user, pass string, token string) ([]byte, error) {
+	var reader *bytes.Reader
+	var req *http.Request
+	var err error
+
+	reader = nil
+	if len(token) > 1 {
+		tokenJson := "{\"token2fa\":\"" + token + "\"}"
+		reader = bytes.NewReader([]byte(tokenJson))
+		req, err = http.NewRequest(http.MethodPost, c.loginUrl, reader)
+	} else {
+		req, err = http.NewRequest(http.MethodPost, c.loginUrl, nil)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	req.SetBasicAuth(user, pass)
+	req.Header.Set("Content-Type", "application/json")
 
 	reqDump, _ := httputil.DumpRequest(req, true)
 	log.Verbf("sending request: \n%v", string(reqDump))
