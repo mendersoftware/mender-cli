@@ -30,7 +30,7 @@ import (
 const (
 	argLoginUsername = "username"
 	argLoginPassword = "password"
-	argLoginToken    = "token"
+	argLoginToken    = "2fa-code"
 )
 
 var loginCmd = &cobra.Command{
