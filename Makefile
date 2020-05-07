@@ -1,7 +1,7 @@
 GO ?= go
 GOFMT ?= gofmt
 V ?=
-PKGS = $(shell go list ./... | grep -v vendor)
+PKGS = $(shell go list ./...)
 PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 		-o -type f -name '*.go' -print)
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
