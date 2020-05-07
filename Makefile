@@ -1,7 +1,7 @@
 GO ?= go
 GOFMT ?= gofmt
 V ?=
-PKGS = $(shell go list ./... | grep -v vendor)
+PKGS = $(shell go list ./...)
 PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 		-o -type f -name '*.go' -print)
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
@@ -64,7 +64,7 @@ extracheck:
 		/bin/false; \
 	fi
 	echo "-- checking with govet"
-	$(GO) tool vet $(PKGFILES_notest)
+	$(GO) vet $(PKGS)
 	echo "-- checking for dead code"
 	deadcode -ignore version.go:Version
 	echo "-- checking with varcheck"
@@ -85,7 +85,7 @@ coverage:
 		rm -f coverage-tmp.txt;  \
 		$(GO) test -coverprofile=coverage-tmp.txt $$p ; \
 		if [ -f coverage-tmp.txt ]; then \
-			cat coverage-tmp.txt |grep -v 'mode:' >> coverage.txt; \
+			cat coverage-tmp.txt |  grep -v 'mode:' >> coverage.txt || /bin/true; \
 		fi; \
 	done
 	rm -f coverage-tmp.txt
