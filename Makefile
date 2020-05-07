@@ -64,7 +64,7 @@ extracheck:
 		/bin/false; \
 	fi
 	echo "-- checking with govet"
-	$(GO) tool vet $(PKGFILES_notest)
+	$(GO) vet $(PKGS)
 	echo "-- checking for dead code"
 	deadcode -ignore version.go:Version
 	echo "-- checking with varcheck"
