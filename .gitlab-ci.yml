@@ -88,7 +88,7 @@ test:unit:
   <<: *sync_remote_branches
   stage: test
   script:
-    - go list ./... | grep -v vendor | xargs -n1 -I {} -P 4 go test -v -covermode=atomic -coverprofile=../../../{}/coverage.txt {} || exit $?;
+    - make coverage
     - mkdir -p tests/unit-coverage && find . -name 'coverage.txt' -exec cp --parents {} ./tests/unit-coverage \;
     - tar -cvf $CI_PROJECT_DIR/unit-coverage.tar tests/unit-coverage
   artifacts:
