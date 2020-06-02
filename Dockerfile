@@ -1,6 +1,5 @@
-FROM golang:1.11-alpine3.9 as builder
-RUN apk update && apk add make git
-RUN mkdir -p /go/src/github.com/mendersoftware/mender-cli
+FROM golang:1.14-alpine3.12 as builder
+RUN apk add --no-cache make git
 WORKDIR /go/src/github.com/mendersoftware/mender-cli
 ADD ./ .
 RUN make build
