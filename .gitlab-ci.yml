@@ -81,8 +81,8 @@ test:checks:
   script:
     - apt-get -qq update && apt-get -qqy install --allow-unauthenticated e2tools
     # Install code coverage tooling
-    - go get -u github.com/axw/gocov/gocov
-    - go get -u golang.org/x/tools/cmd/cover
+    - GO111MODULE=off go get -u github.com/axw/gocov/gocov
+    - GO111MODULE=off go get -u golang.org/x/tools/cmd/cover
     - make get-tools
     - make check
 
