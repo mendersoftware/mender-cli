@@ -1,4 +1,4 @@
-// Copyright 2018 Northern.tech AS
+// Copyright 2020 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cheggaaa/pb"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/pkg/errors"
 
 	"github.com/mendersoftware/mender-cli/log"
@@ -93,7 +93,7 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 
 	if !noProgress {
 		// create progress bar
-		bar = pb.New64(artifactStats.Size()).SetUnits(pb.U_BYTES).SetRefreshRate(time.Millisecond * 100)
+		bar = pb.New64(artifactStats.Size()).Set(pb.Bytes, true).SetRefreshRate(time.Millisecond * 100)
 		bar.Start()
 	}
 
@@ -107,7 +107,7 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 		part, _ = writer.CreateFormFile("artifact", artifactStats.Name())
 
 		if !noProgress {
-			part = io.MultiWriter(part, bar)
+			part = bar.NewProxyWriter(part)
 		}
 
 		if _, err := io.Copy(part, artifact); err != nil {
@@ -118,7 +118,7 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 
 		writer.Close()
 		if !noProgress {
-			bar.FinishPrint("Processing uploaded file. This may take around one minute.\n")
+			log.Info("Processing uploaded file. This may take around one minute.\n")
 		}
 		return
 	}()

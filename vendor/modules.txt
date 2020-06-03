@@ -1,10 +1,13 @@
-# github.com/cheggaaa/pb v1.0.28
-## explicit
-github.com/cheggaaa/pb
+# github.com/VividCortex/ewma v1.1.1
+github.com/VividCortex/ewma
 # github.com/cheggaaa/pb/v3 v3.0.4
 ## explicit
+github.com/cheggaaa/pb/v3
+github.com/cheggaaa/pb/v3/termutil
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.7.0
+github.com/fatih/color
 # github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
 ## explicit
 github.com/howeyc/gopass
@@ -12,9 +15,12 @@ github.com/howeyc/gopass
 github.com/inconshreveable/mousetrap
 # github.com/mattn/go-colorable v0.1.6
 ## explicit
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.12
+github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.7
 github.com/mattn/go-runewidth
-# github.com/mendersoftware/mendertesting v0.0.0-20200508051949-7d791ecb530c
+# github.com/mendersoftware/mendertesting v0.0.0-20200602125439-77581b5b7449
 ## explicit
 github.com/mendersoftware/mendertesting
 # github.com/pkg/errors v0.9.1
@@ -34,17 +40,5 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# gopkg.in/VividCortex/ewma.v1 v1.1.1
-## explicit
-# gopkg.in/cheggaaa/pb.v2 v2.0.7
-## explicit
-# gopkg.in/fatih/color.v1 v1.7.0
-## explicit
-# gopkg.in/mattn/go-colorable.v0 v0.1.0
-## explicit
-# gopkg.in/mattn/go-isatty.v0 v0.0.4
-## explicit
-# gopkg.in/mattn/go-runewidth.v0 v0.0.4
-## explicit
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
