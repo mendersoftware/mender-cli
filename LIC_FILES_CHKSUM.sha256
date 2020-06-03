@@ -4,7 +4,6 @@
 f42d670262f9aed37a33c97d93fa2c1324f439ee03d7690710c5fe002561b0b5  vendor/github.com/inconshreveable/mousetrap/LICENSE
 5e3400b93bbb099e83e52bab885e7441750673c21f97988ca3f1240639b63283  vendor/github.com/spf13/cobra/LICENSE.txt
 b8514c577c1c4b46cee454d5a882b15fa411e72c5bd7f801f241591789fce61a  vendor/github.com/spf13/pflag/LICENSE
-70fa746d8e9547f977b99dc684ec1e4d059a99960f50493ba56332302ff73869  vendor/github.com/cheggaaa/pb/LICENSE
 b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1  vendor/gopkg.in/yaml.v2/LICENSE
 
 #ISC
@@ -18,15 +17,13 @@ f06d8d6fe9e7dca9cd1c6385eab60b67c34f59a7871ee794553904b0d5cfcd2c  vendor/github.
 2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/sys/LICENSE
 2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/crypto/LICENSE
 2eb550be6801c1ea434feba53bf6d12e7c71c90253e0a9de4a4f46cf88b56477  vendor/github.com/pmezard/go-difflib/LICENSE
-70fa746d8e9547f977b99dc684ec1e4d059a99960f50493ba56332302ff73869  vendor/gopkg.in/cheggaaa/pb.v2/LICENSE
+70fa746d8e9547f977b99dc684ec1e4d059a99960f50493ba56332302ff73869  vendor/github.com/cheggaaa/pb/v3/LICENSE
 
 #MIT
 dad2b0b2cc2dbdbf95ad5d800ef7588956e74dc2479014829d42be295125c25d  vendor/github.com/stretchr/testify/LICENSE
 a94710b55e03b5285f77d048c5ba61bb9d6ee04a06c0eb90e68821e11b0c707a  vendor/gopkg.in/yaml.v2/LICENSE.libyaml
-de95ed802d2f90e3c72cb3c9a927cca5f2aec234a3ef1250232db0f8178b2d93  vendor/gopkg.in/fatih/color.v1/LICENSE.md
-9a6c3aa72d265f8f5fd6068d3de786741acb89edccf1c4011bc6a8b2ca64668c  vendor/gopkg.in/VividCortex/ewma.v1/LICENSE
-88a2379b3ca34bf5c57127aff9dcb802bbb60ece0805cdbda65b3bd115f971d9  vendor/gopkg.in/mattn/go-runewidth.v0/LICENSE
-88a2379b3ca34bf5c57127aff9dcb802bbb60ece0805cdbda65b3bd115f971d9  vendor/gopkg.in/mattn/go-colorable.v0/LICENSE
-08eab1118c80885fa1fa6a6dd7303f65a379fcb3733e063d20d1bbc2c76e6fa1  vendor/gopkg.in/mattn/go-isatty.v0/LICENSE
 08eab1118c80885fa1fa6a6dd7303f65a379fcb3733e063d20d1bbc2c76e6fa1  vendor/github.com/mattn/go-isatty/LICENSE
 88a2379b3ca34bf5c57127aff9dcb802bbb60ece0805cdbda65b3bd115f971d9  vendor/github.com/mattn/go-colorable/LICENSE
+de95ed802d2f90e3c72cb3c9a927cca5f2aec234a3ef1250232db0f8178b2d93  vendor/github.com/fatih/color/LICENSE.md
+9a6c3aa72d265f8f5fd6068d3de786741acb89edccf1c4011bc6a8b2ca64668c  vendor/github.com/VividCortex/ewma/LICENSE
+88a2379b3ca34bf5c57127aff9dcb802bbb60ece0805cdbda65b3bd115f971d9  vendor/github.com/mattn/go-runewidth/LICENSE
