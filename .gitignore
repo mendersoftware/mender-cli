@@ -1,3 +1,4 @@
 mender-cli
 mender-cli.linux.amd64
 mender-cli.darwin.amd64
+autocomplete/
