@@ -30,12 +30,25 @@ To start using `mender-cli`, we recommend that you begin with the
 You can find the latest `mender-cli` binaries in the [Downloads page on Mender
 Docs](https://docs.mender.io/downloads).
 
-## Enabling Bash auto-complete
+## Autocompletion
+
+Autocompletion can be enabled for the `mender-cli` tool through one of two ways.
+
+1. `sudo make install-autocomplete-scripts`
+
+This is the simplest option, and will automatically generate and install the
+auto-completion scripts for both `Bash` and `Zsh`, and install them into the
+appropriate directories. That is `Bash` autocompletion goes into the
+`/etc/bash_completion.d/` directory, and `Zsh` scripts (if `Zsh` is installed),
+gets installed into the `/usr/local/share/zsh/site-functions/` directory.
+
+2. Manually
+
+### Enabling Bash auto-complete manually
 
 The `mender-cli` tool can be enabled to support shell autocompletion, like you
 are used to for your regular tools, like `git`, `cd`, etc. In order to enable
-this functionality the `mender-cli` tool has to be run with the
-`--generate` flag. Example:
+this functionality run the `mender-cli` tool with the `--generate` flag. Example:
 
 ```console
 mender-cli --generate
@@ -56,10 +69,10 @@ completions (i.e., source it). This can be done in one of two ways:
    /path/to/mender-cli/autocomplete/autocomplete.sh" >> ~/.bashrc` needs to be
    present in your `Bash` config.
 
-## Enabling Zsh auto-complete
+### Enabling Zsh auto-complete manually
 
 The `mender-cli` tool supports enabling `Zsh` support, just like [Bash
-auto-completion](#enabling-bash-auto-complete).
+auto-completion](#enabling-bash-auto-complete-manually).
 
 In order to enable `Zsh` auto-completion do:
 
