@@ -56,6 +56,39 @@ completions (i.e., source it). This can be done in one of two ways:
    /path/to/mender-cli/autocomplete/autocomplete.sh" >> ~/.bashrc` needs to be
    present in your `Bash` config.
 
+## Enabling Zsh auto-complete
+
+The `mender-cli` tool supports enabling `Zsh` support, just like [Bash
+auto-completion](#enabling-bash-auto-complete).
+
+In order to enable `Zsh` auto-completion do:
+
+```console
+mender-cli --generate
+```
+
+to generate the auto-completion script.
+
+```console
+echo $FPATH
+```
+
+Choose one of the directories in the `$FPATH`, and then copy the
+`./autocomplete/autocomplete.zsh` script into this directory, and rename it to
+`_mender-cli`, and restart your shell. Now typing:
+
+```console
+mender-cli [Tab]
+```
+
+should result in:
+
+```console
+$ mender-cli [Tab]
+artifacts  -- Operations on mender artifacts.
+login      -- Log in to the Mender server (required before other operation
+```
+
 ## Contributing
 
 We welcome and ask for your contribution. If you would like to contribute to

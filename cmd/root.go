@@ -55,6 +55,7 @@ func Execute() {
 	b, _ := rootCmd.Flags().GetBool(argRootGenerate)
 	if b {
 		rootCmd.GenBashCompletionFile("./autocomplete/autocomplete.sh")
+		rootCmd.GenZshCompletionFile("./autocomplete/autocomplete.zsh")
 		return
 	}
 	CheckErr(rootCmd.Execute())
