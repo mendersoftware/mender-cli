@@ -30,6 +30,32 @@ To start using `mender-cli`, we recommend that you begin with the
 You can find the latest `mender-cli` binaries in the [Downloads page on Mender
 Docs](https://docs.mender.io/downloads).
 
+## Enabling Bash auto-complete
+
+The `mender-cli` tool can be enabled to support shell autocompletion, like you
+are used to for your regular tools, like `git`, `cd`, etc. In order to enable
+this functionality the `mender-cli` tool has to be run with the
+`--generate` flag. Example:
+
+```console
+mender-cli --generate
+```
+
+This will output the file `autocomplete.sh` in the `autocomplete` directory in
+the directory the binary is run from, so it is recommended to run this from the
+`mender-cli` source directory, where this directory already exists.
+
+In order to enable the functionality the current `Bash` shell has to pick up the
+completions (i.e., source it). This can be done in one of two ways:
+
+1. Copy the `./autocomplete/autocomplete.sh` file to `/etc/bash_completion.d/`,
+   where a new `Bash` shell will automatically source it on invocation.
+
+2. Keep the file where it is, and have each new login shell source the file as a
+   part of `.bashrc`. This means that `echo "source
+   /path/to/mender-cli/autocomplete/autocomplete.sh" >> ~/.bashrc` needs to be
+   present in your `Bash` config.
+
 ## Contributing
 
 We welcome and ask for your contribution. If you would like to contribute to
