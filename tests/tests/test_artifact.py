@@ -96,13 +96,3 @@ class TestArtifactUpload:
 
         assert r.returncode!=0
         expect_output(r.stderr, 'FAILURE', 'Please Login first')
-
-    def test_error_no_server(self, valid_artifact, clean_deployments_db):
-        c = cli.Cli()
-        r = c.run('--skip-verify', \
-                  'artifacts', 'upload', \
-                  '--description', 'foo',
-                  valid_artifact)
-
-        assert r.returncode!=0
-        expect_output(r.stderr, '"server" not set')

@@ -92,17 +92,5 @@ class TestLogin:
 
         expect_output(r.stderr, 'FAILURE: login failed with status 401')
 
-    def test_error_no_server(self, single_user):
-        c = cli.Cli()
-
-        r = c.run('login', \
-                  '--skip-verify', \
-                  '--username', 'user@tenant.com', \
-                  '--password', 'youcantguess')
-
-        assert r.returncode != 0
-
-        expect_output(r.stderr, '"server" not set')
-
     def __check_token_at(self, path):
         assert os.path.isfile(path)
