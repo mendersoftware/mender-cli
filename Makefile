@@ -33,6 +33,9 @@ endif
 build:
 	CGO_ENABLED=0 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
 
+build-autocomplete-scripts: build
+	@./mender-cli --generate-autocomplete
+
 build-multiplatform:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
 	     -o mender-cli.linux.amd64
@@ -41,6 +44,16 @@ build-multiplatform:
 
 install:
 	CGO_ENABLED=0 $(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+
+install-autocomplete-scripts: build-autocomplete-scripts
+	@echo "Installing Bash auto-complete script into ${DESTDIR}${PREFIX}/etc/bash_completion.d/"
+	@install -d ${DESTDIR}$(PREFIX)/etc/bash_completion.d/
+	@install -m 644 ./autocomplete/autocomplete.sh $(DESTDIR)$(PREFIX)/etc/bash_completion.d/
+	@if which zsh >/dev/null 2>&1 ; then \
+	echo "Installing zsh auto-complete script into ${DESTDIR}${PREFIX}/usr/local/share/zsh/site-functions/" \
+	install -d $(DESTDIR)$(PREFIX)/usr/local/share/zsh/site-functions/ && \
+	install -m 644 ./autocomplete/autocomplete.zsh $(DESTDIR)$(PREFIX)/usr/local/share/zsh/site-functions/_mender-cli \
+	; fi
 
 clean:
 	$(GO) clean

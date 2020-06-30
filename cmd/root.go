@@ -1,4 +1,4 @@
-// Copyright 2019 Northern.tech AS
+// Copyright 2020 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/mendersoftware/mender-cli/log"
@@ -25,6 +27,7 @@ const (
 	argRootSkipVerify = "skip-verify"
 	argRootToken      = "token"
 	argRootVerbose    = "verbose"
+	argRootGenerate   = "generate-autocomplete"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,13 +45,19 @@ var rootCmd = &cobra.Command{
 			log.Verb(fmt.Sprintf("verbose output is ON"))
 		}
 	},
+	ValidArgs: []string{"artifacts", "help", "login"},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	rootCmd.AddCommand(loginCmd)
-	rootCmd.AddCommand(artifactsCmd)
+	rootCmd.LocalFlags().Parse(os.Args)
+	b, _ := rootCmd.Flags().GetBool(argRootGenerate)
+	if b {
+		rootCmd.GenBashCompletionFile("./autocomplete/autocomplete.sh")
+		rootCmd.GenZshCompletionFile("./autocomplete/autocomplete.zsh")
+		return
+	}
 	CheckErr(rootCmd.Execute())
 }
 
@@ -61,4 +70,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
+	rootCmd.Flags().Bool(argRootGenerate, false, "generate shell completion script")
+	rootCmd.Flags().MarkHidden(argRootGenerate)
+	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(artifactsCmd)
 }
