@@ -22,6 +22,7 @@ import (
 	"github.com/howeyc/gopass"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/mendersoftware/mender-cli/client/useradm"
 	"github.com/mendersoftware/mender-cli/log"
@@ -46,10 +47,21 @@ var loginCmd = &cobra.Command{
 
 func init() {
 	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (required)")
-	loginCmd.MarkFlagRequired(argLoginUsername)
 
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "two-factor authentication token")
+
+	viper.SetConfigName(".mender-clirc")
+	viper.SetConfigType("json")
+	viper.AddConfigPath("/etc/mender-cli/")
+	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Info("No configuration file found")
+	} else {
+		log.Info(fmt.Sprintf("Using configuration file: %s", viper.ConfigFileUsed()))
+	}
 }
 
 type LoginCmd struct {
@@ -62,9 +74,12 @@ type LoginCmd struct {
 }
 
 func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
-	server, err := cmd.Flags().GetString(argRootServer)
-	if err != nil {
-		return nil, err
+	viper.BindPFlag(argRootServer, cmd.Flags().Lookup(argRootServer))
+	viper.BindPFlag(argLoginUsername, cmd.Flags().Lookup(argLoginUsername))
+	viper.BindPFlag(argLoginPassword, cmd.Flags().Lookup(argLoginPassword))
+	server := viper.GetString(argRootServer)
+	if server == "" {
+		return nil, errors.New("No server, this should not happen")
 	}
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
@@ -72,14 +87,14 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 		return nil, err
 	}
 
-	username, err := cmd.Flags().GetString(argLoginUsername)
-	if err != nil {
-		return nil, err
+	username := viper.GetString(argLoginUsername)
+	if username == "" {
+		return nil, errors.New("No username set")
 	}
 
-	password, err := cmd.Flags().GetString(argLoginPassword)
-	if err != nil {
-		return nil, err
+	password := viper.GetString(argLoginPassword)
+	if password == "" {
+		return nil, errors.New("No password set")
 	}
 
 	tfaToken, err := cmd.Flags().GetString(argLoginToken)

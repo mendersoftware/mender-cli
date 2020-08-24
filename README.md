@@ -30,6 +30,29 @@ To start using `mender-cli`, we recommend that you begin with the
 You can find the latest `mender-cli` binaries in the [Downloads page on Mender
 Docs](https://docs.mender.io/downloads).
 
+## Configuration file
+
+The `mender-cli` tool supports having a custom configuration setup. For now it
+supports the `username`, `password`, and `server` configuration parameters. The
+file must be in the JSON format, and can be located in one of the following
+directories:
+
+* `/etc/mender-cli/.mender-clirc`
+* `$HOME/.mender-clirc`
+* `.` (The directory in which the binary is run from)
+
+Example configuration file:
+
+```json
+{
+    "username": "foo@bar.com",
+    "password": "baz",
+    "server"  : "bar.com"
+}
+```
+
+!!! Note: It is possible to override all configuration file parameters on the command line.
+
 ## Autocompletion
 
 Autocompletion can be enabled for the `mender-cli` tool through one of two ways.
