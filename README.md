@@ -1,4 +1,5 @@
 [![Build Status](https://gitlab.com/Northern.tech/Mender/mender-cli/badges/master/pipeline.svg)](https://gitlab.com/Northern.tech/Mender/mender-cli/pipelines)
+[![Coverage Status](https://coveralls.io/repos/github/mendersoftware/mender-cli/badge.svg?branch=master)](https://coveralls.io/github/mendersoftware/mender-cli?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mendersoftware/mender-cli)](https://goreportcard.com/report/github.com/mendersoftware/mender-cli)
 
 
