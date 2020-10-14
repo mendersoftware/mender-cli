@@ -15,6 +15,7 @@ package deployments
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,13 +33,51 @@ import (
 	"github.com/mendersoftware/mender-cli/log"
 )
 
+type artifactsList struct {
+	artifacts []artifactData
+}
+
+type artifactData struct {
+	ID                    string   `json:"id"`
+	Description           string   `json:"description"`
+	Name                  string   `json:"name"`
+	DeviceTypesCompatible []string `json:"device_types_compatible"`
+	Info                  struct {
+		Format  string `json:"format"`
+		Version int    `json:"version"`
+	} `json:"info"`
+	Signed  bool `json:"signed"`
+	Updates []struct {
+		TypeInfo struct {
+			Type string `json:"type"`
+		} `json:"type_info"`
+		Files []struct {
+			Name     string    `json:"name"`
+			Checksum string    `json:"checksum"`
+			Size     int       `json:"size"`
+			Date     time.Time `json:"date"`
+		} `json:"files"`
+		MetaData []interface{} `json:"meta_data"`
+	} `json:"updates"`
+	ArtifactProvides struct {
+		ArtifactName string `json:"artifact_name"`
+	} `json:"artifact_provides"`
+	ArtifactDepends struct {
+		DeviceType []string `json:"device_type"`
+	} `json:"artifact_depends"`
+	Size     int       `json:"size"`
+	Modified time.Time `json:"modified"`
+}
+
 const (
-	artifactUploadUrl = "/api/management/v1/deployments/artifacts"
+	artifactUploadURL = "/api/management/v1/deployments/artifacts"
+	artifactsListURL  = "/api/management/v1/deployments/artifacts"
 )
 
 type Client struct {
 	url               string
-	artifactUploadUrl string
+	artifactUploadURL string
+	artifactsListURL  string
 	client            *http.Client
 }
 
@@ -49,15 +88,92 @@ func NewClient(url string, skipVerify bool) *Client {
 
 	return &Client{
 		url:               url,
-		artifactUploadUrl: JoinURL(url, artifactUploadUrl),
+		artifactUploadURL: JoinURL(url, artifactUploadURL),
+		artifactsListURL:  JoinURL(url, artifactsListURL),
 		client: &http.Client{
 			Transport: tr,
 		},
 	}
 }
 
-func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noProgress bool) error {
+func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return errors.Wrap(err, "Please Login first")
+	}
 
+	req, err := http.NewRequest(http.MethodGet, c.artifactsListURL, nil)
+	if err != nil {
+		return errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "Get /deployments/artifacts request failed")
+	}
+	defer rsp.Body.Close()
+
+	body, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return err
+	}
+
+	var list artifactsList
+	err = json.Unmarshal(body, &list.artifacts)
+	if err != nil {
+		return err
+	}
+	for _, v := range list.artifacts {
+		listArtifact(v, detailLevel)
+	}
+
+	return nil
+}
+
+func listArtifact(a artifactData, detailLevel int) {
+	fmt.Println(fmt.Sprintf("ID: %s", a.ID))
+	fmt.Println(fmt.Sprintf("Name: %s", a.Name))
+	fmt.Println(fmt.Sprintf("Signed: %t", a.Signed))
+	fmt.Println(fmt.Sprintf("Modfied: %s", a.Modified))
+	fmt.Println(fmt.Sprintf("Size: %d", a.Size))
+	fmt.Println(fmt.Sprintf("Description: %s", a.Description))
+	if detailLevel == 1 {
+		fmt.Println("Compatible device types:")
+		for _, v := range a.DeviceTypesCompatible {
+			fmt.Println(fmt.Sprintf("  %s", v))
+		}
+		fmt.Println(fmt.Sprintf("Artifact format: %s", a.Info.Format))
+		fmt.Println(fmt.Sprintf("Format version: %d", a.Info.Version))
+	}
+	if detailLevel > 1 {
+		fmt.Println(fmt.Sprintf("Artifact provides: %s", a.ArtifactProvides.ArtifactName))
+		fmt.Println("Artifact depends:")
+		for _, v := range a.ArtifactDepends.DeviceType {
+			fmt.Println(fmt.Sprintf("  %s", v))
+		}
+		fmt.Println("Updates:")
+		for _, v := range a.Updates {
+			fmt.Println(fmt.Sprintf("  Type: %s", v.TypeInfo.Type))
+			fmt.Println("  Files:")
+			for _, f := range v.Files {
+				fmt.Println(fmt.Sprintf("    Name: %s", f.Name))
+				fmt.Println(fmt.Sprintf("    Checksum: %s", f.Checksum))
+				fmt.Println(fmt.Sprintf("    Size: %d", f.Size))
+				fmt.Println(fmt.Sprintf("    Date: %s", f.Date))
+				if len(v.Files) > 1 {
+					fmt.Println()
+				}
+			}
+		}
+	}
+	fmt.Println("--------------------------------------------------------------------------------")
+}
+
+func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noProgress bool) error {
 	var bar *pb.ProgressBar
 
 	artifact, err := os.Open(artifactPath)
@@ -81,7 +197,7 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 		return errors.Wrap(err, "Please Login first")
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.artifactUploadUrl, pR)
+	req, err := http.NewRequest(http.MethodPost, c.artifactUploadURL, pR)
 	if err != nil {
 		return errors.Wrap(err, "Cannot create request")
 	}

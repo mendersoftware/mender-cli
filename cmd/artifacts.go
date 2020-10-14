@@ -20,9 +20,10 @@ import (
 var artifactsCmd = &cobra.Command{
 	Use:       "artifacts",
 	Short:     "Operations on mender artifacts.",
-	ValidArgs: []string{"upload"},
+	ValidArgs: []string{"upload", "list"},
 }
 
 func init() {
 	artifactsCmd.AddCommand(artifactUploadCmd)
+	artifactsCmd.AddCommand(artifactsListCmd)
 }
