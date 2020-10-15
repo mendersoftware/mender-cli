@@ -57,7 +57,9 @@ func init() {
 	viper.AddConfigPath("$HOME/")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if errors.Is(err, viper.ConfigFileNotFoundError{}) {
+			log.Info("Configuration file not found. Continuing.")
+		} else {
 			log.Info(fmt.Sprintf("Failed to read config: %s", err))
 			os.Exit(1)
 		}
