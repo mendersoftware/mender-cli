@@ -121,6 +121,10 @@ func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
 	if err != nil {
 		return errors.Wrap(err, "Get /deployments/artifacts request failed")
 	}
+	if rsp.StatusCode != 200 {
+		return fmt.Errorf("Get /deployments/artifacts request failed with status %d\n", rsp.StatusCode)
+	}
+
 	defer rsp.Body.Close()
 
 	body, err := ioutil.ReadAll(rsp.Body)
