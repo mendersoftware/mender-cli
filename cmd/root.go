@@ -22,12 +22,15 @@ import (
 	"github.com/mendersoftware/mender-cli/log"
 )
 
+var Version string
+
 const (
 	argRootServer     = "server"
 	argRootSkipVerify = "skip-verify"
 	argRootToken      = "token"
 	argRootVerbose    = "verbose"
 	argRootGenerate   = "generate-autocomplete"
+	argRootVersion    = "version"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -40,7 +43,6 @@ var rootCmd = &cobra.Command{
 		verbose, err := cmd.Flags().GetBool(argRootVerbose)
 		CheckErr(err)
 		log.Setup(verbose)
-
 		if verbose {
 			log.Verb(fmt.Sprintf("verbose output is ON"))
 		}
@@ -58,6 +60,12 @@ func Execute() {
 		rootCmd.GenZshCompletionFile("./autocomplete/autocomplete.zsh")
 		return
 	}
+	version, err := rootCmd.Flags().GetBool(argRootVersion)
+	CheckErr(err)
+	if version {
+		fmt.Printf("mender-cli version %s\n", Version)
+		os.Exit(0)
+	}
 	CheckErr(rootCmd.Execute())
 }
 
@@ -69,6 +77,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
+	rootCmd.Flags().Bool(argRootVersion, false, "print version")
 	rootCmd.Flags().Bool(argRootGenerate, false, "generate shell completion script")
 	rootCmd.Flags().MarkHidden(argRootGenerate)
 	rootCmd.AddCommand(loginCmd)
