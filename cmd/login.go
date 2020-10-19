@@ -56,9 +56,13 @@ func init() {
 	viper.AddConfigPath("/etc/mender-cli/")
 	viper.AddConfigPath("$HOME/")
 	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Info("No configuration file found")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Info(fmt.Sprintf("Failed to read config: %s", err))
+			os.Exit(1)
+		} else {
+			log.Info("Configuration file not found. Continuing.")
+		}
 	} else {
 		log.Info(fmt.Sprintf("Using configuration file: %s", viper.ConfigFileUsed()))
 	}
@@ -93,9 +97,6 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	password := viper.GetString(argLoginPassword)
-	if password == "" {
-		return nil, errors.New("No password set")
-	}
 
 	tfaToken, err := cmd.Flags().GetString(argLoginToken)
 	if err != nil {
