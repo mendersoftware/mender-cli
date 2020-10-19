@@ -14,10 +14,12 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/howeyc/gopass"
 	"github.com/pkg/errors"
@@ -46,8 +48,7 @@ var loginCmd = &cobra.Command{
 }
 
 func init() {
-	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (required)")
-
+	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "two-factor authentication token")
 
@@ -92,10 +93,6 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	username := viper.GetString(argLoginUsername)
-	if username == "" {
-		return nil, errors.New("No username set")
-	}
-
 	password := viper.GetString(argLoginPassword)
 
 	tfaToken, err := cmd.Flags().GetString(argLoginToken)
@@ -126,11 +123,15 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 }
 
 func (c *LoginCmd) Run() error {
-	err := c.maybeGetPassword()
+	err := c.maybeGetUsername()
 	if err != nil {
 		return err
 	}
 
+	err = c.maybeGetPassword()
+	if err != nil {
+		return err
+	}
 	client := useradm.NewClient(c.server, c.skipVerify)
 	res, err := client.Login(c.username, c.password, c.token)
 	if err != nil {
@@ -145,9 +146,23 @@ func (c *LoginCmd) Run() error {
 	return nil
 }
 
+func (c *LoginCmd) maybeGetUsername() error {
+	if c.username == "" {
+		fmt.Printf("Username: ")
+		reader := bufio.NewReader(os.Stdin)
+		str, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		c.username = strings.TrimSuffix(str, "\n")
+	}
+
+	return nil
+}
+
 func (c *LoginCmd) maybeGetPassword() error {
 	if c.password == "" {
-		fmt.Printf("Password:")
+		fmt.Printf("Password: ")
 
 		p, err := gopass.GetPasswdMasked()
 		if err != nil {
