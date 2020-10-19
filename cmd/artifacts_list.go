@@ -25,7 +25,7 @@ const (
 
 var artifactsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List mender artifacts from the Mender server.",
+	Short: "List Mender Artifacts from the Mender server.",
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewArtifactsListCmd(c, args)
 		CheckErr(err)
@@ -35,7 +35,7 @@ var artifactsListCmd = &cobra.Command{
 }
 
 func init() {
-	artifactsListCmd.Flags().IntP(argDetailLevel, "d", 0, "artifacts list detail level [0..2]")
+	artifactsListCmd.Flags().IntP(argDetailLevel, "d", 0, "artifacts list detail level [0..3]")
 }
 
 type ArtifactsListCmd struct {

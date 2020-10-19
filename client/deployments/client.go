@@ -71,7 +71,7 @@ type artifactData struct {
 
 const (
 	artifactUploadURL = "/api/management/v1/deployments/artifacts"
-	artifactsListURL  = "/api/management/v1/deployments/artifacts"
+	artifactsListURL  = artifactUploadURL
 )
 
 type Client struct {
@@ -97,6 +97,9 @@ func NewClient(url string, skipVerify bool) *Client {
 }
 
 func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
+	if detailLevel > 3 || detailLevel < 0 {
+		return fmt.Errorf("FAILURE: invalid artifact detail")
+	}
 	token, err := ioutil.ReadFile(tokenPath)
 	if err != nil {
 		return errors.Wrap(err, "Please Login first")
@@ -104,12 +107,15 @@ func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
 
 	req, err := http.NewRequest(http.MethodGet, c.artifactsListURL, nil)
 	if err != nil {
-		return errors.Wrap(err, "Cannot create request")
+		return errors.Wrap(err, "Failed to create HTTP request")
 	}
 	req.Header.Set("Authorization", "Bearer "+string(token))
 
-	reqDump, _ := httputil.DumpRequest(req, false)
-	log.Verbf("sending request: \n%v", string(reqDump))
+	reqDump, err := httputil.DumpRequest(req, false)
+	if err != nil {
+		return err
+	}
+	log.Verbf("sending request: \n%s", string(reqDump))
 
 	rsp, err := c.client.Do(req)
 	if err != nil {
@@ -135,41 +141,45 @@ func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
 }
 
 func listArtifact(a artifactData, detailLevel int) {
-	fmt.Println(fmt.Sprintf("ID: %s", a.ID))
-	fmt.Println(fmt.Sprintf("Name: %s", a.Name))
-	fmt.Println(fmt.Sprintf("Signed: %t", a.Signed))
-	fmt.Println(fmt.Sprintf("Modfied: %s", a.Modified))
-	fmt.Println(fmt.Sprintf("Size: %d", a.Size))
-	fmt.Println(fmt.Sprintf("Description: %s", a.Description))
-	if detailLevel == 1 {
+	fmt.Printf("ID: %s\n", a.ID)
+	fmt.Printf("Name: %s\n", a.Name)
+	if detailLevel >= 1 {
+		fmt.Printf("Signed: %t\n", a.Signed)
+		fmt.Printf("Modfied: %s\n", a.Modified)
+		fmt.Printf("Size: %d\n", a.Size)
+		fmt.Printf("Description: %s\n", a.Description)
 		fmt.Println("Compatible device types:")
 		for _, v := range a.DeviceTypesCompatible {
-			fmt.Println(fmt.Sprintf("  %s", v))
+			fmt.Printf("  %s\n", v)
 		}
-		fmt.Println(fmt.Sprintf("Artifact format: %s", a.Info.Format))
-		fmt.Println(fmt.Sprintf("Format version: %d", a.Info.Version))
+		fmt.Printf("Artifact format: %s\n", a.Info.Format)
+		fmt.Printf("Format version: %d\n", a.Info.Version)
 	}
-	if detailLevel > 1 {
-		fmt.Println(fmt.Sprintf("Artifact provides: %s", a.ArtifactProvides.ArtifactName))
+	if detailLevel >= 2 {
+		fmt.Printf("Artifact provides: %s\n", a.ArtifactProvides.ArtifactName)
 		fmt.Println("Artifact depends:")
 		for _, v := range a.ArtifactDepends.DeviceType {
-			fmt.Println(fmt.Sprintf("  %s", v))
+			fmt.Printf("  %s\n", v)
 		}
 		fmt.Println("Updates:")
 		for _, v := range a.Updates {
-			fmt.Println(fmt.Sprintf("  Type: %s", v.TypeInfo.Type))
+			fmt.Printf("  Type: %s\n", v.TypeInfo.Type)
 			fmt.Println("  Files:")
 			for _, f := range v.Files {
-				fmt.Println(fmt.Sprintf("    Name: %s", f.Name))
-				fmt.Println(fmt.Sprintf("    Checksum: %s", f.Checksum))
-				fmt.Println(fmt.Sprintf("    Size: %d", f.Size))
-				fmt.Println(fmt.Sprintf("    Date: %s", f.Date))
+				fmt.Printf("\tName: %s\n", f.Name)
+				fmt.Printf("\tChecksum: %s\n", f.Checksum)
+				fmt.Printf("\tSize: %d\n", f.Size)
+				fmt.Printf("\tDate: %s\n", f.Date)
 				if len(v.Files) > 1 {
 					fmt.Println()
 				}
 			}
+			if detailLevel == 3 {
+				fmt.Printf("  MetaData: %v\n", v.MetaData)
+			}
 		}
 	}
+
 	fmt.Println("--------------------------------------------------------------------------------")
 }
 
