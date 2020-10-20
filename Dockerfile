@@ -1,4 +1,4 @@
-FROM golang:1.15.2-alpine3.12 as builder
+FROM golang:1.15.3-alpine3.12 as builder
 RUN apk add --no-cache make git
 WORKDIR /go/src/github.com/mendersoftware/mender-cli
 ADD ./ .
