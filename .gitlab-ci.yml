@@ -58,7 +58,7 @@ test:build_acceptance:image:
       - acceptance_testing_image.tar
 
 test:checks:
-  stage: test
+  stage: test_prep
   script:
     - apt-get -qq update && apt-get -qqy install --allow-unauthenticated e2tools
     # Install code coverage tooling
