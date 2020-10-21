@@ -23,7 +23,6 @@ before_script:
 
 stages:
   - test_prep
-  - test_fast
   - test
   - build
   - publish
@@ -81,7 +80,7 @@ test:checks:
     - make check
 
 test:acceptance:
-  stage: test_fast
+  stage: test
   image: tiangolo/docker-with-compose
   dependencies:
     - test:build_acceptance:tools
