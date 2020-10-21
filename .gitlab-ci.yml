@@ -11,6 +11,7 @@ include:
 image: golang:1.14
 
 variables:
+  DOCKER_REPOSITORY: mendersoftware/mender-cli
   REPO_NAME: github.com/mendersoftware/mender-cli
   GITHUB_RELEASE_BINARY: mender-cli
   S3_BUCKET_NAME: "mender"
