@@ -1,5 +1,7 @@
 include:
   - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-commits.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-static.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-unittests.yml'
@@ -54,22 +56,7 @@ test:build_acceptance:image:
     paths:
       - acceptance_testing_image.tar
 
-.sync_branches_template: &sync_remote_branches
-    before_script:
-    # Rename the branch we're on, so that it's not in the way for the
-    # subsequent fetch. It's ok if this fails, it just means we're not on any
-    # branch.
-    - git branch -m temp-branch || true
-    # Git trick: Fetch directly into our local branches instead of remote
-    # branches.
-    - git fetch origin 'refs/heads/*:refs/heads/*'
-    # Get last remaining tags, if any.
-    - git fetch --tags origin
-
-
-
 test:checks:
-  <<: *sync_remote_branches
   stage: test
   script:
     - apt-get -qq update && apt-get -qqy install --allow-unauthenticated e2tools
