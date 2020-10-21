@@ -1,5 +1,7 @@
 include:
   - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-golang-static.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-unittests.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-github-status-updates.yml'
@@ -52,16 +54,6 @@ test:build_acceptance:image:
     expire_in: 2w
     paths:
       - acceptance_testing_image.tar
-
-test:format:
-  image: golang:1.14
-  stage: test
-  allow_failure: true
-  script:
-    - go fmt $(go list ./... | grep -v /vendor/)
-    - go vet $(go list ./... | grep -v /vendor/)
-    - go test -race $(go list ./... | grep -v /vendor/)
-
 
 .sync_branches_template: &sync_remote_branches
     before_script:
