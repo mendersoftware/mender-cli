@@ -73,19 +73,6 @@ test:static:
     # Get last remaining tags, if any.
     - git fetch --tags origin
 
-
-
-test:checks:
-  <<: *sync_remote_branches
-  stage: test
-  script:
-    - apt-get -qq update && apt-get -qqy install --allow-unauthenticated e2tools
-    # Install code coverage tooling
-    - GO111MODULE=off go get -u github.com/axw/gocov/gocov
-    - GO111MODULE=off go get -u golang.org/x/tools/cmd/cover
-    - make get-go-tools
-    - make check
-
 test_acc:run:
   stage: test_acc
   image: tiangolo/docker-with-compose
