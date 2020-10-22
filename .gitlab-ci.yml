@@ -13,12 +13,6 @@ variables:
   S3_BUCKET_PATH: "mender-cli"
   BUILD_DIR: build
 
-before_script:
-  - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
-  - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
-  - cd /go/src/$(dirname $REPO_NAME)/mender-cli
-  - apt-get update && apt-get install -yyq liblzma-dev
-
 stages:
   - test
   - test_acc_prep
@@ -99,6 +93,11 @@ test_acc:run:
 compile:
   image: golang:1.14
   stage: build
+  before_script:
+    - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
+    - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
+    - cd /go/src/$(dirname $REPO_NAME)/mender-cli
+    - make get-build-deps
   script:
     - make build-multiplatform
     - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.linux.amd64 $CI_PROJECT_DIR/
