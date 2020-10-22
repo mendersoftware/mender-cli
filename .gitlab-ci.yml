@@ -53,14 +53,12 @@ test:build_acceptance:image:
     paths:
       - acceptance_testing_image.tar
 
-test:format:
+test:static:
   image: golang:1.14
   stage: test
-  allow_failure: true
   script:
-    - go fmt $(go list ./... | grep -v /vendor/)
-    - go vet $(go list ./... | grep -v /vendor/)
-    - go test -race $(go list ./... | grep -v /vendor/)
+    - make get-go-tools
+    - make test-static
 
 
 .sync_branches_template: &sync_remote_branches
@@ -85,7 +83,7 @@ test:checks:
     # Install code coverage tooling
     - GO111MODULE=off go get -u github.com/axw/gocov/gocov
     - GO111MODULE=off go get -u golang.org/x/tools/cmd/cover
-    - make get-tools
+    - make get-go-tools
     - make check
 
 test:acceptance:
