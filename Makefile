@@ -7,10 +7,16 @@ PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
 GOCYCLO ?= 15
 
-TOOLS = \
+GO_TEST_TOOLS = \
 	github.com/fzipp/gocyclo/... \
 	github.com/opennota/check/cmd/varcheck \
-	github.com/mendersoftware/deadcode
+	github.com/mendersoftware/deadcode \
+	github.com/axw/gocov/gocov \
+	golang.org/x/tools/cmd/cover
+
+BUILD_DEPS = \
+	e2tools \
+	liblzma-dev
 
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
@@ -59,18 +65,22 @@ clean:
 	$(GO) clean
 	rm -f coverage.txt coverage-tmp.txt
 
-get-tools:
-	set -e ; for t in $(TOOLS); do \
+get-go-tools:
+	set -e ; for t in $(GO_TEST_TOOLS); do \
 		echo "-- go getting $$t"; \
 		GO111MODULE=off go get -u $$t; \
 	done
 
-check: test extracheck
+get-build-deps:
+	apt-get update -qq
+	apt-get install -yyq $(BUILD_DEPS)
 
-test:
+get-deps: get-go-tools get-build-deps
+
+test-unit:
 	$(GO) test $(BUILDV) $(PKGS)
 
-extracheck:
+test-static:
 	echo "-- checking if code is gofmt'ed"
 	if [ -n "$$($(GOFMT) -d $(PKGFILES))" ]; then \
 		echo "-- gofmt check failed"; \
@@ -103,5 +113,5 @@ coverage:
 	done
 	rm -f coverage-tmp.txt
 
-.PHONY: build clean get-tools test check \
+.PHONY: build clean get-go-tools get-apt-deps get-deps test check \
 	cover htmlcover coverage
