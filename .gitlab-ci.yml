@@ -24,10 +24,10 @@ test_acc_prep:tools:
   image: golang:1.14
   stage: test_acc_prep
   script:
-    - go build -o $CI_PROJECT_DIR/mender-cli
-    - chmod +x $CI_PROJECT_DIR/mender-cli
-    - wget -q -O $CI_PROJECT_DIR/mender-artifact https://d1b0l86ne08fsf.cloudfront.net/mender-artifact/master/mender-artifact
-    - chmod +x $CI_PROJECT_DIR/mender-artifact
+    - apt-get update && apt-get install make
+    # make target env var
+    - export PROJECT_DIR="$CI_PROJECT_DIR/"
+    - make build-acceptance-tools
   artifacts:
     untracked: true
     paths:
@@ -40,7 +40,9 @@ test_acc_prep:image:
   services:
     - docker:19.03.5-dind
   script:
-    - docker build -t testing -f tests/Dockerfile .
+    - apk add make
+    - export PROJECT_DIR="$CI_PROJECT_DIR/"
+    - make build-acceptance-image
     - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
   artifacts:
     expire_in: 2w
@@ -76,17 +78,11 @@ test_acc:run:
   services:
     - docker:19.03.5-dind
   script:
-    - apk add git bash
+    - apk add git bash make
     - docker load -i acceptance_testing_image.tar
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
-    - mkdir -p ${SHARED_PATH} && mv mender-artifact mender-cli tests/* ${SHARED_PATH}
-    - git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
-    # this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
-    # to allow the tests to be run, as the composition is now generated during test image build
-    - sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
-    - sed -e 's/DOWNLOAD_SPEED/#DOWNLOAD_SPEED/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
-    - sed -e 's/ALLOWED_HOSTS:\ .*/ALLOWED_HOSTS:\ _/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
-    - TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
+    - make run-acceptance
+
   tags:
     - docker
 

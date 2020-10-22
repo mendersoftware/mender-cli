@@ -80,6 +80,38 @@ get-deps: get-go-tools get-build-deps
 test-unit:
 	$(GO) test $(BUILDV) $(PKGS)
 
+build-acceptance-tools:
+	# set PROJECT_DIR="$(pwd)" for local builds
+	@if [ -z ${PROJECT_DIR} ]; then\
+		echo "aborting: PROJECT_DIR not set";\
+	    exit 1;\
+	 fi
+	go build -o ${PROJECT_DIR}/mender-cli
+	chmod +x ${PROJECT_DIR}/mender-cli
+	wget -q -O ${PROJECT_DIR}/mender-artifact https://d1b0l86ne08fsf.cloudfront.net/mender-artifact/master/mender-artifact
+	chmod +x ${PROJECT_DIR}/mender-artifact
+
+build-acceptance-image:
+	docker build -t testing -f tests/Dockerfile .
+
+build-acceptance: build-acceptance-tools build-acceptance-image
+
+run-acceptance:
+	# set e.g. SHARED_PATH="$(pwd)/shared" for local builds
+	@if [ -z ${SHARED_PATH} ]; then\
+		echo "aborting: SHARED_PATH not set";\
+	    exit 1;\
+	 fi
+	mkdir -p ${SHARED_PATH}
+	cp -r mender-artifact mender-cli tests/* ${SHARED_PATH}
+	git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
+	# this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
+	# to allow the tests to be run, as the composition is now generated during test image build
+	sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
+	sed -e 's/DOWNLOAD_SPEED/#DOWNLOAD_SPEED/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
+	sed -e 's/ALLOWED_HOSTS:\ .*/ALLOWED_HOSTS:\ _/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
+	TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
+
 test-static:
 	echo "-- checking if code is gofmt'ed"
 	if [ -n "$$($(GOFMT) -d $(PKGFILES))" ]; then \
