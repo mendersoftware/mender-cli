@@ -20,9 +20,9 @@ before_script:
   - apt-get update && apt-get install -yyq liblzma-dev
 
 stages:
+  - test
   - test_prep
   - test_fast
-  - test
   - build
   - publish
 
