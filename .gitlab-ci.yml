@@ -15,14 +15,14 @@ variables:
 
 stages:
   - test
-  - test_acc_prep
-  - test_acc
+  - test_acceptance_build
+  - test_acceptance
   - build
   - publish
 
-test_acc_prep:tools:
+test_acceptance_build:tools:
   image: golang:1.14
-  stage: test_acc_prep
+  stage: test_acceptance_build
   script:
     - apt-get update && apt-get install make
     # make target env var
@@ -34,8 +34,8 @@ test_acc_prep:tools:
       - mender-cli
       - mender-artifact
 
-test_acc_prep:image:
-  stage: test_acc_prep
+test_acceptance_build:image:
+  stage: test_acceptance_build
   image: docker
   services:
     - docker:19.03.5-dind
@@ -69,20 +69,20 @@ test:static:
     # Get last remaining tags, if any.
     - git fetch --tags origin
 
-test_acc:run:
-  stage: test_acc
+test_acceptance:run:
+  stage: test_acceptance
   image: tiangolo/docker-with-compose
   dependencies:
-    - test_acc_prep:tools
-    - test_acc_prep:image
+    - test_acceptance_build:tools
+    - test_acceptance_build:image
   services:
     - docker:19.03.5-dind
   script:
     - apk add git bash make
     - docker load -i acceptance_testing_image.tar
+    # make target env var
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
     - make run-acceptance
-
   tags:
     - docker
 
