@@ -8,7 +8,7 @@ PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
 GOCYCLO ?= 15
 
 TOOLS = \
-	github.com/fzipp/gocyclo \
+	github.com/fzipp/gocyclo/... \
 	github.com/opennota/check/cmd/varcheck \
 	github.com/mendersoftware/deadcode
 
