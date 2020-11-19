@@ -1,22 +1,13 @@
 GO ?= go
-GOFMT ?= gofmt
 V ?=
 PKGS = $(shell go list ./...)
 PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 		-o -type f -name '*.go' -print)
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
-GOCYCLO ?= 15
 
 GO_TEST_TOOLS = \
-	github.com/fzipp/gocyclo/... \
 	github.com/opennota/check/cmd/varcheck \
-	github.com/mendersoftware/deadcode \
-	github.com/axw/gocov/gocov \
-	golang.org/x/tools/cmd/cover
-
-BUILD_DEPS = \
-	e2tools \
-	liblzma-dev
+	github.com/mendersoftware/deadcode
 
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
@@ -73,7 +64,7 @@ get-go-tools:
 
 get-build-deps:
 	apt-get update -qq
-	apt-get install -yyq $(BUILD_DEPS)
+	apt-get install -yyq $(cat deb-requirements.txt);
 
 get-deps: get-go-tools get-build-deps
 
@@ -111,19 +102,10 @@ run-acceptance:
 	TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
 
 test-static:
-	echo "-- checking if code is gofmt'ed"
-	if [ -n "$$($(GOFMT) -d $(PKGFILES))" ]; then \
-		echo "-- gofmt check failed"; \
-		/bin/false; \
-	fi
-	echo "-- checking with govet"
-	$(GO) vet $(PKGS)
 	echo "-- checking for dead code"
 	deadcode -ignore version.go:Version
 	echo "-- checking with varcheck"
 	varcheck .
-	echo "-- checking cyclometric complexity > $(GOCYCLO)"
-	gocyclo -over $(GOCYCLO) $(PKGFILES_notest)
 
 cover: coverage
 	$(GO) tool cover -func=coverage.txt

@@ -1,5 +1,7 @@
 include:
   - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-golang-static.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-unittests.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-github-status-updates.yml'
@@ -7,7 +9,6 @@ include:
 image: golang:1.14
 
 variables:
-  REPO_NAME: github.com/mendersoftware/mender-cli
   GITHUB_RELEASE_BINARY: mender-cli
   S3_BUCKET_NAME: "mender"
   S3_BUCKET_PATH: "mender-cli"
@@ -21,17 +22,17 @@ stages:
   - publish
 
 compile:
-  image: golang:1.14
   stage: build
   before_script:
-    - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
-    - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
-    - cd /go/src/$(dirname $REPO_NAME)/mender-cli
+    # Prepare GOPATH
+    - mkdir -p /go/src/github.com/mendersoftware
+    - cp -r ${CI_PROJECT_DIR} /go/src/github.com/mendersoftware/${CI_PROJECT_NAME}
+    - cd /go/src/github.com/mendersoftware/${CI_PROJECT_NAME}
     - make get-build-deps
   script:
     - make build-multiplatform
-    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.linux.amd64 $CI_PROJECT_DIR/
-    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.darwin.amd64 $CI_PROJECT_DIR/
+    - cp mender-cli.linux.amd64 $CI_PROJECT_DIR/
+    - cp mender-cli.darwin.amd64 $CI_PROJECT_DIR/
   artifacts:
     paths:
       - mender-cli.linux.amd64
@@ -48,7 +49,7 @@ test:smoketests:mac:
     - mender-mac-slave
 
 test:smoketests:linux:
-  image: debian:9
+  image: debian:buster
   stage: test
   dependencies:
     - compile
@@ -56,20 +57,19 @@ test:smoketests:linux:
   script:
     - ./mender-cli.linux.amd64
 
-test:static:  
-  image: golang:1.14
+test:static:extra:
   stage: test
   script:
     - make get-go-tools
     - make test-static
 
 test_acceptance_build:tools:
-  image: golang:1.14
+  image: alpine
   stage: test_acceptance_build
   dependencies:
     - compile
   script:
-    - apt-get update && apt-get install make
+    - apk add --no-cache make
     # make target env var
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
     - cp mender-cli.linux.amd64 $CI_PROJECT_DIR/mender-cli
@@ -86,7 +86,7 @@ test_acceptance_build:image:
   services:
     - docker:19.03.5-dind
   script:
-    - apk add make
+    - apk add --no-cache make
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
     - make build-acceptance-image
     - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
@@ -94,18 +94,6 @@ test_acceptance_build:image:
     expire_in: 2w
     paths:
       - acceptance_testing_image.tar
-
-.sync_branches_template: &sync_remote_branches
-    before_script:
-    # Rename the branch we're on, so that it's not in the way for the
-    # subsequent fetch. It's ok if this fails, it just means we're not on any
-    # branch.
-    - git branch -m temp-branch || true
-    # Git trick: Fetch directly into our local branches instead of remote
-    # branches.
-    - git fetch origin 'refs/heads/*:refs/heads/*'
-    # Get last remaining tags, if any.
-    - git fetch --tags origin
 
 test_acceptance:run:
   stage: test_acceptance
@@ -116,7 +104,7 @@ test_acceptance:run:
   services:
     - docker:19.03.5-dind
   script:
-    - apk add git bash make
+    - apk add --no-cache git bash make
     - docker load -i acceptance_testing_image.tar
     # make target env var
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
