@@ -14,19 +14,65 @@ variables:
   BUILD_DIR: build
 
 stages:
+  - build
   - test
   - test_acceptance_build
   - test_acceptance
-  - build
   - publish
+
+compile:
+  image: golang:1.14
+  stage: build
+  before_script:
+    - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
+    - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
+    - cd /go/src/$(dirname $REPO_NAME)/mender-cli
+    - make get-build-deps
+  script:
+    - make build-multiplatform
+    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.linux.amd64 $CI_PROJECT_DIR/
+    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.darwin.amd64 $CI_PROJECT_DIR/
+  artifacts:
+    paths:
+      - mender-cli.linux.amd64
+      - mender-cli.darwin.amd64
+
+test:smoketests:mac:
+  stage: test
+  dependencies:
+    - compile
+  before_script: []
+  script:
+    - ./mender-cli.darwin.amd64
+  tags:
+    - mender-mac-slave
+
+test:smoketests:linux:
+  image: debian:9
+  stage: test
+  dependencies:
+    - compile
+  before_script: []
+  script:
+    - ./mender-cli.linux.amd64
+
+test:static:  
+  image: golang:1.14
+  stage: test
+  script:
+    - make get-go-tools
+    - make test-static
 
 test_acceptance_build:tools:
   image: golang:1.14
   stage: test_acceptance_build
+  dependencies:
+    - compile
   script:
     - apt-get update && apt-get install make
     # make target env var
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
+    - cp mender-cli.linux.amd64 $CI_PROJECT_DIR/mender-cli
     - make build-acceptance-tools
   artifacts:
     untracked: true
@@ -48,14 +94,6 @@ test_acceptance_build:image:
     expire_in: 2w
     paths:
       - acceptance_testing_image.tar
-
-test:static:
-  image: golang:1.14
-  stage: test
-  script:
-    - make get-go-tools
-    - make test-static
-
 
 .sync_branches_template: &sync_remote_branches
     before_script:
@@ -85,23 +123,6 @@ test_acceptance:run:
     - make run-acceptance
   tags:
     - docker
-
-compile:
-  image: golang:1.14
-  stage: build
-  before_script:
-    - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
-    - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
-    - cd /go/src/$(dirname $REPO_NAME)/mender-cli
-    - make get-build-deps
-  script:
-    - make build-multiplatform
-    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.linux.amd64 $CI_PROJECT_DIR/
-    - cp /go/src/$(dirname $REPO_NAME)/mender-cli/mender-cli.darwin.amd64 $CI_PROJECT_DIR/
-  artifacts:
-    paths:
-      - mender-cli.linux.amd64
-      - mender-cli.darwin.amd64
 
 publish:s3:
   stage: publish

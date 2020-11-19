@@ -86,8 +86,6 @@ build-acceptance-tools:
 		echo "aborting: PROJECT_DIR not set";\
 	    exit 1;\
 	 fi
-	go build -o ${PROJECT_DIR}/mender-cli
-	chmod +x ${PROJECT_DIR}/mender-cli
 	wget -q -O ${PROJECT_DIR}/mender-artifact https://d1b0l86ne08fsf.cloudfront.net/mender-artifact/master/mender-artifact
 	chmod +x ${PROJECT_DIR}/mender-artifact
 
