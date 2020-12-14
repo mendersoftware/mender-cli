@@ -93,9 +93,6 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	password := viper.GetString(argLoginPassword)
-	if password == "" {
-		return nil, errors.New("No password set")
-	}
 
 	tfaToken, err := cmd.Flags().GetString(argLoginToken)
 	if err != nil {
