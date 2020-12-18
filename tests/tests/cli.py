@@ -27,11 +27,25 @@ class Cli:
         completed = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return CliResult(completed)
 
+    def run_and_enter_password(self, *argv, password=""):
+        """Returns a CompletedProcess wrapped in CliResult"""
+        args = [self.path] + list(argv)
+        p = subprocess.Popen(
+            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        stdout, stderr = p.communicate(input=password.encode() + b"\n")
+        return CliResult(p, stdout=stdout, stderr=stderr)
+
+
 class CliResult:
     """Wraps CompletedProcess, decodes output to strings"""
-    def __init__(self, completed_process):
+    def __init__(self, completed_process, stdout=None, stderr=None):
         self.completed_process = completed_process
 
         self.returncode = completed_process.returncode
-        self.stdout = self.completed_process.stdout.decode('utf-8')
-        self.stderr = self.completed_process.stderr.decode('utf-8')
+        self.stdout = (
+            self.completed_process.stdout.decode("utf-8") if stdout is None else stdout
+        )
+        self.stderr = (
+            self.completed_process.stderr.decode("utf-8") if stderr is None else stderr
+        )
