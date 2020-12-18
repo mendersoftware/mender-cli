@@ -172,6 +172,22 @@ class TestLogin:
 
         assert r.returncode == 0, r.stderr
 
+    def test_login_from_stdin(self, single_user):
+        """test login reading password from stdin"""
+        conf = """
+        {
+            "username": "user@tenant.com",
+            "server": "https://mender-api-gateway"
+        }
+        """
+
+        self._write_mender_cli_conf(conf)
+
+        c = cli.Cli()
+        r = c.run_and_enter_password("login", "--skip-verify", password="youcantguess")
+
+        assert r.returncode == 0, r.stderr
+
     def test_configuration_parameter_override(self, single_user):
         """test that parameters listed in the configuration file can be overridden on the CLI
 
