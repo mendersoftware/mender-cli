@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 from minio import Minio
-from minio.error import ResponseError
 
 def cleanup_mender_storage(bucket='mender-artifact-storage'):
     client = Minio('minio.s3.docker.mender.io:9000',
