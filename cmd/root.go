@@ -82,4 +82,5 @@ func init() {
 	rootCmd.Flags().MarkHidden(argRootGenerate)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(artifactsCmd)
+	rootCmd.AddCommand(terminalCmd)
 }
