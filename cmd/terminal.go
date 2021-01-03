@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ type TerminalCmd struct {
 	sessionID  string
 	running    bool
 	stop       chan bool
+	err        error
 }
 
 // NewTerminalCmd returns a new TerminalCmd
@@ -267,7 +268,7 @@ func (c *TerminalCmd) Run() error {
 	_ = conn.WriteMessage(websocket.BinaryMessage, data)
 	conn.Close()
 
-	return nil
+	return c.err
 }
 
 func (c *TerminalCmd) resizeTerminal(ctx context.Context, msgChan chan *ws.ProtoMsg, termID int, termWidth int, termHeight int) {
@@ -354,7 +355,13 @@ func (c *TerminalCmd) pipeStdin(conn *websocket.Conn, w io.Writer) {
 				break
 			}
 		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeSpawnShell {
-			c.sessionID = string(m.Header.SessionID)
+			status := m.Header.Properties["status"].(int64)
+			if status == int64(wsshell.ErrorMessage) {
+				c.err = errors.New(fmt.Sprintf("Unable to start the shell: %s", string(m.Body)))
+				c.Stop()
+			} else {
+				c.sessionID = string(m.Header.SessionID)
+			}
 		}
 	}
 }
