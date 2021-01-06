@@ -1,5 +1,7 @@
 include:
   - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-golang-unittests.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-github-status-updates.yml'
 
 image: golang:1.14
@@ -58,8 +60,6 @@ test:format:
   script:
     - go fmt $(go list ./... | grep -v /vendor/)
     - go vet $(go list ./... | grep -v /vendor/)
-    - go test -race $(go list ./... | grep -v /vendor/)
-
 
 .sync_branches_template: &sync_remote_branches
     before_script:
@@ -85,19 +85,6 @@ test:checks:
     - GO111MODULE=off go get -u golang.org/x/tools/cmd/cover
     - make get-tools
     - make check
-
-test:unit:
-  image: golang:1.14
-  <<: *sync_remote_branches
-  stage: test
-  script:
-    - make coverage
-    - mkdir -p tests/unit-coverage && find . -name 'coverage.txt' -exec cp --parents {} ./tests/unit-coverage \;
-    - tar -cvf $CI_PROJECT_DIR/unit-coverage.tar tests/unit-coverage
-  artifacts:
-    expire_in: 2w
-    paths:
-      - unit-coverage.tar
 
 test:acceptance:
   stage: test_fast
@@ -133,17 +120,6 @@ compile:
     paths:
       - mender-cli.linux.amd64
       - mender-cli.darwin.amd64
-
-publish:tests:
-  image: alpine
-  stage: publish
-  before_script:
-    - apk add --no-cache bash curl findutils git
-  dependencies:
-    - test:unit
-  script:
-    - tar -xf unit-coverage.tar
-    - bash -c "bash <(curl -s https://codecov.io/bash) -Z -F unittests -s ./tests/unit-coverage"
 
 publish:s3:
   stage: publish
