@@ -373,6 +373,9 @@ func (c *TerminalCmd) pipeStdout(conn *websocket.Conn, w io.Writer) {
 			} else {
 				c.sessionID = string(m.Header.SessionID)
 			}
+		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeStopShell {
+			c.Stop()
+			break
 		}
 	}
 }
