@@ -25,6 +25,8 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -49,10 +51,8 @@ const (
 	pongWait = 1 * time.Minute
 
 	// protocols
-	httpsProtocol = "https"
-	httpProtocol  = "http"
-	wssProtocol   = "wss"
-	wsProtocol    = "ws"
+	httpProtocol = "http"
+	wsProtocol   = "ws"
 )
 
 var terminalCmd = &cobra.Command{
@@ -66,15 +66,6 @@ var terminalCmd = &cobra.Command{
 	},
 }
 
-func getWebSocketScheme(scheme string) string {
-	if scheme == httpsProtocol {
-		scheme = wssProtocol
-	} else if scheme == httpProtocol {
-		scheme = wsProtocol
-	}
-	return scheme
-}
-
 // TerminalCmd handles the terminal command
 type TerminalCmd struct {
 	server     string
@@ -82,7 +73,7 @@ type TerminalCmd struct {
 	deviceID   string
 	sessionID  string
 	running    bool
-	stop       chan bool
+	stop       chan struct{}
 	err        error
 }
 
@@ -102,7 +93,7 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		server:     server,
 		skipVerify: skipVerify,
 		deviceID:   args[0],
-		stop:       make(chan bool),
+		stop:       make(chan struct{}),
 	}, nil
 }
 
@@ -132,13 +123,11 @@ func (c *TerminalCmd) Run() error {
 
 	// connect to the websocket
 	deviceConnectPath := "/api/management/v1/deviceconnect/devices/" + c.deviceID + "/connect"
-	parsedURL, err := url.Parse(c.server)
+	u, err := url.Parse(strings.TrimSuffix(c.server, "/") + deviceConnectPath)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse the server URL")
 	}
-
-	scheme := getWebSocketScheme(parsedURL.Scheme)
-	u := url.URL{Scheme: scheme, Host: parsedURL.Host, Path: deviceConnectPath}
+	u.Scheme = strings.Replace(u.Scheme, httpProtocol, wsProtocol, 1)
 
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+string(token))
@@ -266,20 +255,20 @@ func (c *TerminalCmd) Run() error {
 	}
 	_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
 	_ = conn.WriteMessage(websocket.BinaryMessage, data)
-	conn.Close()
 
 	return c.err
 }
 
 func (c *TerminalCmd) resizeTerminal(ctx context.Context, msgChan chan *ws.ProtoMsg, termID int, termWidth int, termHeight int) {
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	resize := make(chan os.Signal, 1)
+	signal.Notify(resize, syscall.SIGWINCH)
+	defer signal.Stop(resize)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		case <-resize:
 			newTermWidth, newTermHeight, _ := terminal.GetSize(termID)
 			if newTermWidth != termWidth || newTermHeight != termHeight {
 				termWidth = newTermWidth
@@ -301,8 +290,8 @@ func (c *TerminalCmd) resizeTerminal(ctx context.Context, msgChan chan *ws.Proto
 }
 
 func (c *TerminalCmd) Stop() {
-	c.stop <- true
 	c.running = false
+	c.stop <- struct{}{}
 }
 
 func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, r io.Reader) {
@@ -313,10 +302,12 @@ func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, r io.Reader) {
 		if err != nil {
 			if c.running {
 				log.Err(fmt.Sprintf("error: %v", err))
+			} else {
+				c.Stop()
 			}
 			break
 		}
-		// CLTR+] or EOF, terminate the shell
+		// CTRL+] or EOF, terminate the shell
 		if raw[0] == 29 || raw[0] == 4 {
 			c.Stop()
 			return
@@ -340,6 +331,8 @@ func (c *TerminalCmd) pipeStdin(conn *websocket.Conn, w io.Writer) {
 		if err != nil {
 			if c.running {
 				log.Err(fmt.Sprintf("error: %v", err))
+			} else {
+				c.Stop()
 			}
 			break
 		}
@@ -355,8 +348,8 @@ func (c *TerminalCmd) pipeStdin(conn *websocket.Conn, w io.Writer) {
 				break
 			}
 		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeSpawnShell {
-			status := m.Header.Properties["status"].(int64)
-			if status == int64(wsshell.ErrorMessage) {
+			status, ok := m.Header.Properties["status"].(int64)
+			if ok && status == int64(wsshell.ErrorMessage) {
 				c.err = errors.New(fmt.Sprintf("Unable to start the shell: %s", string(m.Body)))
 				c.Stop()
 			} else {
