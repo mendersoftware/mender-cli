@@ -39,8 +39,6 @@ import (
 
 	"github.com/mendersoftware/go-lib-micro/ws"
 	wsshell "github.com/mendersoftware/go-lib-micro/ws/shell"
-
-	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
@@ -53,6 +51,10 @@ const (
 	// protocols
 	httpProtocol = "http"
 	wsProtocol   = "ws"
+
+	// default terminal size
+	defaultTermWidth  = 80
+	defaultTermHeight = 40
 )
 
 var terminalCmd = &cobra.Command{
@@ -97,31 +99,45 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 	}, nil
 }
 
+func (c *TerminalCmd) getToken() ([]byte, error) {
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to determine the auth token path")
+	}
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "Please Login first")
+	}
+	return token, nil
+}
+
 // Run executes the command
 func (c *TerminalCmd) Run() error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 	defer cancelContext()
 
-	log.Info(fmt.Sprintf("Connecting to the remote terminal of the device %s...", c.deviceID))
-
-	tokenPath, err := getDefaultAuthTokenPath()
+	token, err := c.getToken()
 	if err != nil {
-		return errors.Wrap(err, "Unable to determine the auth token path")
-	}
-
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
+		return err
 	}
 
 	// get the terminal width and height
+	termWidth := defaultTermWidth
+	termHeight := defaultTermHeight
 	termID := int(os.Stdout.Fd())
-	termWidth, termHeight, err := terminal.GetSize(termID)
-	if err != nil {
-		return errors.Wrap(err, "Unable to get the terminal size")
+	isTerminal := false
+
+	stat, _ := os.Stdout.Stat()
+	if (stat.Mode() & os.ModeCharDevice) > 0 {
+		termWidth, termHeight, err = terminal.GetSize(termID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to get the terminal size")
+		}
+		isTerminal = true
 	}
 
 	// connect to the websocket
+	fmt.Fprintf(os.Stderr, "Connecting to the remote terminal of the device %s...\n", c.deviceID)
 	deviceConnectPath := "/api/management/v1/deviceconnect/devices/" + c.deviceID + "/connect"
 	u, err := url.Parse(strings.TrimSuffix(c.server, "/") + deviceConnectPath)
 	if err != nil {
@@ -168,16 +184,18 @@ func (c *TerminalCmd) Run() error {
 		)
 	})
 
-	log.Info("Press CTRL+] to quit the session")
+	fmt.Fprintln(os.Stderr, "Press CTRL+] to quit the session")
 
 	// set the terminal in raw mode
-	oldState, err := term.MakeRaw(termID)
-	if err != nil {
-		return errors.Wrap(err, "Unable to set the terminal in raw mode")
+	if isTerminal {
+		oldState, err := term.MakeRaw(termID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to set the terminal in raw mode")
+		}
+		defer func() {
+			_ = term.Restore(termID, oldState)
+		}()
 	}
-	defer func() {
-		_ = term.Restore(termID, oldState)
-	}()
 
 	// send the shell start message
 	m := &ws.ProtoMsg{
@@ -202,8 +220,8 @@ func (c *TerminalCmd) Run() error {
 	msgChan := make(chan *ws.ProtoMsg)
 
 	c.running = true
-	go c.pipeStdout(msgChan, os.Stdout)
-	go c.pipeStdin(conn, os.Stdin)
+	go c.pipeStdin(msgChan, os.Stdin)
+	go c.pipeStdout(conn, os.Stdout)
 
 	// handle CTRL+C and signals
 	quit := make(chan os.Signal, 1)
@@ -218,7 +236,7 @@ func (c *TerminalCmd) Run() error {
 		case msg := <-msgChan:
 			data, err := msgpack.Marshal(msg)
 			if err != nil {
-				log.Err(fmt.Sprintf("error: %v", err))
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
 				break
 			}
 			_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -294,14 +312,14 @@ func (c *TerminalCmd) Stop() {
 	c.stop <- struct{}{}
 }
 
-func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, r io.Reader) {
+func (c *TerminalCmd) pipeStdin(msgChan chan *ws.ProtoMsg, r io.Reader) {
 	s := bufio.NewReader(r)
 	for c.running {
 		raw := make([]byte, 1024)
 		n, err := s.Read(raw)
 		if err != nil {
 			if c.running {
-				log.Err(fmt.Sprintf("error: %v", err))
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			} else {
 				c.Stop()
 			}
@@ -325,12 +343,12 @@ func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, r io.Reader) {
 	}
 }
 
-func (c *TerminalCmd) pipeStdin(conn *websocket.Conn, w io.Writer) {
+func (c *TerminalCmd) pipeStdout(conn *websocket.Conn, w io.Writer) {
 	for c.running {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
 			if c.running {
-				log.Err(fmt.Sprintf("error: %v", err))
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			} else {
 				c.Stop()
 			}
@@ -340,7 +358,7 @@ func (c *TerminalCmd) pipeStdin(conn *websocket.Conn, w io.Writer) {
 		m := &ws.ProtoMsg{}
 		err = msgpack.Unmarshal(data, m)
 		if err != nil {
-			log.Err(fmt.Sprintf("error: %v", err))
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			break
 		}
 		if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeShellCommand {

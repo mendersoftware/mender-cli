@@ -65,7 +65,7 @@ func init() {
 			log.Info("Configuration file not found. Continuing.")
 		}
 	} else {
-		log.Info(fmt.Sprintf("Using configuration file: %s", viper.ConfigFileUsed()))
+		fmt.Fprintf(os.Stderr, "Using configuration file: %s\n", viper.ConfigFileUsed())
 	}
 }
 
