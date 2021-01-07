@@ -376,8 +376,8 @@ func (c *TerminalCmd) pipeStdin(msgChan chan *ws.ProtoMsg, r io.Reader) {
 			}
 			break
 		}
-		// CTRL+] or EOT, terminate the shell
-		if raw[0] == 29 || raw[0] == 4 {
+		// CTRL+] terminates the session
+		if raw[0] == 29 {
 			c.Stop()
 			return
 		}
