@@ -368,13 +368,15 @@ func (c *TerminalCmd) pipeStdin(msgChan chan *ws.ProtoMsg, r io.Reader) {
 		n, err := s.Read(raw)
 		if err != nil {
 			if c.running {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				if err != io.EOF {
+					fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				}
 			} else {
 				c.Stop()
 			}
 			break
 		}
-		// CTRL+] or EOF, terminate the shell
+		// CTRL+] or EOT, terminate the shell
 		if raw[0] == 29 || raw[0] == 4 {
 			c.Stop()
 			return
