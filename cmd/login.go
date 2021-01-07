@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ func init() {
 			log.Info("Configuration file not found. Continuing.")
 		}
 	} else {
-		log.Info(fmt.Sprintf("Using configuration file: %s", viper.ConfigFileUsed()))
+		fmt.Fprintf(os.Stderr, "Using configuration file: %s\n", viper.ConfigFileUsed())
 	}
 }
 

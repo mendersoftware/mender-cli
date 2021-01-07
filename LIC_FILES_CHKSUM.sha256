@@ -6,6 +6,8 @@ b8514c577c1c4b46cee454d5a882b15fa411e72c5bd7f801f241591789fce61a  vendor/github.
 f6918bd93ffe07f4b2c61b8287c32cb3122e08aed0be50f1c7d0eddc87877a8f  vendor/gopkg.in/ini.v1/LICENSE
 5e3400b93bbb099e83e52bab885e7441750673c21f97988ca3f1240639b63283  vendor/github.com/spf13/afero/LICENSE.txt
 b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1  vendor/gopkg.in/yaml.v2/LICENSE
+d5a55eaa82e2c109b8bcadfa66139497511b80d665668264f155b5a45086b086  vendor/github.com/mendersoftware/go-lib-micro/LICENSE
+cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30  vendor/google.golang.org/appengine/LICENSE
 
 #ISC
 f06d8d6fe9e7dca9cd1c6385eab60b67c34f59a7871ee794553904b0d5cfcd2c  vendor/github.com/howeyc/gopass/LICENSE.txt
@@ -13,6 +15,8 @@ f06d8d6fe9e7dca9cd1c6385eab60b67c34f59a7871ee794553904b0d5cfcd2c  vendor/github.
 #BSD-2-Clause
 8d427fd87bc9579ea368fde3d49f9ca22eac857f91a9dec7e3004bdfab7dee86  vendor/github.com/pkg/errors/LICENSE
 e45788cee53174eee4d7938484bedca0e66dcac6e92bec354b410273bdb5f6e7  vendor/github.com/magiconair/properties/LICENSE
+1530185dd39cdde7cb2f786a7a5fcf8bc34368b6ae73c15e72bafe88fd80b9a2  vendor/github.com/vmihailenco/msgpack/LICENSE
+2be1b548b0387ca8948e1bb9434e709126904d15f622cc2d0d8e7f186e4d122d  vendor/github.com/gorilla/websocket/LICENSE
 
 #BSD-3-Clause
 2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/sys/LICENSE
@@ -21,6 +25,9 @@ e45788cee53174eee4d7938484bedca0e66dcac6e92bec354b410273bdb5f6e7  vendor/github.
 70fa746d8e9547f977b99dc684ec1e4d059a99960f50493ba56332302ff73869  vendor/github.com/cheggaaa/pb/v3/LICENSE
 c8001d18c3dda64c7e72146f1b23d73619fcf426aed6778f447599f5ac8e600a  vendor/github.com/fsnotify/fsnotify/LICENSE
 b8514c577c1c4b46cee454d5a882b15fa411e72c5bd7f801f241591789fce61a  vendor/github.com/spf13/pflag/LICENSE
+2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/net/LICENSE
+2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  vendor/golang.org/x/term/LICENSE
+8778a9fc1eaffb03ab873caae251df2d224f6b5502be8777d3cd573a4dd43903  vendor/github.com/golang/protobuf/LICENSE
 
 #MIT
 08eab1118c80885fa1fa6a6dd7303f65a379fcb3733e063d20d1bbc2c76e6fa1  vendor/github.com/mattn/go-isatty/LICENSE
@@ -38,4 +45,3 @@ a94710b55e03b5285f77d048c5ba61bb9d6ee04a06c0eb90e68821e11b0c707a  vendor/gopkg.i
 
 # Mozilla Public License 2.0
 bef1747eda88b9ed46e94830b0d978c3499dad5dfe38d364971760881901dadd  vendor/github.com/hashicorp/hcl/LICENSE
-
