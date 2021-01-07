@@ -111,37 +111,18 @@ func (c *TerminalCmd) getToken() ([]byte, error) {
 	return token, nil
 }
 
-// Run executes the command
-func (c *TerminalCmd) Run() error {
-	ctx, cancelContext := context.WithCancel(context.Background())
-	defer cancelContext()
-
+// connect to the websocket
+func (c *TerminalCmd) connect() (*websocket.Conn, error) {
 	token, err := c.getToken()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// get the terminal width and height
-	termWidth := defaultTermWidth
-	termHeight := defaultTermHeight
-	termID := int(os.Stdout.Fd())
-	isTerminal := false
-
-	stat, _ := os.Stdout.Stat()
-	if (stat.Mode() & os.ModeCharDevice) > 0 {
-		termWidth, termHeight, err = terminal.GetSize(termID)
-		if err != nil {
-			return errors.Wrap(err, "Unable to get the terminal size")
-		}
-		isTerminal = true
-	}
-
-	// connect to the websocket
 	fmt.Fprintf(os.Stderr, "Connecting to the remote terminal of the device %s...\n", c.deviceID)
 	deviceConnectPath := "/api/management/v1/deviceconnect/devices/" + c.deviceID + "/connect"
 	u, err := url.Parse(strings.TrimSuffix(c.server, "/") + deviceConnectPath)
 	if err != nil {
-		return errors.Wrap(err, "Unable to parse the server URL")
+		return nil, errors.Wrap(err, "Unable to parse the server URL")
 	}
 	u.Scheme = strings.Replace(u.Scheme, httpProtocol, wsProtocol, 1)
 
@@ -152,16 +133,19 @@ func (c *TerminalCmd) Run() error {
 	}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), headers)
 	if err != nil {
-		return errors.Wrap(err, "Unable to connect to the device")
+		return nil, errors.Wrap(err, "Unable to connect to the device")
 	}
-	defer conn.Close()
 
-	// handle the ping-pong connection health check
 	err = conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
-		return errors.Wrap(err, "Unable to set the read deadline")
+		return nil, errors.Wrap(err, "Unable to set the read deadline")
 	}
 
+	return conn, nil
+}
+
+// handle the ping-pong connection health check
+func (c *TerminalCmd) pingPong(ctx context.Context, conn *websocket.Conn) {
 	pingPeriod := (pongWait * 9) / 10
 	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()
@@ -184,20 +168,24 @@ func (c *TerminalCmd) Run() error {
 		)
 	})
 
-	fmt.Fprintln(os.Stderr, "Press CTRL+] to quit the session")
+	for {
+		select {
+		case <-ticker.C:
+			pongWaitString := strconv.Itoa(int(pongWait.Seconds()))
+			_ = conn.WriteControl(
+				websocket.PingMessage,
+				[]byte(pongWaitString),
+				time.Now().Add(writeWait),
+			)
 
-	// set the terminal in raw mode
-	if isTerminal {
-		oldState, err := term.MakeRaw(termID)
-		if err != nil {
-			return errors.Wrap(err, "Unable to set the terminal in raw mode")
+		case <-ctx.Done():
+			return
 		}
-		defer func() {
-			_ = term.Restore(termID, oldState)
-		}()
 	}
+}
 
-	// send the shell start message
+// send the shell start message
+func (c *TerminalCmd) startShell(conn *websocket.Conn, termWidth, termHeight int) error {
 	m := &ws.ProtoMsg{
 		Header: ws.ProtoHdr{
 			Proto:   ws.ProtoTypeShell,
@@ -211,10 +199,88 @@ func (c *TerminalCmd) Run() error {
 
 	data, err := msgpack.Marshal(m)
 	if err != nil {
-		return errors.Wrap(err, "Unable to parse the message from the websocket")
+		return errors.Wrap(err, "Unable to marshal the message from the websocket")
 	}
-	_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
-	_ = conn.WriteMessage(websocket.BinaryMessage, data)
+	if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return errors.Wrap(err, "Unable to set the write deadline")
+	}
+	if err := conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+		return errors.Wrap(err, "Unable to write the message")
+	}
+	return nil
+}
+
+// send the stop shell message
+func (c *TerminalCmd) stopShell(conn *websocket.Conn) error {
+	m := &ws.ProtoMsg{
+		Header: ws.ProtoHdr{
+			Proto:     ws.ProtoTypeShell,
+			MsgType:   wsshell.MessageTypeStopShell,
+			SessionID: c.sessionID,
+		},
+	}
+
+	data, err := msgpack.Marshal(m)
+	if err != nil {
+		return errors.Wrap(err, "Unable to marshal the message from the websocket")
+	}
+	if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return errors.Wrap(err, "Unable to set the write deadline")
+	}
+	if err := conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+		return errors.Wrap(err, "Unable to write the message")
+	}
+	return nil
+}
+
+// Run executes the command
+func (c *TerminalCmd) Run() error {
+	ctx, cancelContext := context.WithCancel(context.Background())
+	defer cancelContext()
+
+	// get the terminal width and height
+	termWidth := defaultTermWidth
+	termHeight := defaultTermHeight
+	termID := int(os.Stdout.Fd())
+	isTerminal := false
+
+	stat, _ := os.Stdout.Stat()
+	if (stat.Mode() & os.ModeCharDevice) > 0 {
+		var err error
+		termWidth, termHeight, err = terminal.GetSize(termID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to get the terminal size")
+		}
+		isTerminal = true
+	}
+
+	// connect to the websocket
+	conn, err := c.connect()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// set the terminal in raw mode
+	if isTerminal {
+		fmt.Fprintln(os.Stderr, "Press CTRL+] to quit the session")
+
+		oldState, err := term.MakeRaw(termID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to set the terminal in raw mode")
+		}
+		defer func() {
+			_ = term.Restore(termID, oldState)
+		}()
+	}
+
+	// start the ping-pong connection health-check
+	go c.pingPong(ctx, conn)
+
+	// start the shell
+	if err := c.startShell(conn, termWidth, termHeight); err != nil {
+		return err
+	}
 
 	// message channel
 	msgChan := make(chan *ws.ProtoMsg)
@@ -241,13 +307,6 @@ func (c *TerminalCmd) Run() error {
 			}
 			_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
 			_ = conn.WriteMessage(websocket.BinaryMessage, data)
-		case <-ticker.C:
-			pongWaitString := strconv.Itoa(int(pongWait.Seconds()))
-			_ = conn.WriteControl(
-				websocket.PingMessage,
-				[]byte(pongWaitString),
-				time.Now().Add(writeWait),
-			)
 		case <-quit:
 			c.running = false
 		case <-c.stop:
@@ -258,22 +317,12 @@ func (c *TerminalCmd) Run() error {
 	// cancel the context
 	cancelContext()
 
-	// send the stop shell message
-	m = &ws.ProtoMsg{
-		Header: ws.ProtoHdr{
-			Proto:     ws.ProtoTypeShell,
-			MsgType:   wsshell.MessageTypeStopShell,
-			SessionID: c.sessionID,
-		},
+	// stop shell message
+	if err := c.stopShell(conn); err != nil {
+		return err
 	}
 
-	data, err = msgpack.Marshal(m)
-	if err != nil {
-		return errors.Wrap(err, "Unable to parse the message from the websocket")
-	}
-	_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
-	_ = conn.WriteMessage(websocket.BinaryMessage, data)
-
+	// return the error message (if any)
 	return c.err
 }
 
