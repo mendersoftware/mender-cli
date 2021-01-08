@@ -1,15 +1,25 @@
 # github.com/VividCortex/ewma v1.1.1
 github.com/VividCortex/ewma
+# github.com/aws/aws-sdk-go v1.36.23
+## explicit
 # github.com/cheggaaa/pb/v3 v3.0.5
 ## explicit
 github.com/cheggaaa/pb/v3
 github.com/cheggaaa/pb/v3/termutil
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
-# github.com/fsnotify/fsnotify v1.4.7
+# github.com/fsnotify/fsnotify v1.4.9
+## explicit
 github.com/fsnotify/fsnotify
-# github.com/golang/protobuf v1.3.3
+# github.com/go-playground/validator/v10 v10.4.1
+## explicit
+# github.com/golang/protobuf v1.4.3
+## explicit
 github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.2
+## explicit
+# github.com/google/uuid v1.1.4
+## explicit
 # github.com/gorilla/websocket v1.4.2
 ## explicit
 github.com/gorilla/websocket
@@ -29,7 +39,14 @@ github.com/hashicorp/hcl/json/token
 github.com/howeyc/gopass
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/magiconair/properties v1.8.1
+# github.com/json-iterator/go v1.1.10
+## explicit
+# github.com/klauspost/compress v1.11.6
+## explicit
+# github.com/leodido/go-urn v1.2.1
+## explicit
+# github.com/magiconair/properties v1.8.4
+## explicit
 github.com/magiconair/properties
 # github.com/mattn/go-colorable v0.1.6
 ## explicit
@@ -38,44 +55,56 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.7
 github.com/mattn/go-runewidth
-# github.com/mendersoftware/go-lib-micro v0.0.0-20201224104551-c32e5b82c3d4
+# github.com/mendersoftware/go-lib-micro v0.0.0-20210108082129-a99629450795
 ## explicit
 github.com/mendersoftware/go-lib-micro/ws
 github.com/mendersoftware/go-lib-micro/ws/shell
-# github.com/mitchellh/mapstructure v1.1.2
+# github.com/mitchellh/mapstructure v1.4.0
+## explicit
 github.com/mitchellh/mapstructure
-# github.com/pelletier/go-toml v1.7.0
+# github.com/pelletier/go-toml v1.8.1
+## explicit
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/spf13/afero v1.1.2
+# github.com/spf13/afero v1.5.1
+## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.3.0
+# github.com/spf13/cast v1.3.1
+## explicit
 github.com/spf13/cast
 # github.com/spf13/cobra v1.1.1
 ## explicit
 github.com/spf13/cobra
-# github.com/spf13/jwalterweatherman v1.0.0
+# github.com/spf13/jwalterweatherman v1.1.0
+## explicit
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/spf13/viper v1.7.1
 ## explicit
 github.com/spf13/viper
+# github.com/stretchr/objx v0.3.0
+## explicit
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
+# github.com/ugorji/go v1.2.2
+## explicit
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 ## explicit
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+# golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 ## explicit
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
+# golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+## explicit
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20201119102817-f84b799fce68
+# golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+## explicit
+# golang.org/x/sys v0.0.0-20210105210732-16f7687f5001
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
@@ -84,7 +113,8 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 ## explicit
 golang.org/x/term
-# golang.org/x/text v0.3.3
+# golang.org/x/text v0.3.4
+## explicit
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # google.golang.org/appengine v1.6.1
@@ -99,10 +129,39 @@ google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
-# gopkg.in/ini.v1 v1.51.0
+# google.golang.org/protobuf v1.25.0
+## explicit
+google.golang.org/protobuf/encoding/prototext
+google.golang.org/protobuf/encoding/protowire
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/fieldsort
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/genid
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protoreflect
+google.golang.org/protobuf/reflect/protoregistry
+google.golang.org/protobuf/runtime/protoiface
+google.golang.org/protobuf/runtime/protoimpl
+# gopkg.in/ini.v1 v1.62.0
+## explicit
 gopkg.in/ini.v1
-# gopkg.in/yaml.v2 v2.3.0
+# gopkg.in/yaml.v2 v2.4.0
 ## explicit
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
