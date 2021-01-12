@@ -70,13 +70,14 @@ var terminalCmd = &cobra.Command{
 
 // TerminalCmd handles the terminal command
 type TerminalCmd struct {
-	server     string
-	skipVerify bool
-	deviceID   string
-	sessionID  string
-	running    bool
-	stop       chan struct{}
-	err        error
+	server      string
+	skipVerify  bool
+	deviceID    string
+	sessionID   string
+	running     bool
+	healthcheck chan int
+	stop        chan struct{}
+	err         error
 }
 
 // NewTerminalCmd returns a new TerminalCmd
@@ -92,10 +93,11 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 	}
 
 	return &TerminalCmd{
-		server:     server,
-		skipVerify: skipVerify,
-		deviceID:   args[0],
-		stop:       make(chan struct{}),
+		server:      server,
+		skipVerify:  skipVerify,
+		deviceID:    args[0],
+		healthcheck: make(chan int),
+		stop:        make(chan struct{}),
 	}, nil
 }
 
@@ -287,7 +289,7 @@ func (c *TerminalCmd) Run() error {
 
 	c.running = true
 	go c.pipeStdin(msgChan, os.Stdin)
-	go c.pipeStdout(conn, os.Stdout)
+	go c.pipeStdout(msgChan, conn, os.Stdout)
 
 	// handle CTRL+C and signals
 	quit := make(chan os.Signal, 1)
@@ -297,6 +299,7 @@ func (c *TerminalCmd) Run() error {
 	go c.resizeTerminal(ctx, msgChan, termID, termWidth, termHeight)
 
 	// wait for CTRL+C, signals or stop
+	healthcheckTimeout := time.Now().Add(24 * time.Hour)
 	for c.running {
 		select {
 		case msg := <-msgChan:
@@ -307,6 +310,12 @@ func (c *TerminalCmd) Run() error {
 			}
 			_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
 			_ = conn.WriteMessage(websocket.BinaryMessage, data)
+		case healthcheckInterval := <-c.healthcheck:
+			healthcheckTimeout = time.Now().Add(time.Duration(healthcheckInterval) * time.Second)
+		case <-time.After(time.Until(healthcheckTimeout)):
+			_ = c.stopShell(conn)
+			c.err = errors.New("health check failed, connection with the device lost")
+			c.running = false
 		case <-quit:
 			c.running = false
 		case <-c.stop:
@@ -394,7 +403,7 @@ func (c *TerminalCmd) pipeStdin(msgChan chan *ws.ProtoMsg, r io.Reader) {
 	}
 }
 
-func (c *TerminalCmd) pipeStdout(conn *websocket.Conn, w io.Writer) {
+func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, conn *websocket.Conn, w io.Writer) {
 	for c.running {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
@@ -416,6 +425,18 @@ func (c *TerminalCmd) pipeStdout(conn *websocket.Conn, w io.Writer) {
 			if _, err := w.Write(m.Body); err != nil {
 				break
 			}
+		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypePingShell {
+			if healthcheckTimeout, ok := m.Header.Properties["timeout"].(int64); ok && healthcheckTimeout > 0 {
+				c.healthcheck <- int(healthcheckTimeout)
+			}
+			m := &ws.ProtoMsg{
+				Header: ws.ProtoHdr{
+					Proto:     ws.ProtoTypeShell,
+					MsgType:   wsshell.MessageTypePongShell,
+					SessionID: c.sessionID,
+				},
+			}
+			msgChan <- m
 		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeSpawnShell {
 			status, ok := m.Header.Properties["status"].(int64)
 			if ok && status == int64(wsshell.ErrorMessage) {
