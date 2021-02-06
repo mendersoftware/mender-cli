@@ -39,6 +39,9 @@ const (
 
 	// Time allowed to read the next pong message from the peer.
 	pongWait = 1 * time.Minute
+
+	// deviceconnect API path
+	deviceConnectPath = "/api/management/v1/deviceconnect/devices/:deviceID/connect"
 )
 
 type Client struct {
@@ -57,8 +60,7 @@ func NewClient(url string, skipVerify bool) *Client {
 // Connect to the websocket
 func (c *Client) Connect(deviceID string, token []byte) error {
 	fmt.Printf("Connecting to the device %s...\n", deviceID)
-	deviceConnectPath := "/api/management/v1/deviceconnect/devices/" + deviceID + "/connect"
-	u, err := url.Parse(strings.TrimSuffix(c.url, "/") + deviceConnectPath)
+	u, err := url.Parse(strings.TrimSuffix(c.url, "/") + strings.Replace(deviceConnectPath, ":deviceID", deviceID, 1))
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse the server URL")
 	}
