@@ -1,7 +1,5 @@
 # github.com/VividCortex/ewma v1.1.1
 github.com/VividCortex/ewma
-# github.com/aws/aws-sdk-go v1.36.23
-## explicit
 # github.com/cheggaaa/pb/v3 v3.0.5
 ## explicit
 github.com/cheggaaa/pb/v3
@@ -11,15 +9,9 @@ github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
-# github.com/go-playground/validator/v10 v10.4.1
-## explicit
 # github.com/golang/protobuf v1.4.3
 ## explicit
 github.com/golang/protobuf/proto
-# github.com/golang/snappy v0.0.2
-## explicit
-# github.com/google/uuid v1.1.4
-## explicit
 # github.com/gorilla/websocket v1.4.2
 ## explicit
 github.com/gorilla/websocket
@@ -39,12 +31,6 @@ github.com/hashicorp/hcl/json/token
 github.com/howeyc/gopass
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/json-iterator/go v1.1.10
-## explicit
-# github.com/klauspost/compress v1.11.6
-## explicit
-# github.com/leodido/go-urn v1.2.1
-## explicit
 # github.com/magiconair/properties v1.8.4
 ## explicit
 github.com/magiconair/properties
@@ -86,12 +72,8 @@ github.com/spf13/pflag
 # github.com/spf13/viper v1.7.1
 ## explicit
 github.com/spf13/viper
-# github.com/stretchr/objx v0.3.0
-## explicit
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/ugorji/go v1.2.2
-## explicit
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 ## explicit
 github.com/vmihailenco/msgpack
@@ -102,8 +84,6 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 ## explicit
 golang.org/x/net/context
-# golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
-## explicit
 # golang.org/x/sys v0.0.0-20210105210732-16f7687f5001
 ## explicit
 golang.org/x/sys/internal/unsafeheader
