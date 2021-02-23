@@ -49,3 +49,7 @@ func Verbf(msg string, args ...interface{}) {
 func Info(msg string) {
 	fmt.Fprintln(os.Stdout, msg)
 }
+
+func Infof(msg string, args ...interface{}) {
+	fmt.Fprintf(os.Stdout, msg, args...)
+}

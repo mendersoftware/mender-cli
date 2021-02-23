@@ -111,4 +111,5 @@ func init() {
 	rootCmd.AddCommand(devicesCmd)
 	rootCmd.AddCommand(terminalCmd)
 	rootCmd.AddCommand(portForwardCmd)
+	rootCmd.AddCommand(fileTransferCmd)
 }
