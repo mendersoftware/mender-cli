@@ -15,6 +15,7 @@ package cmd
 
 import (
 	"bufio"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"encoding/binary"
@@ -312,6 +313,9 @@ func (c *TerminalCmd) record() {
 	}
 	defer f.Close()
 
+	fz := gzip.NewWriter(f)
+	defer fz.Close()
+
 	data := TerminalRecordingHeader{
 		Version:        terminalRecordingVersion,
 		Timestamp:      time.Now().Unix(),
@@ -320,14 +324,18 @@ func (c *TerminalCmd) record() {
 	}
 	copy(data.DeviceID[:], []byte(c.deviceID))
 	copy(data.TerminalType[:], []byte(terminalTypeDefault))
-	err = binary.Write(f, binary.LittleEndian, data)
+	err = binary.Write(fz, binary.LittleEndian, data)
 	if err != nil {
 		log.Err(fmt.Sprintf("Header write failed: %s", err.Error()))
+	}
+	err = fz.Flush()
+	if err != nil {
+		log.Err(fmt.Sprintf("Header flush failed: %s", err.Error()))
 	}
 
 	log.Info(fmt.Sprintf("Recording to file: %s", c.recordFile))
 
-	e := gob.NewEncoder(f)
+	e := gob.NewEncoder(fz)
 	for {
 		select {
 		case <-c.stopRecording:
@@ -338,6 +346,7 @@ func (c *TerminalCmd) record() {
 				Data: terminalOutput,
 			}
 			err = e.Encode(o)
+			fz.Flush()
 			if err != nil {
 				log.Err(fmt.Sprintf("Error encoding %q: %s", string(terminalOutput), err.Error()))
 				return
@@ -354,8 +363,14 @@ func (c *TerminalCmd) playback(w io.Writer) error {
 	}
 	defer f.Close()
 
+	fz, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer fz.Close()
+
 	var header TerminalRecordingHeader
-	err = binary.Read(f, binary.LittleEndian, &header)
+	err = binary.Read(fz, binary.LittleEndian, &header)
 	if err != nil {
 		log.Err(fmt.Sprintf("Can't read header: %s", err.Error()))
 		return err
@@ -370,7 +385,7 @@ func (c *TerminalCmd) playback(w io.Writer) error {
 	log.Info(fmt.Sprintf("Timestamp: %s", dateTime.Format(time.UnixDate)))
 	log.Info("")
 
-	d := gob.NewDecoder(f)
+	d := gob.NewDecoder(fz)
 	for {
 		var o TerminalRecordingData
 		err = d.Decode(&o)
