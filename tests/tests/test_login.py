@@ -20,7 +20,7 @@ from common import single_user, expect_output, DEFAULT_TOKEN_PATH
 import cli
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def cleanup_token(request):
     yield
     os.remove(request.param)
