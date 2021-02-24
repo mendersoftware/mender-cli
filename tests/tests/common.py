@@ -44,5 +44,5 @@ def clean_useradm_db():
     assert r.returncode == 0, r.stderr
 
 def expect_output(stream, *expected):
-        for e in expected:
-            assert e in stream, 'expected string {} not found in stream'.format(e)
+    for e in expected:
+        assert e in stream, f'expected string "{e}" not found in stream: {stream}'
