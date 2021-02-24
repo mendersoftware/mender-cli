@@ -117,7 +117,7 @@ class TestLogin:
         with open(os.getenv("HOME") + "/.mender-clirc", "w") as f:
             try:
                 f.write(conf)
-            except Expeception as e:
+            except Exception as e:
                 pytest.fail("Failed to create configuration file: {}".format(e))
 
     def test_login_from_configuration_file(self, single_user):
