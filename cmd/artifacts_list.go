@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -14,7 +14,10 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/mendersoftware/mender-cli/client/deployments"
 )
@@ -46,9 +49,9 @@ type ArtifactsListCmd struct {
 }
 
 func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, error) {
-	server, err := cmd.Flags().GetString(argRootServer)
-	if err != nil {
-		return nil, err
+	server := viper.GetString(argRootServer)
+	if server == "" {
+		return nil, errors.New("No server")
 	}
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)

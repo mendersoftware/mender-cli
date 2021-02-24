@@ -32,6 +32,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/vmihailenco/msgpack"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/unix"
@@ -82,9 +83,9 @@ type TerminalCmd struct {
 
 // NewTerminalCmd returns a new TerminalCmd
 func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
-	server, err := cmd.Flags().GetString(argRootServer)
-	if err != nil {
-		return nil, err
+	server := viper.GetString(argRootServer)
+	if server == "" {
+		return nil, errors.New("No server")
 	}
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
