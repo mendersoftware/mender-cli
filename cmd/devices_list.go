@@ -19,35 +19,31 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mendersoftware/mender-cli/client/deployments"
+	"github.com/mendersoftware/mender-cli/client/devices"
 )
 
-const (
-	argDetailLevel = "detail"
-)
-
-var artifactsListCmd = &cobra.Command{
+var devicesListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Get a list of artifacts from the Mender server.",
+	Short: "Get a list of devices from the Mender server.",
 	Run: func(c *cobra.Command, args []string) {
-		cmd, err := NewArtifactsListCmd(c, args)
+		cmd, err := NewDevicesListCmd(c, args)
 		CheckErr(err)
 		CheckErr(cmd.Run())
 	},
 }
 
 func init() {
-	artifactsListCmd.Flags().IntP(argDetailLevel, "d", 0, "artifacts list detail level [0..3]")
+	devicesListCmd.Flags().IntP(argDetailLevel, "d", 0, "devices list detail level [0..3]")
 }
 
-type ArtifactsListCmd struct {
+type DevicesListCmd struct {
 	server      string
 	skipVerify  bool
 	tokenPath   string
 	detailLevel int
 }
 
-func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, error) {
+func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, error) {
 	server := viper.GetString(argRootServer)
 	if server == "" {
 		return nil, errors.New("No server")
@@ -75,7 +71,7 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 		}
 	}
 
-	return &ArtifactsListCmd{
+	return &DevicesListCmd{
 		server:      server,
 		tokenPath:   token,
 		skipVerify:  skipVerify,
@@ -83,8 +79,8 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 	}, nil
 }
 
-func (c *ArtifactsListCmd) Run() error {
+func (c *DevicesListCmd) Run() error {
 
-	client := deployments.NewClient(c.server, c.skipVerify)
-	return client.ListArtifacts(c.tokenPath, c.detailLevel)
+	client := devices.NewClient(c.server, c.skipVerify)
+	return client.ListDevices(c.tokenPath, c.detailLevel)
 }

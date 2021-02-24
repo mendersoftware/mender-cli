@@ -42,7 +42,6 @@ var loginCmd = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewLoginCmd(c, args)
 		CheckErr(err)
-
 		CheckErr(cmd.Run())
 	},
 }
