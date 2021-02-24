@@ -25,7 +25,7 @@ import docker
 import s3
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def logged_in_single_user(single_user):
     c = cli.Cli()
     r = c.run('login', \
@@ -39,14 +39,14 @@ def logged_in_single_user(single_user):
     os.remove(DEFAULT_TOKEN_PATH)
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def valid_artifact():
     path = '/tests/foo-artifact'
     artifact.create_artifact_file(path)
     yield path
     os.remove(path)
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def clean_deployments_db():
     yield
     r = docker.exec('mender-mongo', \
@@ -54,7 +54,7 @@ def clean_deployments_db():
                     'mongo', 'deployment_service', '--eval', 'db.dropDatabase()')
     assert r.returncode == 0, r.stderr
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def clean_mender_storage():
     yield
     s3.cleanup_mender_storage()
