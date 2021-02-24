@@ -62,7 +62,7 @@ def clean_mender_storage():
 class TestArtifactUpload:
     @pytest.mark.usefixtures('clean_deployments_db', 'clean_mender_storage')
     def test_ok(self, logged_in_single_user, valid_artifact):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run('--server', 'https://mender-api-gateway', \
                   '--skip-verify', \
                   'artifacts', 'upload', \
@@ -89,7 +89,7 @@ class TestArtifactUpload:
         assert artifact['device_types_compatible'] == ['device-foo']
 
     def test_error_no_login(self, valid_artifact):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run('--server', 'https://mender-api-gateway', \
                   '--skip-verify', \
                   'artifacts', 'upload', \

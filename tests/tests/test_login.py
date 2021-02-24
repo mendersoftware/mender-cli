@@ -29,7 +29,7 @@ def cleanup_token(request):
 class TestLogin:
     @pytest.mark.parametrize("cleanup_token", [DEFAULT_TOKEN_PATH], indirect=True)
     def test_ok(self, single_user, cleanup_token):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
 
         r = c.run(
             "login",
@@ -49,7 +49,7 @@ class TestLogin:
 
     @pytest.mark.parametrize("cleanup_token", ["/tests/authtoken"], indirect=True)
     def test_ok_custom_path(self, single_user, cleanup_token):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
 
         custom_path = "/tests/authtoken"
 
@@ -73,7 +73,7 @@ class TestLogin:
 
     @pytest.mark.parametrize("cleanup_token", [DEFAULT_TOKEN_PATH], indirect=True)
     def test_ok_verbose(self, single_user, cleanup_token):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
 
         r = c.run(
             "login",
@@ -95,7 +95,7 @@ class TestLogin:
         )
 
     def test_error_wrong_creds(self, single_user):
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
 
         r = c.run(
             "login",
@@ -133,7 +133,7 @@ class TestLogin:
 
         self._write_mender_cli_conf(conf)
 
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run("login", "--skip-verify")
 
         assert r.returncode != 0, r.stderr
@@ -183,7 +183,7 @@ class TestLogin:
 
         self._write_mender_cli_conf(conf)
 
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run_and_enter_password("login", "--skip-verify", password="youcantguess")
 
         assert r.returncode == 0, r.stderr
@@ -206,7 +206,7 @@ class TestLogin:
 
         self._write_mender_cli_conf(conf)
 
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run(
             "login",
             "--server",
