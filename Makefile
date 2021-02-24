@@ -64,7 +64,7 @@ get-go-tools:
 
 get-build-deps:
 	apt-get update -qq
-	apt-get install -yyq $(cat deb-requirements.txt);
+	apt-get install -yyq $(shell cat deb-requirements.txt)
 
 get-deps: get-go-tools get-build-deps
 
