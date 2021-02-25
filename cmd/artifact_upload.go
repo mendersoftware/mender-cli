@@ -35,7 +35,6 @@ var artifactUploadCmd = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewArtifactUploadCmd(c, args)
 		CheckErr(err)
-
 		CheckErr(cmd.Run())
 	},
 }

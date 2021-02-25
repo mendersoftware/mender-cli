@@ -102,5 +102,6 @@ func init() {
 	rootCmd.Flags().MarkHidden(argRootGenerate)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(artifactsCmd)
+	rootCmd.AddCommand(devicesCmd)
 	rootCmd.AddCommand(terminalCmd)
 }

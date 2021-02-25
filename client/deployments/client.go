@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 package deployments
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,12 +23,12 @@ import (
 	"net/http/httputil"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/pkg/errors"
 
+	"github.com/mendersoftware/mender-cli/client"
 	"github.com/mendersoftware/mender-cli/log"
 )
 
@@ -82,17 +81,11 @@ type Client struct {
 }
 
 func NewClient(url string, skipVerify bool) *Client {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
-	}
-
 	return &Client{
 		url:               url,
-		artifactUploadURL: JoinURL(url, artifactUploadURL),
-		artifactsListURL:  JoinURL(url, artifactsListURL),
-		client: &http.Client{
-			Transport: tr,
-		},
+		artifactUploadURL: client.JoinURL(url, artifactUploadURL),
+		artifactsListURL:  client.JoinURL(url, artifactsListURL),
+		client:            client.NewHttpClient(skipVerify),
 	}
 }
 
@@ -100,34 +93,8 @@ func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid artifact detail")
 	}
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 
-	req, err := http.NewRequest(http.MethodGet, c.artifactsListURL, nil)
-	if err != nil {
-		return errors.Wrap(err, "Failed to create HTTP request")
-	}
-	req.Header.Set("Authorization", "Bearer "+string(token))
-
-	reqDump, err := httputil.DumpRequest(req, false)
-	if err != nil {
-		return err
-	}
-	log.Verbf("sending request: \n%s", string(reqDump))
-
-	rsp, err := c.client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "Get /deployments/artifacts request failed")
-	}
-	if rsp.StatusCode != 200 {
-		return fmt.Errorf("Get /deployments/artifacts request failed with status %d\n", rsp.StatusCode)
-	}
-
-	defer rsp.Body.Close()
-
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := client.DoGetRequest(tokenPath, c.artifactsListURL, c.client)
 	if err != nil {
 		return err
 	}
@@ -276,14 +243,4 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 	}
 
 	return nil
-}
-
-func JoinURL(base, url string) string {
-	if strings.HasPrefix(url, "/") {
-		url = url[1:]
-	}
-	if !strings.HasSuffix(base, "/") {
-		base = base + "/"
-	}
-	return base + url
 }

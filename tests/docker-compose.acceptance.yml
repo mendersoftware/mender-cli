@@ -6,6 +6,10 @@ services:
             - mender
         depends_on:
             - mender-useradm
+            - mender-inventory
+            - mender-workflows-server
+            - mender-workflows-worker
+            - mender-device-auth
             - mender-api-gateway
             - mender-deployments
         volumes:
