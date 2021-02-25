@@ -39,6 +39,10 @@ build-multiplatform:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
 	     -o mender-cli.darwin.amd64
 
+build-coverage:
+	CGO_ENABLED=0 $(GO) test -c -o mender-cli-test \
+		-coverpkg $(shell echo $(PKGS) | tr  ' ' ',')
+
 install:
 	CGO_ENABLED=0 $(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
 
@@ -92,7 +96,7 @@ run-acceptance:
 	    exit 1;\
 	 fi
 	mkdir -p ${SHARED_PATH}
-	cp -r mender-artifact mender-cli tests/* ${SHARED_PATH}
+	cp -r mender-artifact mender-cli mender-cli-test tests/* ${SHARED_PATH}
 	git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
 	# this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
 	# to allow the tests to be run, as the composition is now generated during test image build

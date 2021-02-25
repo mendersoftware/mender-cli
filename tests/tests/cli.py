@@ -13,8 +13,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import subprocess
+import tempfile
 
-MENDER_CLI='tests/mender-cli'
+MENDER_CLI = "tests/mender-cli"
+MENDER_CLI_COVERAGE = "tests/mender-cli-test"
+COVERAGE_DIR = "/tests/cover"
+
 
 class Cli:
     """Simple wrapper for subprocess"""
@@ -49,3 +53,26 @@ class CliResult:
         self.stderr = (
             self.completed_process.stderr.decode("utf-8") if stderr is None else stderr
         )
+
+
+class MenderCliCoverage(Cli):
+    def __init__(self, path=MENDER_CLI_COVERAGE):
+        self.path = path
+
+    def _next_coverage_file(self):
+        coverfile = tempfile.NamedTemporaryFile(
+            delete=False, dir=COVERAGE_DIR, prefix="coverage-acceptance-", suffix=".txt"
+        )
+        coverfile.close()
+        return coverfile.name
+
+    def run(self, *argv):
+        args = [
+            self.path,
+            "-test.coverprofile=" + self._next_coverage_file(),
+            "-acceptance-tests",
+            "-test.run=TestMain",
+            "-cli-args=" + " ".join(list(argv)),
+        ]
+        completed = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return CliResult(completed)
