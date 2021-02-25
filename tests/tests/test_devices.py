@@ -68,7 +68,7 @@ class TestDevicesList:
         assert r.status_code == 401
 
         # Device should be listed as pending
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run(
             "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
         )
@@ -87,7 +87,7 @@ class TestDevicesList:
         assert r.status_code == 204
 
         # Device should now be listed as accepted
-        c = cli.Cli()
+        c = cli.MenderCliCoverage()
         r = c.run(
             "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
         )
