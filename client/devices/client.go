@@ -14,17 +14,11 @@
 package devices
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
-	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/mendersoftware/mender-cli/log"
+	"github.com/mendersoftware/mender-cli/client"
 )
 
 type devicesList struct {
@@ -66,16 +60,10 @@ type Client struct {
 }
 
 func NewClient(url string, skipVerify bool) *Client {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
-	}
-
 	return &Client{
 		url:            url,
-		devicesListURL: JoinURL(url, devicesListURL),
-		client: &http.Client{
-			Transport: tr,
-		},
+		devicesListURL: client.JoinURL(url, devicesListURL),
+		client:         client.NewHttpClient(skipVerify),
 	}
 }
 
@@ -83,34 +71,8 @@ func (c *Client) ListDevices(tokenPath string, detailLevel int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid devices detail")
 	}
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 
-	req, err := http.NewRequest(http.MethodGet, c.devicesListURL, nil)
-	if err != nil {
-		return errors.Wrap(err, "Failed to create HTTP request")
-	}
-	req.Header.Set("Authorization", "Bearer "+string(token))
-
-	reqDump, err := httputil.DumpRequest(req, false)
-	if err != nil {
-		return err
-	}
-	log.Verbf("sending request: \n%s", string(reqDump))
-
-	rsp, err := c.client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "Get /devauth/devices request failed")
-	}
-	if rsp.StatusCode != 200 {
-		return fmt.Errorf("Get /devauth/devices request failed with status %d\n", rsp.StatusCode)
-	}
-
-	defer rsp.Body.Close()
-
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := client.DoGetRequest(tokenPath, c.devicesListURL, c.client)
 	if err != nil {
 		return err
 	}
@@ -168,14 +130,4 @@ func listDevice(a deviceData, detailLevel int) {
 	}
 
 	fmt.Println("--------------------------------------------------------------------------------")
-}
-
-func JoinURL(base, url string) string {
-	if strings.HasPrefix(url, "/") {
-		url = url[1:]
-	}
-	if !strings.HasSuffix(base, "/") {
-		base = base + "/"
-	}
-	return base + url
 }

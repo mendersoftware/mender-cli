@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@ package useradm
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/mendersoftware/mender-cli/client"
 	"github.com/mendersoftware/mender-cli/log"
 )
 
@@ -41,16 +40,10 @@ type Client struct {
 }
 
 func NewClient(url string, skipVerify bool) *Client {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
-	}
-
 	return &Client{
 		url:      url,
-		loginUrl: JoinURL(url, loginUrl),
-		client: &http.Client{
-			Transport: tr,
-		},
+		loginUrl: client.JoinURL(url, loginUrl),
+		client:   client.NewHttpClient(skipVerify),
 	}
 }
 
@@ -96,14 +89,4 @@ func (c *Client) Login(user, pass string, token string) ([]byte, error) {
 	}
 
 	return body, nil
-}
-
-func JoinURL(base, url string) string {
-	if strings.HasPrefix(url, "/") {
-		url = url[1:]
-	}
-	if !strings.HasSuffix(base, "/") {
-		base = base + "/"
-	}
-	return base + url
 }
