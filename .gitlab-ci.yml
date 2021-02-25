@@ -27,6 +27,7 @@ stages:
 
 compile:
   stage: build
+  needs: []
   before_script:
     # Prepare GOPATH
     - mkdir -p /go/src/github.com/mendersoftware
@@ -66,6 +67,7 @@ test:static:
 
 test:static:extra:
   stage: test
+  needs: []
   script:
     - make get-go-tools
     - make test-static
@@ -95,6 +97,7 @@ test_acceptance_build:image:
   image: docker
   services:
     - docker:19.03.5-dind
+  needs: []
   script:
     - apk add --no-cache make
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
@@ -151,7 +154,7 @@ publish:acceptance:
     - goveralls
       -repotoken ${COVERALLS_TOKEN}
       -service gitlab-ci
-      -jobid $(git rev-parse HEAD)
+      -jobid $CI_PIPELINE_ID
       -covermode set
       -flagname acceptance
       -parallel
