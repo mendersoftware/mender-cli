@@ -20,7 +20,7 @@ from common import single_user, expect_output, DEFAULT_TOKEN_PATH
 import cli
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def cleanup_token(request):
     yield
     os.remove(request.param)
@@ -117,7 +117,7 @@ class TestLogin:
         with open(os.getenv("HOME") + "/.mender-clirc", "w") as f:
             try:
                 f.write(conf)
-            except Expeception as e:
+            except Exception as e:
                 pytest.fail("Failed to create configuration file: {}".format(e))
 
     def test_login_from_configuration_file(self, single_user):

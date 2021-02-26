@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/mendersoftware/mender-cli/log"
 )
@@ -32,6 +33,24 @@ const (
 	argRootGenerate   = "generate-autocomplete"
 	argRootVersion    = "version"
 )
+
+func init() {
+	viper.SetConfigName(".mender-clirc")
+	viper.SetConfigType("json")
+	viper.AddConfigPath("/etc/mender-cli/")
+	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath(".")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Info(fmt.Sprintf("Failed to read config: %s", err))
+			os.Exit(1)
+		} else {
+			log.Info("Configuration file not found. Continuing.")
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Using configuration file: %s\n", viper.ConfigFileUsed())
+	}
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -74,6 +93,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringP(argRootServer, "", "https://hosted.mender.io", "root server URL, e.g. 'https://hosted.mender.io'")
+	viper.BindPFlag(argRootServer, rootCmd.PersistentFlags().Lookup(argRootServer))
 	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")

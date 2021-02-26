@@ -22,7 +22,7 @@ import docker
 USER_HOME = str(Path.home())
 DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.cache', 'mender', 'authtoken')
 
-@pytest.yield_fixture(scope="class")
+@pytest.fixture(scope="class")
 def single_user():
     r = docker.exec('mender-useradm', \
                     docker.BASE_COMPOSE_FILES, \
