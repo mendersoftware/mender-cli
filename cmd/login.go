@@ -1,4 +1,4 @@
-// Copyright 2020 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -50,20 +50,8 @@ func init() {
 
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "two-factor authentication token")
-
-	viper.SetConfigName(".mender-clirc")
-	viper.SetConfigType("json")
-	viper.AddConfigPath("/etc/mender-cli/")
-	viper.AddConfigPath("$HOME/")
-	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Info(fmt.Sprintf("Failed to read config: %s", err))
-			os.Exit(1)
-		}
-	} else {
-		log.Info(fmt.Sprintf("Using configuration file: %s", viper.ConfigFileUsed()))
-	}
+	viper.BindPFlag(argLoginUsername, loginCmd.Flags().Lookup(argLoginUsername))
+	viper.BindPFlag(argLoginPassword, loginCmd.Flags().Lookup(argLoginPassword))
 }
 
 type LoginCmd struct {
@@ -76,9 +64,6 @@ type LoginCmd struct {
 }
 
 func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
-	viper.BindPFlag(argRootServer, cmd.Flags().Lookup(argRootServer))
-	viper.BindPFlag(argLoginUsername, cmd.Flags().Lookup(argLoginUsername))
-	viper.BindPFlag(argLoginPassword, cmd.Flags().Lookup(argLoginPassword))
 	server := viper.GetString(argRootServer)
 	if server == "" {
 		return nil, errors.New("No server, this should not happen")

@@ -102,7 +102,7 @@ test:acceptance:
     - git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
     # this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
     # to allow the tests to be run, as the composition is now generated during test image build
-    - sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
+    - sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/80:80/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
     - sed -e 's/DOWNLOAD_SPEED/#DOWNLOAD_SPEED/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
     - sed -e 's/ALLOWED_HOSTS:\ .*/ALLOWED_HOSTS:\ _/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
     - TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
