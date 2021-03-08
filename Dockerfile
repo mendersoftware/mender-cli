@@ -4,6 +4,6 @@ WORKDIR /go/src/github.com/mendersoftware/mender-cli
 ADD ./ .
 RUN make build
 
-FROM busybox
+FROM alpine
 COPY --from=builder /go/src/github.com/mendersoftware/mender-cli/mender-cli /
 ENTRYPOINT ["/mender-cli"]
