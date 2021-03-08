@@ -3,10 +3,7 @@ name: "[builder] CI for releases"
 on:
   push:
     branches:
-      - main
-      - dev
-    paths:
-      - "Dockerfile"
+      - master
 
 jobs:
   release:
