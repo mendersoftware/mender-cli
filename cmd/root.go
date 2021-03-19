@@ -75,8 +75,14 @@ func Execute() {
 	rootCmd.LocalFlags().Parse(os.Args)
 	b, _ := rootCmd.Flags().GetBool(argRootGenerate)
 	if b {
-		rootCmd.GenBashCompletionFile("./autocomplete/autocomplete.sh")
-		rootCmd.GenZshCompletionFile("./autocomplete/autocomplete.zsh")
+		err := rootCmd.GenBashCompletionFile("./autocomplete/autocomplete.sh")
+		if err != nil {
+			log.Errf("Failed to generate the Bash autocompletion scripts: %s\n", err)
+		}
+		err = rootCmd.GenZshCompletionFile("./autocomplete/autocomplete.zsh")
+		if err != nil {
+			log.Errf("Failed to generate the Zsh autocompletion scripts: %s\n", err)
+		}
 		return
 	}
 	version, err := rootCmd.Flags().GetBool(argRootVersion)
