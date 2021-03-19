@@ -70,9 +70,14 @@ const (
 )
 
 var terminalCmd = &cobra.Command{
-	Use:   "terminal DEVICE_ID",
-	Short: "Access a device's remote terminal",
-	Args:  cobra.RangeArgs(0, 1),
+	Use:   "terminal [DEVICE_ID]",
+	Short: "Remotely access a terminal on a device",
+	Long: "Remotely access a terminal on a device\n" +
+		"Basic usage is terminal DEVICE_ID, which starts a new terminal " +
+		"session with the remote device. The session can be saved locally " +
+		"using --record flag. When using --playback flag, no DEVICE_ID is " +
+		"required and no connection will be established.",
+	Args: cobra.RangeArgs(0, 1),
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewTerminalCmd(c, args)
 		CheckErr(err)
@@ -157,6 +162,10 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 	deviceID := ""
 	if len(args) == 1 {
 		deviceID = args[0]
+	}
+
+	if playbackFile == "" && deviceID == "" {
+		return nil, errors.New("No device specified")
 	}
 
 	return &TerminalCmd{
@@ -427,8 +436,12 @@ func (c *TerminalCmd) Run() error {
 	}
 
 	// when playing back, no further processing is required
-	if _, err := os.Stat(c.playbackFile); err == nil {
-		return c.playback(os.Stdout)
+	if c.playbackFile != "" {
+		if _, err := os.Stat(c.playbackFile); err == nil {
+			return c.playback(os.Stdout)
+		} else {
+			return err
+		}
 	}
 
 	// start recording when applicable

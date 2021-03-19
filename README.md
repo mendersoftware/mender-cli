@@ -71,10 +71,11 @@ gets installed into the `/usr/local/share/zsh/site-functions/` directory.
 
 The `mender-cli` tool can be enabled to support shell autocompletion, like you
 are used to for your regular tools, like `git`, `cd`, etc. In order to enable
-this functionality run the `mender-cli` tool with the `--generate` flag. Example:
+this functionality run the `mender-cli` tool with the `--generate-autocomplete`
+flag. Example:
 
 ```console
-mender-cli --generate
+mender-cli --generate-autocomplete
 ```
 
 This will output the file `autocomplete.sh` in the `autocomplete` directory in
@@ -100,7 +101,7 @@ auto-completion](#enabling-bash-auto-complete-manually).
 In order to enable `Zsh` auto-completion do:
 
 ```console
-mender-cli --generate
+mender-cli --generate-autocomplete
 ```
 
 to generate the auto-completion script.
