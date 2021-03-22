@@ -12,6 +12,9 @@ github.com/fsnotify/fsnotify
 # github.com/golang/protobuf v1.4.3
 ## explicit
 github.com/golang/protobuf/proto
+# github.com/google/uuid v1.2.0
+## explicit
+github.com/google/uuid
 # github.com/gorilla/websocket v1.4.2
 ## explicit
 github.com/gorilla/websocket
@@ -41,9 +44,10 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.7
 github.com/mattn/go-runewidth
-# github.com/mendersoftware/go-lib-micro v0.0.0-20210108082129-a99629450795
+# github.com/mendersoftware/go-lib-micro v0.0.0-20210322083710-42186ab64a1e
 ## explicit
 github.com/mendersoftware/go-lib-micro/ws
+github.com/mendersoftware/go-lib-micro/ws/portforward
 github.com/mendersoftware/go-lib-micro/ws/shell
 # github.com/mitchellh/mapstructure v1.4.0
 ## explicit

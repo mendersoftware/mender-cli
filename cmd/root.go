@@ -110,4 +110,5 @@ func init() {
 	rootCmd.AddCommand(artifactsCmd)
 	rootCmd.AddCommand(devicesCmd)
 	rootCmd.AddCommand(terminalCmd)
+	rootCmd.AddCommand(portForwardCmd)
 }
