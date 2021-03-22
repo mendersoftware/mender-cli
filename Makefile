@@ -51,7 +51,7 @@ install-autocomplete-scripts: build-autocomplete-scripts
 	@install -d ${DESTDIR}$(PREFIX)/etc/bash_completion.d/
 	@install -m 644 ./autocomplete/autocomplete.sh $(DESTDIR)$(PREFIX)/etc/bash_completion.d/
 	@if which zsh >/dev/null 2>&1 ; then \
-	echo "Installing zsh auto-complete script into ${DESTDIR}${PREFIX}/usr/local/share/zsh/site-functions/" \
+	echo "Installing zsh auto-complete script into ${DESTDIR}${PREFIX}/usr/local/share/zsh/site-functions/" && \
 	install -d $(DESTDIR)$(PREFIX)/usr/local/share/zsh/site-functions/ && \
 	install -m 644 ./autocomplete/autocomplete.zsh $(DESTDIR)$(PREFIX)/usr/local/share/zsh/site-functions/_mender-cli \
 	; fi
