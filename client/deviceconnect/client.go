@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -48,12 +49,16 @@ type Client struct {
 	url        string
 	skipVerify bool
 	conn       *websocket.Conn
+	readMutex  *sync.Mutex
+	writeMutex *sync.Mutex
 }
 
 func NewClient(url string, skipVerify bool) *Client {
 	return &Client{
 		url:        url,
 		skipVerify: skipVerify,
+		readMutex:  &sync.Mutex{},
+		writeMutex: &sync.Mutex{},
 	}
 }
 
@@ -127,6 +132,8 @@ func (c *Client) PingPong(ctx context.Context) {
 
 // ReadMessage reads a Proto message from the websocket
 func (c *Client) ReadMessage() (*ws.ProtoMsg, error) {
+	c.readMutex.Lock()
+	defer c.readMutex.Unlock()
 	_, data, err := c.conn.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -149,6 +156,8 @@ func (c *Client) WriteMessage(m *ws.ProtoMsg) error {
 	if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 		return errors.Wrap(err, "Unable to set the write deadline")
 	}
+	c.writeMutex.Lock()
+	defer c.writeMutex.Unlock()
 	if err := c.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 		return errors.Wrap(err, "Unable to write the message")
 	}
