@@ -14,11 +14,18 @@
 package deviceconnect
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,6 +35,9 @@ import (
 	"github.com/mendersoftware/go-lib-micro/ws"
 	"github.com/pkg/errors"
 	"github.com/vmihailenco/msgpack"
+
+	"github.com/mendersoftware/mender-cli/client"
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
@@ -43,6 +53,9 @@ const (
 
 	// deviceconnect API path
 	deviceConnectPath = "/api/management/v1/deviceconnect/devices/:deviceID/connect"
+
+	// fileUploadURL API path
+	fileUploadURL = "/api/management/v1/deviceconnect/"
 )
 
 type Client struct {
@@ -51,6 +64,8 @@ type Client struct {
 	conn       *websocket.Conn
 	readMutex  *sync.Mutex
 	writeMutex *sync.Mutex
+	tokenPath  string
+	client     *http.Client
 }
 
 func NewClient(url string, skipVerify bool) *Client {
@@ -167,4 +182,216 @@ func (c *Client) WriteMessage(m *ws.ProtoMsg) error {
 // Close closes the connection
 func (c *Client) Close() {
 	c.conn.Close()
+}
+
+func NewFileTransferClient(url string, tokenPath string, skipVerify bool) *Client {
+	return &Client{
+		url:       url,
+		tokenPath: tokenPath,
+		client:    client.NewHttpClient(skipVerify),
+	}
+}
+
+type DeviceSpec struct {
+	DeviceID   string
+	DevicePath string
+}
+
+type DeviceConnectError struct {
+	ErrorStr  string `json:"error"`
+	RequestID string `json:"request_id"`
+}
+
+func (d *DeviceConnectError) Error() string {
+	if d.ErrorStr != "" {
+		if d.RequestID != "" {
+			return fmt.Sprintf("Error: [%s] %s", d.RequestID, d.ErrorStr)
+		}
+		return fmt.Sprintf("Error: %s", d.ErrorStr)
+	}
+	return "No Error string returned from the server. This is unexpected behaviour"
+}
+
+func NewDeviceConnectError(errCode int, r io.Reader) *DeviceConnectError {
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return &DeviceConnectError{
+			ErrorStr: fmt.Sprintf("Failed to upload the file. HTTP status code: %d", errCode),
+		}
+	}
+	d := &DeviceConnectError{}
+	if err = json.Unmarshal(body, d); err != nil {
+		d.ErrorStr = string(body) // Just hope there is something sensible in the body
+	}
+	return d
+}
+
+func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
+	token, err := ioutil.ReadFile(c.tokenPath)
+	if err != nil {
+		return errors.Wrap(err, "Please Login first")
+	}
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	file, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	fi, err := os.Stat(sourcePath)
+	if err != nil {
+		return err
+	}
+	log.Verbf("Uploading the file to %s\n", deviceSpec.DevicePath)
+	if err = writer.WriteField("path", deviceSpec.DevicePath); err != nil {
+		return err
+	}
+	part, err := writer.CreateFormFile("file", sourcePath)
+	if _, err = io.Copy(part, file); err != nil {
+		return err
+	}
+	writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode()))
+	if err = writer.Close(); err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPut,
+		c.url+fileUploadURL+"devices/"+deviceSpec.DeviceID+"/upload",
+		body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusCreated:
+		return nil
+	case http.StatusBadRequest:
+		log.Err("Error: Bad request\n")
+	case http.StatusForbidden:
+		log.Err("Error: You are not allowed to access the given resource\n")
+	case http.StatusNotFound:
+		log.Err("Error: Resource not found\n")
+	case http.StatusConflict:
+		log.Err("Error: Device not connected\n")
+	case http.StatusInternalServerError:
+		log.Errf("Error: Internal Server Error\n")
+	default:
+		log.Errf("Error: Received unexpected response code: %d\n",
+			resp.StatusCode)
+	}
+	return NewDeviceConnectError(resp.StatusCode, resp.Body)
+}
+
+func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
+	token, err := ioutil.ReadFile(c.tokenPath)
+	if err != nil {
+		return errors.Wrap(err, "Please Login first")
+	}
+	req, err := http.NewRequest(http.MethodGet,
+		c.url+fileUploadURL+"devices/"+deviceSpec.DeviceID+"/download",
+		nil,
+	)
+	req.Header.Set("Authorization", "Bearer "+string(token))
+	q := req.URL.Query()
+	q.Add("path", deviceSpec.DevicePath)
+	req.URL.RawQuery = q.Encode()
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(resp, true)
+	log.Verbf("Response: \n%v\n", string(rspDump))
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return c.downloadFile(sourcePath, resp)
+	case http.StatusBadRequest:
+		log.Err("Bad request\n")
+	case http.StatusForbidden:
+		log.Err("Forbidden")
+	case http.StatusNotFound:
+		log.Err("File not found on the device\n")
+	case http.StatusConflict:
+		log.Err("The device is not connected\n")
+	case http.StatusInternalServerError:
+		log.Err("Internal server error\n")
+	default:
+		log.Errf("Error: Received unexpected response code: %d\n",
+			resp.StatusCode)
+	}
+	return NewDeviceConnectError(resp.StatusCode, resp.Body)
+}
+
+func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
+	path := resp.Header.Get("X-MEN-FILE-PATH")
+	uid := resp.Header.Get("X-MEN-FILE-UID")
+	gid := resp.Header.Get("X-MEN-FILE-GID")
+	mode := resp.Header.Get("X-MEN-FILE-MODE")
+	if mode == "" {
+		return errors.New("Missing X-MEN-FILE-MODE header")
+	}
+	modeo, err := strconv.ParseInt(mode, 8, 32)
+	if err != nil {
+		return err
+	}
+	_size := resp.Header.Get("X-MEN-FILE-SIZE")
+	size, err := strconv.ParseInt(_size, 10, 64)
+	if err != nil {
+		return fmt.Errorf("No proper size given for the file: %s", _size)
+	}
+	var n int64
+	file, err := os.OpenFile(localFileName, os.O_CREATE|os.O_WRONLY, os.FileMode(modeo))
+	if err != nil {
+		log.Errf("Failed to create the file %s locally\n", path)
+		return err
+	}
+	defer file.Close()
+
+	if resp.Header.Get("Content-Type") != "application/octet-stream" {
+		return fmt.Errorf("Unexpected Content-Type header: %s", resp.Header.Get("Content-Type"))
+	}
+	if err != nil {
+		log.Err("downloadFile: Failed to parse the Content-Type header")
+		return err
+	}
+	n, err = io.Copy(file, resp.Body)
+	if err != nil {
+		log.Verbf("wrote: %d\n", n)
+		return err
+	}
+	log.Verbf("wrote: %d\n", n)
+	if n != size {
+		return errors.New("The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'")
+	}
+	// Set the proper permissions and {G,U}ID's if present
+	if uid != "" && gid != "" {
+		uidi, err := strconv.Atoi(uid)
+		if err != nil {
+			return err
+		}
+		gidi, err := strconv.Atoi(gid)
+		if err != nil {
+			return err
+		}
+		os.Chown(file.Name(), uidi, gidi)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
