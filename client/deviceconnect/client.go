@@ -245,11 +245,19 @@ func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
 	if err = writer.WriteField("path", deviceSpec.DevicePath); err != nil {
 		return err
 	}
+	if err = writer.WriteField("src_path", sourcePath); err != nil {
+		return err
+	}
+	if err = writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode())); err != nil {
+		return err
+	}
 	part, err := writer.CreateFormFile("file", sourcePath)
+	if err != nil {
+		return err
+	}
 	if _, err = io.Copy(part, file); err != nil {
 		return err
 	}
-	writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode()))
 	if err = writer.Close(); err != nil {
 		return err
 	}
