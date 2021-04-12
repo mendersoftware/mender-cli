@@ -1,10 +1,10 @@
 # github.com/VividCortex/ewma v1.1.1
 github.com/VividCortex/ewma
-# github.com/cheggaaa/pb/v3 v3.0.7
+# github.com/cheggaaa/pb/v3 v3.0.8
 ## explicit
 github.com/cheggaaa/pb/v3
 github.com/cheggaaa/pb/v3/termutil
-# github.com/fatih/color v1.7.0
+# github.com/fatih/color v1.10.0
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
@@ -37,12 +37,11 @@ github.com/inconshreveable/mousetrap
 # github.com/magiconair/properties v1.8.4
 ## explicit
 github.com/magiconair/properties
-# github.com/mattn/go-colorable v0.1.6
-## explicit
+# github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.7
+# github.com/mattn/go-runewidth v0.0.12
 github.com/mattn/go-runewidth
 # github.com/mendersoftware/go-lib-micro v0.0.0-20210322083710-42186ab64a1e
 ## explicit
@@ -58,6 +57,8 @@ github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/rivo/uniseg v0.2.0
+github.com/rivo/uniseg
 # github.com/spf13/afero v1.5.1
 ## explicit
 github.com/spf13/afero
@@ -88,7 +89,7 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 ## explicit
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20210105210732-16f7687f5001
+# golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
