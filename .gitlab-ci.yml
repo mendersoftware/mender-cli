@@ -17,7 +17,6 @@ before_script:
   - mkdir -p /go/src/$(dirname $REPO_NAME)/mender-cli /go/src/_/builds
   - cp -r $CI_PROJECT_DIR /go/src/$(dirname $REPO_NAME)
   - cd /go/src/$(dirname $REPO_NAME)/mender-cli
-  - apt-get update && apt-get install -yyq liblzma-dev
 
 stages:
   - test_prep
