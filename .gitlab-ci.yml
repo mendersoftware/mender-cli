@@ -98,7 +98,7 @@ test:acceptance:
     - docker load -i acceptance_testing_image.tar
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
     - mkdir -p ${SHARED_PATH} && mv mender-artifact mender-cli tests/* ${SHARED_PATH}
-    - git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
+    - git clone -b 2.4.x https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
     # this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
     # to allow the tests to be run, as the composition is now generated during test image build
     - sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
