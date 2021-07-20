@@ -10,7 +10,7 @@ include:
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-github-status-updates.yml'
 
-image: golang:1.15
+image: golang:1.16
 
 variables:
   GITHUB_RELEASE_BINARY: mender-cli
@@ -62,18 +62,12 @@ test:smoketests:linux:
   script:
     - ./mender-cli.linux.amd64
 
-test:static:
-  image: golang:1.15
-
 test:static:extra:
   stage: test
   needs: []
   script:
     - make get-go-tools
     - make test-static
-
-test:unit:
-  image: golang:1.15
 
 test_acceptance_build:tools:
   stage: test_acceptance_build
@@ -133,7 +127,7 @@ test_acceptance:run:
 
 publish:acceptance:
   stage: publish
-  image: golang:1.14-alpine3.11
+  image: golang:1.16-alpine3.14
   dependencies:
     - test_acceptance:run
   before_script:
