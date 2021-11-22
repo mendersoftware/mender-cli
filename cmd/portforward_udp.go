@@ -40,8 +40,19 @@ type UDPPortForwarder struct {
 	waitGroupAcks *sync.WaitGroup
 }
 
-func NewUDPPortForwarder(bindingHost string, localPort uint16, remoteHost string, remotePort uint16) (*UDPPortForwarder, error) {
-	fmt.Printf("Forwarding from udp/%s:%d -> udp/%s:%d\n", bindingHost, localPort, remoteHost, remotePort)
+func NewUDPPortForwarder(
+	bindingHost string,
+	localPort uint16,
+	remoteHost string,
+	remotePort uint16,
+) (*UDPPortForwarder, error) {
+	fmt.Printf(
+		"Forwarding from udp/%s:%d -> udp/%s:%d\n",
+		bindingHost,
+		localPort,
+		remoteHost,
+		remotePort,
+	)
 	sAddr, err := net.ResolveUDPAddr("udp", bindingHost+":"+strconv.Itoa(int(localPort)))
 	if err != nil {
 		return nil, err
@@ -58,7 +69,12 @@ func NewUDPPortForwarder(bindingHost string, localPort uint16, remoteHost string
 	}, nil
 }
 
-func (p *UDPPortForwarder) Run(ctx context.Context, sessionID string, msgChan chan *ws.ProtoMsg, recvChans map[string]chan *ws.ProtoMsg) {
+func (p *UDPPortForwarder) Run(
+	ctx context.Context,
+	sessionID string,
+	msgChan chan *ws.ProtoMsg,
+	recvChans map[string]chan *ws.ProtoMsg,
+) {
 	// listen for new connections
 	defer p.conn.Close()
 
@@ -119,10 +135,12 @@ func (p *UDPPortForwarder) Run(ctx context.Context, sessionID string, msgChan ch
 		for {
 			select {
 			case m := <-recvChan:
-				if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForwardStop {
+				if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForwardStop {
 					sendStopMessage = false
 					return
-				} else if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForward {
+				} else if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForward {
 					_, err := p.conn.WriteToUDP(m.Body, p.sourceAddr)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
@@ -140,7 +158,8 @@ func (p *UDPPortForwarder) Run(ctx context.Context, sessionID string, msgChan ch
 						}
 						msgChan <- m
 					}
-				} else if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForwardAck {
+				} else if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForwardAck {
 					p.waitGroupAcks.Add(-1)
 				}
 			case <-ctx.Done():

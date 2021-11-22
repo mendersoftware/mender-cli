@@ -81,7 +81,6 @@ github.com/subosito/gotenv
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-## explicit
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
 golang.org/x/net/context

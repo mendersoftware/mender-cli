@@ -1,6 +1,6 @@
 include:
   - project: 'Northern.tech/Mender/mendertesting'
-    file: '.gitlab-ci-check-golang-static.yml'
+    file: '.gitlab-ci-check-golang-lint.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-unittests.yml'
   - project: 'Northern.tech/Mender/mendertesting'
@@ -61,13 +61,6 @@ test:smoketests:linux:
   before_script: []
   script:
     - ./mender-cli.linux.amd64
-
-test:static:extra:
-  stage: test
-  needs: []
-  script:
-    - make get-go-tools
-    - make test-static
 
 test_acceptance_build:tools:
   stage: test_acceptance_build
