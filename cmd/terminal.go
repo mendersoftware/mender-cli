@@ -30,12 +30,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 
 	"github.com/mendersoftware/go-lib-micro/ws"
 	wsshell "github.com/mendersoftware/go-lib-micro/ws/shell"
+
 	"github.com/mendersoftware/mender-cli/client/deviceconnect"
 	"github.com/mendersoftware/mender-cli/log"
 )
@@ -71,7 +71,8 @@ var terminalCmd = &cobra.Command{
 
 func init() {
 	terminalCmd.Flags().StringP(argRecord, "", "", "recording file path to save the session to")
-	terminalCmd.Flags().StringP(argPlayback, "", "", "recording file path to playback the session from")
+	terminalCmd.Flags().
+		StringP(argPlayback, "", "", "recording file path to playback the session from")
 }
 
 // TerminalCmd handles the terminal command
@@ -301,7 +302,11 @@ func (c *TerminalCmd) playback(w io.Writer) error {
 			break
 		}
 		if o.Type == terminalRecordingOutput {
-			w.Write(o.Data)
+			_, err = w.Write(o.Data)
+			if err != nil {
+				log.Err(fmt.Sprintf("Writting error: %s", err.Error()))
+				return err
+			}
 		}
 		time.Sleep(playbackSleep)
 	}
@@ -323,7 +328,7 @@ func (c *TerminalCmd) Run() error {
 	stat, _ := os.Stdout.Stat()
 	if (stat.Mode() & os.ModeCharDevice) > 0 {
 		var err error
-		termWidth, termHeight, err = terminal.GetSize(termID)
+		termWidth, termHeight, err = term.GetSize(termID)
 		if err != nil {
 			return errors.Wrap(err, "Unable to get the terminal size")
 		}
@@ -346,7 +351,10 @@ func (c *TerminalCmd) Run() error {
 			go c.record()
 		}
 	} else {
-		log.Err(fmt.Sprintf("Can't create recording file: %s exists, refused to record.", c.recordFile))
+		log.Err(fmt.Sprintf(
+			"Can't create recording file: %s exists, refused to record.",
+			c.recordFile,
+		))
 	}
 
 	// get the JWT token
@@ -432,7 +440,13 @@ func (c *TerminalCmd) Run() error {
 	return c.err
 }
 
-func (c *TerminalCmd) resizeTerminal(ctx context.Context, msgChan chan *ws.ProtoMsg, termID int, termWidth int, termHeight int) {
+func (c *TerminalCmd) resizeTerminal(
+	ctx context.Context,
+	msgChan chan *ws.ProtoMsg,
+	termID int,
+	termWidth int,
+	termHeight int,
+) {
 	resize := make(chan os.Signal, 1)
 	signal.Notify(resize, syscall.SIGWINCH)
 	defer signal.Stop(resize)
@@ -442,7 +456,7 @@ func (c *TerminalCmd) resizeTerminal(ctx context.Context, msgChan chan *ws.Proto
 		case <-ctx.Done():
 			return
 		case <-resize:
-			newTermWidth, newTermHeight, _ := terminal.GetSize(termID)
+			newTermWidth, newTermHeight, _ := term.GetSize(termID)
 			if newTermWidth != termWidth || newTermHeight != termHeight {
 				termWidth = newTermWidth
 				termHeight = newTermHeight
@@ -503,7 +517,11 @@ func (c *TerminalCmd) pipeStdin(msgChan chan *ws.ProtoMsg, r io.Reader) {
 	}
 }
 
-func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, client *deviceconnect.Client, w io.Writer) {
+func (c *TerminalCmd) pipeStdout(
+	msgChan chan *ws.ProtoMsg,
+	client *deviceconnect.Client,
+	w io.Writer,
+) {
 	for c.running {
 		m, err := client.ReadMessage()
 		if err != nil {
@@ -514,15 +532,18 @@ func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, client *deviceconnec
 			}
 			break
 		}
-		if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeShellCommand {
+		if m.Header.Proto == ws.ProtoTypeShell &&
+			m.Header.MsgType == wsshell.MessageTypeShellCommand {
 			if _, err := w.Write(m.Body); err != nil {
 				break
 			}
 			if c.recording {
 				c.terminalOutputChan <- m.Body
 			}
-		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypePingShell {
-			if healthcheckTimeout, ok := m.Header.Properties["timeout"].(int64); ok && healthcheckTimeout > 0 {
+		} else if m.Header.Proto == ws.ProtoTypeShell &&
+			m.Header.MsgType == wsshell.MessageTypePingShell {
+			if healthcheckTimeout, ok := m.Header.Properties["timeout"].(int64); ok &&
+				healthcheckTimeout > 0 {
 				c.healthcheck <- int(healthcheckTimeout)
 			}
 			m := &ws.ProtoMsg{
@@ -533,7 +554,8 @@ func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, client *deviceconnec
 				},
 			}
 			msgChan <- m
-		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeSpawnShell {
+		} else if m.Header.Proto == ws.ProtoTypeShell &&
+			m.Header.MsgType == wsshell.MessageTypeSpawnShell {
 			status, ok := m.Header.Properties["status"].(int64)
 			if ok && status == int64(wsshell.ErrorMessage) {
 				c.err = errors.New(fmt.Sprintf("Unable to start the shell: %s", string(m.Body)))
@@ -541,7 +563,8 @@ func (c *TerminalCmd) pipeStdout(msgChan chan *ws.ProtoMsg, client *deviceconnec
 			} else {
 				c.sessionID = string(m.Header.SessionID)
 			}
-		} else if m.Header.Proto == ws.ProtoTypeShell && m.Header.MsgType == wsshell.MessageTypeStopShell {
+		} else if m.Header.Proto == ws.ProtoTypeShell &&
+			m.Header.MsgType == wsshell.MessageTypeStopShell {
 			c.Stop()
 			break
 		}
