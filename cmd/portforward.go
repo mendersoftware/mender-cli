@@ -41,7 +41,8 @@ const (
 )
 
 var portForwardCmd = &cobra.Command{
-	Use:   "port-forward DEVICE_ID [tcp|udp/]LOCAL_PORT[:REMOTE_PORT] [[tcp|udp/]LOCAL_PORT[:REMOTE_PORT]...]",
+	Use: "port-forward DEVICE_ID [tcp|udp/]LOCAL_PORT[:REMOTE_PORT]" +
+		" [[tcp|udp/]LOCAL_PORT[:REMOTE_PORT]...]",
 	Short: "Forward one or more local ports to remote port(s) on the device",
 	Long: "This command supports both TCP and UDP port-forwarding.\n\n" +
 		"The port specification can be prefixed with \"tcp/\" or \"udp/\".\n" +
@@ -62,7 +63,10 @@ var portForwardCmd = &cobra.Command{
 }
 
 var portForwardMaxDuration = 24 * time.Hour
-var errPortForwardNotImplemented = errors.New("port forward not implemented or enabled on the device")
+
+var errPortForwardNotImplemented = errors.New(
+	"port forward not implemented or enabled on the device",
+)
 
 func init() {
 	portForwardCmd.Flags().StringP(argBindHost, "", localhost, "binding host")
@@ -357,7 +361,10 @@ func (c *PortForwardCmd) closeSession(client *deviceconnect.Client) error {
 	return nil
 }
 
-func (c *PortForwardCmd) processIncomingMessages(msgChan chan *ws.ProtoMsg, client *deviceconnect.Client) {
+func (c *PortForwardCmd) processIncomingMessages(
+	msgChan chan *ws.ProtoMsg,
+	client *deviceconnect.Client,
+) {
 	for c.running {
 		m, err := client.ReadMessage()
 		if err != nil {
@@ -376,12 +383,19 @@ func (c *PortForwardCmd) processIncomingMessages(msgChan chan *ws.ProtoMsg, clie
 				},
 			}
 			msgChan <- m
-		} else if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == ws.MessageTypeError {
-			c.err = errors.New(fmt.Sprintf("Unable to start the port-forwarding: %s", string(m.Body)))
+		} else if m.Header.Proto == ws.ProtoTypePortForward &&
+			m.Header.MsgType == ws.MessageTypeError {
+			c.err = errors.New(fmt.Sprintf(
+				"Unable to start the port-forwarding: %s",
+				string(m.Body),
+			))
 			c.Stop()
-		} else if m.Header.Proto == ws.ProtoTypePortForward && (m.Header.MsgType == wspf.MessageTypePortForward ||
-			m.Header.MsgType == wspf.MessageTypePortForwardAck || m.Header.MsgType == wspf.MessageTypePortForwardStop) {
-			if connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string); connectionID != "" {
+		} else if m.Header.Proto == ws.ProtoTypePortForward &&
+			(m.Header.MsgType == wspf.MessageTypePortForward ||
+				m.Header.MsgType == wspf.MessageTypePortForwardAck ||
+				m.Header.MsgType == wspf.MessageTypePortForwardStop) {
+			connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string)
+			if connectionID != "" {
 				if recvChan, ok := c.recvChans[connectionID]; ok {
 					recvChan <- m
 				}

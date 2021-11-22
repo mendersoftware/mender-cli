@@ -80,7 +80,17 @@ func NewClient(url string, skipVerify bool) *Client {
 // Connect to the websocket
 func (c *Client) Connect(deviceID string, token []byte) error {
 	fmt.Printf("Connecting to the device %s...\n", deviceID)
-	u, err := url.Parse(strings.TrimSuffix(c.url, "/") + strings.Replace(deviceConnectPath, ":deviceID", deviceID, 1))
+	u, err := url.Parse(
+		strings.TrimSuffix(
+			c.url,
+			"/",
+		) + strings.Replace(
+			deviceConnectPath,
+			":deviceID",
+			deviceID,
+			1,
+		),
+	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse the server URL")
 	}
@@ -91,10 +101,11 @@ func (c *Client) Connect(deviceID string, token []byte) error {
 	websocket.DefaultDialer.TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: c.skipVerify,
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), headers)
+	conn, rsp, err := websocket.DefaultDialer.Dial(u.String(), headers)
 	if err != nil {
 		return errors.Wrap(err, "Unable to connect to the device")
 	}
+	defer rsp.Body.Close()
 
 	err = conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
@@ -246,10 +257,15 @@ func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
 		return err
 	}
 	part, err := writer.CreateFormFile("file", sourcePath)
+	if err != nil {
+		return err
+	}
 	if _, err = io.Copy(part, file); err != nil {
 		return err
 	}
-	writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode()))
+	if err = writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode())); err != nil {
+		return err
+	}
 	if err = writer.Close(); err != nil {
 		return err
 	}
@@ -300,6 +316,9 @@ func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
 		c.url+fileUploadURL+"devices/"+deviceSpec.DeviceID+"/download",
 		nil,
 	)
+	if err != nil {
+		return nil
+	}
 	req.Header.Set("Authorization", "Bearer "+string(token))
 	q := req.URL.Query()
 	q.Add("path", deviceSpec.DevicePath)
@@ -376,7 +395,9 @@ func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
 	}
 	log.Verbf("wrote: %d\n", n)
 	if n != size {
-		return errors.New("The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'")
+		return errors.New(
+			"The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'",
+		)
 	}
 	// Set the proper permissions and {G,U}ID's if present
 	if uid != "" && gid != "" {
@@ -388,7 +409,7 @@ func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
 		if err != nil {
 			return err
 		}
-		os.Chown(file.Name(), uidi, gidi)
+		err = os.Chown(file.Name(), uidi, gidi)
 		if err != nil {
 			return err
 		}

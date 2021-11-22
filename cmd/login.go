@@ -47,11 +47,12 @@ var loginCmd = &cobra.Command{
 }
 
 func init() {
-	loginCmd.Flags().StringP(argLoginUsername, "", "", "username, format: email (will prompt if not provided)")
+	loginCmd.Flags().
+		StringP(argLoginUsername, "", "", "username, format: email (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginPassword, "", "", "password (will prompt if not provided)")
 	loginCmd.Flags().StringP(argLoginToken, "", "", "two-factor authentication token")
-	viper.BindPFlag(argLoginUsername, loginCmd.Flags().Lookup(argLoginUsername))
-	viper.BindPFlag(argLoginPassword, loginCmd.Flags().Lookup(argLoginPassword))
+	_ = viper.BindPFlag(argLoginUsername, loginCmd.Flags().Lookup(argLoginUsername))
+	_ = viper.BindPFlag(argLoginPassword, loginCmd.Flags().Lookup(argLoginPassword))
 }
 
 type LoginCmd struct {

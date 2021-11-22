@@ -1,4 +1,4 @@
-// Copyright 2019 Northern.tech AS
+// Copyright 2021 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -44,11 +44,11 @@ func migrateAuthToken(oldtoken string, token string) {
 	// Attempt migration, ignore errors (but log them?)
 	if err := os.MkdirAll(filepath.Dir(token), 0700); err == nil {
 		// log that token was moved?
-		err = os.Rename(oldtoken, token)
+		_ = os.Rename(oldtoken, token)
 	}
 
 	// Cleanup old token directory if empty
-	os.Remove(filepath.Dir(oldtoken)) // err on non-empty, ignore.
+	_ = os.Remove(filepath.Dir(oldtoken)) // err on non-empty, ignore.
 }
 
 func getDefaultAuthTokenPath() (string, error) {
