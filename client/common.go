@@ -21,8 +21,9 @@ import (
 	"net/http/httputil"
 	"strings"
 
-	"github.com/mendersoftware/mender-cli/log"
 	"github.com/pkg/errors"
+
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 func NewHttpClient(skipVerify bool) *http.Client {
@@ -36,9 +37,7 @@ func NewHttpClient(skipVerify bool) *http.Client {
 }
 
 func JoinURL(base, url string) string {
-	if strings.HasPrefix(url, "/") {
-		url = url[1:]
-	}
+	url = strings.TrimPrefix(url, "/")
 	if !strings.HasSuffix(base, "/") {
 		base = base + "/"
 	}

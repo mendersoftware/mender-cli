@@ -52,13 +52,15 @@ func (c *Client) Login(user, pass string, token string) ([]byte, error) {
 	var req *http.Request
 	var err error
 
-	reader = nil
 	if len(token) > 1 {
 		tokenJson := "{\"token2fa\":\"" + token + "\"}"
 		reader = bytes.NewReader([]byte(tokenJson))
 		req, err = http.NewRequest(http.MethodPost, c.loginUrl, reader)
 	} else {
 		req, err = http.NewRequest(http.MethodPost, c.loginUrl, nil)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

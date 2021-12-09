@@ -39,7 +39,12 @@ type TCPPortForwarder struct {
 	mutexAck   *sync.Mutex
 }
 
-func NewTCPPortForwarder(bindingHost string, localPort uint16, remoteHost string, remotePort uint16) (*TCPPortForwarder, error) {
+func NewTCPPortForwarder(
+	bindingHost string,
+	localPort uint16,
+	remoteHost string,
+	remotePort uint16,
+) (*TCPPortForwarder, error) {
 	fmt.Printf("Forwarding from %s:%d -> %s:%d\n", bindingHost, localPort, remoteHost, remotePort)
 	listen, err := net.Listen(protocolTCP, bindingHost+":"+strconv.Itoa(int(localPort)))
 	if err != nil {
@@ -53,7 +58,12 @@ func NewTCPPortForwarder(bindingHost string, localPort uint16, remoteHost string
 	}, nil
 }
 
-func (p *TCPPortForwarder) Run(ctx context.Context, sessionID string, msgChan chan *ws.ProtoMsg, recvChans map[string]chan *ws.ProtoMsg) {
+func (p *TCPPortForwarder) Run(
+	ctx context.Context,
+	sessionID string,
+	msgChan chan *ws.ProtoMsg,
+	recvChans map[string]chan *ws.ProtoMsg,
+) {
 	// listen for new connections
 	defer p.listen.Close()
 	acceptedConnections := make(chan net.Conn)
@@ -65,7 +75,11 @@ func (p *TCPPortForwarder) Run(ctx context.Context, sessionID string, msgChan ch
 			if err != nil {
 				return
 			}
-			fmt.Printf("Handling connection from %s to %s\n", conn.RemoteAddr().String(), conn.LocalAddr().String())
+			fmt.Printf(
+				"Handling connection from %s to %s\n",
+				conn.RemoteAddr().String(),
+				conn.LocalAddr().String(),
+			)
 			acceptedConnections <- conn
 		}
 	}()
@@ -85,7 +99,14 @@ func (p *TCPPortForwarder) Run(ctx context.Context, sessionID string, msgChan ch
 	}
 }
 
-func (p *TCPPortForwarder) handleRequest(ctx context.Context, conn net.Conn, sessionID string, connectionID string, recvChan chan *ws.ProtoMsg, msgChan chan *ws.ProtoMsg) {
+func (p *TCPPortForwarder) handleRequest(
+	ctx context.Context,
+	conn net.Conn,
+	sessionID string,
+	connectionID string,
+	recvChan chan *ws.ProtoMsg,
+	msgChan chan *ws.ProtoMsg,
+) {
 	defer conn.Close()
 
 	errChan := make(chan error)
@@ -141,10 +162,12 @@ func (p *TCPPortForwarder) handleRequest(ctx context.Context, conn net.Conn, ses
 		for {
 			select {
 			case m := <-recvChan:
-				if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForwardStop {
+				if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForwardStop {
 					sendStopMessage = false
 					return
-				} else if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForward {
+				} else if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForward {
 					_, err := conn.Write(m.Body)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
@@ -162,7 +185,8 @@ func (p *TCPPortForwarder) handleRequest(ctx context.Context, conn net.Conn, ses
 						}
 						msgChan <- m
 					}
-				} else if m.Header.Proto == ws.ProtoTypePortForward && m.Header.MsgType == wspf.MessageTypePortForwardAck {
+				} else if m.Header.Proto == ws.ProtoTypePortForward &&
+					m.Header.MsgType == wspf.MessageTypePortForwardAck {
 					p.mutexAck.Unlock()
 				}
 			case <-ctx.Done():
@@ -201,7 +225,11 @@ func (p *TCPPortForwarder) handleRequest(ctx context.Context, conn net.Conn, ses
 	}
 }
 
-func (p *TCPPortForwarder) handleRequestConnection(dataChan chan []byte, errChan chan error, conn net.Conn) {
+func (p *TCPPortForwarder) handleRequestConnection(
+	dataChan chan []byte,
+	errChan chan error,
+	conn net.Conn,
+) {
 	data := make([]byte, readBuffLength)
 
 	for {

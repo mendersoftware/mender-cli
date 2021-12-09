@@ -63,7 +63,7 @@ var rootCmd = &cobra.Command{
 		CheckErr(err)
 		log.Setup(verbose)
 		if verbose {
-			log.Verb(fmt.Sprintf("verbose output is ON"))
+			log.Verb("verbose output is ON")
 		}
 	},
 	ValidArgs: []string{"artifacts", "help", "login"},
@@ -72,7 +72,10 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	rootCmd.LocalFlags().Parse(os.Args)
+	err := rootCmd.LocalFlags().Parse(os.Args)
+	if err != nil {
+		log.Errf("Failed to parse flags: %s\n", err)
+	}
 	b, _ := rootCmd.Flags().GetBool(argRootGenerate)
 	if b {
 		err := rootCmd.GenBashCompletionFile("./autocomplete/autocomplete.sh")
@@ -98,14 +101,21 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringP(argRootServer, "", "https://hosted.mender.io", "root server URL, e.g. 'https://hosted.mender.io'")
-	viper.BindPFlag(argRootServer, rootCmd.PersistentFlags().Lookup(argRootServer))
-	rootCmd.PersistentFlags().BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
+	rootCmd.PersistentFlags().
+		StringP(
+			argRootServer,
+			"",
+			"https://hosted.mender.io",
+			"root server URL, e.g. 'https://hosted.mender.io'",
+		)
+	_ = viper.BindPFlag(argRootServer, rootCmd.PersistentFlags().Lookup(argRootServer))
+	rootCmd.PersistentFlags().
+		BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
 	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
 	rootCmd.Flags().Bool(argRootVersion, false, "print version")
 	rootCmd.Flags().Bool(argRootGenerate, false, "generate shell completion script")
-	rootCmd.Flags().MarkHidden(argRootGenerate)
+	_ = rootCmd.Flags().MarkHidden(argRootGenerate)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(artifactsCmd)
 	rootCmd.AddCommand(devicesCmd)

@@ -154,7 +154,10 @@ func listArtifact(a artifactData, detailLevel int) {
 	fmt.Println("--------------------------------------------------------------------------------")
 }
 
-func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noProgress bool) error {
+func (c *Client) UploadArtifact(
+	description, artifactPath, tokenPath string,
+	noProgress bool,
+) error {
 	var bar *pb.ProgressBar
 
 	artifact, err := os.Open(artifactPath)
@@ -190,7 +193,9 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 
 	if !noProgress {
 		// create progress bar
-		bar = pb.New64(artifactStats.Size()).Set(pb.Bytes, true).SetRefreshRate(time.Millisecond * 100)
+		bar = pb.New64(artifactStats.Size()).
+			Set(pb.Bytes, true).
+			SetRefreshRate(time.Millisecond * 100)
 		bar.Start()
 	}
 
@@ -199,8 +204,8 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 		defer pW.Close()
 		defer artifact.Close()
 
-		writer.WriteField("size", strconv.FormatInt(artifactStats.Size(), 10))
-		writer.WriteField("description", description)
+		_ = writer.WriteField("size", strconv.FormatInt(artifactStats.Size(), 10))
+		_ = writer.WriteField("description", description)
 		part, _ = writer.CreateFormFile("artifact", artifactStats.Name())
 
 		if !noProgress {
@@ -209,7 +214,7 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 
 		if _, err := io.Copy(part, artifact); err != nil {
 			writer.Close()
-			pR.CloseWithError(err)
+			_ = pR.CloseWithError(err)
 			return
 		}
 
@@ -217,7 +222,6 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 		if !noProgress {
 			log.Info("Processing uploaded file. This may take around one minute.\n")
 		}
-		return
 	}()
 
 	rsp, err := c.client.Do(req)
@@ -239,7 +243,9 @@ func (c *Client) UploadArtifact(description, artifactPath, tokenPath string, noP
 			log.Verbf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body)
 			return errors.New("Unauthorized. Please Login first")
 		}
-		return errors.New(fmt.Sprintf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body))
+		return errors.New(
+			fmt.Sprintf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body),
+		)
 	}
 
 	return nil
