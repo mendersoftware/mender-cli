@@ -9,7 +9,7 @@ require (
 	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
 	github.com/mendersoftware/go-lib-micro v0.0.0-20210322083710-42186ab64a1e
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.10.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/sys v0.0.0-20211210111614-af8b64212486
