@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -69,14 +69,16 @@ type artifactData struct {
 }
 
 const (
-	artifactUploadURL = "/api/management/v1/deployments/artifacts"
-	artifactsListURL  = artifactUploadURL
+	artifactUploadURL  = "/api/management/v1/deployments/artifacts"
+	artifactsListURL   = artifactUploadURL
+	artifactsDeleteURL = artifactUploadURL
 )
 
 type Client struct {
 	url               string
 	artifactUploadURL string
 	artifactsListURL  string
+	artifactDeleteURL string
 	client            *http.Client
 }
 
@@ -85,6 +87,7 @@ func NewClient(url string, skipVerify bool) *Client {
 		url:               url,
 		artifactUploadURL: client.JoinURL(url, artifactUploadURL),
 		artifactsListURL:  client.JoinURL(url, artifactsListURL),
+		artifactDeleteURL: client.JoinURL(url, artifactsDeleteURL),
 		client:            client.NewHttpClient(skipVerify),
 	}
 }
@@ -241,6 +244,50 @@ func (c *Client) UploadArtifact(
 		}
 		if rsp.StatusCode == http.StatusUnauthorized {
 			log.Verbf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body)
+			return errors.New("Unauthorized. Please Login first")
+		}
+		return errors.New(
+			fmt.Sprintf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body),
+		)
+	}
+
+	return nil
+}
+
+func (c *Client) DeleteArtifact(
+	artifactID, tokenPath string,
+) error {
+
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return errors.Wrap(err, "Please Login first")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, c.artifactDeleteURL+"/"+artifactID, nil)
+	if err != nil {
+		return errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "DELETE /artifacts request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	if rsp.StatusCode != http.StatusNoContent {
+		body, err := ioutil.ReadAll(rsp.Body)
+		if err != nil {
+			return errors.Wrap(err, "can't read request body")
+		}
+		if rsp.StatusCode == http.StatusUnauthorized {
+			log.Verbf("artifact delete failed with status %d, reason: %s", rsp.StatusCode, body)
 			return errors.New("Unauthorized. Please Login first")
 		}
 		return errors.New(
