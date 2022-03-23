@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) ListDevices(tokenPath string, detailLevel int) error {
+func (c *Client) ListDevices(tokenPath string, detailLevel int, raw bool) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid devices detail")
 	}
@@ -77,15 +77,19 @@ func (c *Client) ListDevices(tokenPath string, detailLevel int) error {
 		return err
 	}
 
-	var list devicesList
-	err = json.Unmarshal(body, &list.devices)
-	if err != nil {
-		return err
-	}
-	for _, v := range list.devices {
-		listDevice(v, detailLevel)
-	}
+	if raw {
+		print(string(body))
+	} else {
 
+		var list devicesList
+		err = json.Unmarshal(body, &list.devices)
+		if err != nil {
+			return err
+		}
+		for _, v := range list.devices {
+			listDevice(v, detailLevel)
+		}
+	}
 	return nil
 }
 

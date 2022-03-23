@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -32,8 +32,15 @@ var devicesListCmd = &cobra.Command{
 	},
 }
 
+const argRawMode = "raw"
+
 func init() {
 	devicesListCmd.Flags().IntP(argDetailLevel, "d", 0, "devices list detail level [0..3]")
+	devicesListCmd.Flags().BoolP(
+		argRawMode,
+		"r",
+		false,
+		"devices list raw mode (json from mender server)")
 }
 
 type DevicesListCmd struct {
@@ -41,6 +48,7 @@ type DevicesListCmd struct {
 	skipVerify  bool
 	tokenPath   string
 	detailLevel int
+	rawMode     bool
 }
 
 func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, error) {
@@ -64,6 +72,11 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, err
 	}
 
+	rawMode, err := cmd.Flags().GetBool(argRawMode)
+	if err != nil {
+		return nil, err
+	}
+
 	if token == "" {
 		token, err = getDefaultAuthTokenPath()
 		if err != nil {
@@ -76,11 +89,12 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		tokenPath:   token,
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
+		rawMode:     rawMode,
 	}, nil
 }
 
 func (c *DevicesListCmd) Run() error {
 
 	client := devices.NewClient(c.server, c.skipVerify)
-	return client.ListDevices(c.tokenPath, c.detailLevel)
+	return client.ListDevices(c.tokenPath, c.detailLevel, c.rawMode)
 }
