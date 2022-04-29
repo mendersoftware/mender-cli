@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -87,8 +87,29 @@ func (c *FileTransferCmd) Run() error {
 	return c.download()
 }
 
+func (c *FileTransferCmd) checkDevice(deviceID string) error {
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return errors.Wrap(err, "Unable to determine the default auth token path")
+	}
+
+	// check if the device is connected
+	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+	device, err := client.GetDevice(deviceID)
+	if err != nil {
+		return errors.Wrap(err, "unable to get the device")
+	} else if device.Status != deviceconnect.CONNECTED {
+		return errors.New("the device is not connected")
+	}
+
+	return nil
+}
+
 func (c *FileTransferCmd) upload() error {
 	d, err := deviceSpecification(c.destination)
+	if err == nil {
+		err = c.checkDevice(d.DeviceID)
+	}
 	if err != nil {
 		return err
 	}
@@ -114,6 +135,9 @@ func deviceSpecification(s string) (*deviceconnect.DeviceSpec, error) {
 
 func (c *FileTransferCmd) download() error {
 	d, err := deviceSpecification(c.source)
+	if err == nil {
+		err = c.checkDevice(d.DeviceID)
+	}
 	if err != nil {
 		return err
 	}
