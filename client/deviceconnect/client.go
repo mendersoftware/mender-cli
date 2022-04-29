@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ const (
 	pongWait = 1 * time.Minute
 
 	// deviceconnect API path
+	devicePath        = "/api/management/v1/deviceconnect/devices/:deviceID"
 	deviceConnectPath = "/api/management/v1/deviceconnect/devices/:deviceID/connect"
 
 	// fileUploadURL API path
@@ -68,10 +69,12 @@ type Client struct {
 	client     *http.Client
 }
 
-func NewClient(url string, skipVerify bool) *Client {
+func NewClient(url string, tokenPath string, skipVerify bool) *Client {
 	return &Client{
 		url:        url,
+		tokenPath:  tokenPath,
 		skipVerify: skipVerify,
+		client:     client.NewHttpClient(skipVerify),
 		readMutex:  &sync.Mutex{},
 		writeMutex: &sync.Mutex{},
 	}
@@ -114,6 +117,22 @@ func (c *Client) Connect(deviceID string, token []byte) error {
 
 	c.conn = conn
 	return nil
+}
+
+// GetDevice returns the device
+func (c *Client) GetDevice(deviceID string) (*Device, error) {
+	path := strings.Replace(devicePath, ":deviceID", deviceID, 1)
+	body, err := client.DoGetRequest(c.tokenPath, client.JoinURL(c.url, path), c.client)
+	if err != nil {
+		return nil, err
+	}
+
+	var device Device
+	err = json.Unmarshal(body, &device)
+	if err != nil {
+		return nil, err
+	}
+	return &device, nil
 }
 
 // PingPong handles the ping-pong connection health check

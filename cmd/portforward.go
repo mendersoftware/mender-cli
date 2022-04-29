@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -181,11 +181,7 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 	}, nil
 }
 
-func (c *PortForwardCmd) getToken() ([]byte, error) {
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to determine the auth token path")
-	}
+func (c *PortForwardCmd) getToken(tokenPath string) ([]byte, error) {
 	token, err := ioutil.ReadFile(tokenPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Please Login first")
@@ -198,14 +194,28 @@ func (c *PortForwardCmd) Run() error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 	defer cancelContext()
 
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return errors.Wrap(err, "Unable to determine the default auth token path")
+	}
+
+	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+
+	// check if the device is connected
+	device, err := client.GetDevice(c.deviceID)
+	if err != nil {
+		return errors.Wrap(err, "unable to get the device")
+	} else if device.Status != deviceconnect.CONNECTED {
+		return errors.New("the device is not connected")
+	}
+
 	// get the JWT token
-	token, err := c.getToken()
+	token, err := c.getToken(tokenPath)
 	if err != nil {
 		return err
 	}
 
 	// connect to the websocket and start the ping-pong connection health-check
-	client := deviceconnect.NewClient(c.server, c.skipVerify)
 	err = client.Connect(c.deviceID, token)
 	if err != nil {
 		return err
