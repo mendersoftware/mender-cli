@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -166,11 +166,7 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 	}, nil
 }
 
-func (c *TerminalCmd) getToken() ([]byte, error) {
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to determine the auth token path")
-	}
+func (c *TerminalCmd) getToken(tokenPath string) ([]byte, error) {
 	token, err := ioutil.ReadFile(tokenPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Please Login first")
@@ -357,14 +353,28 @@ func (c *TerminalCmd) Run() error {
 		))
 	}
 
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return errors.Wrap(err, "Unable to determine the default auth token path")
+	}
+
+	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+
+	// check if the device is connected
+	device, err := client.GetDevice(c.deviceID)
+	if err != nil {
+		return errors.Wrap(err, "unable to get the device")
+	} else if device.Status != deviceconnect.CONNECTED {
+		return errors.New("the device is not connected")
+	}
+
 	// get the JWT token
-	token, err := c.getToken()
+	token, err := c.getToken(tokenPath)
 	if err != nil {
 		return err
 	}
 
 	// connect to the websocket and start the ping-pong connection health-check
-	client := deviceconnect.NewClient(c.server, c.skipVerify)
 	err = client.Connect(c.deviceID, token)
 	if err != nil {
 		return err
@@ -391,6 +401,27 @@ func (c *TerminalCmd) Run() error {
 		return err
 	}
 
+	// wait for CTRL+C, signals or stop
+	c.runLoop(ctx, client, termID, termWidth, termHeight)
+
+	// cancel the context
+	cancelContext()
+
+	// stop shell message
+	if err := c.stopShell(client); err != nil {
+		return err
+	}
+
+	// return the error message (if any)
+	return c.err
+}
+
+// Run executes the command
+func (c *TerminalCmd) runLoop(
+	ctx context.Context,
+	client *deviceconnect.Client,
+	termID, termWidth, termHeight int,
+) {
 	// message channel
 	msgChan := make(chan *ws.ProtoMsg)
 
@@ -405,12 +436,11 @@ func (c *TerminalCmd) Run() error {
 	// resize the terminal window
 	go c.resizeTerminal(ctx, msgChan, termID, termWidth, termHeight)
 
-	// wait for CTRL+C, signals or stop
 	healthcheckTimeout := time.Now().Add(24 * time.Hour)
 	for c.running {
 		select {
 		case msg := <-msgChan:
-			err = client.WriteMessage(msg)
+			err := client.WriteMessage(msg)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
 				break
@@ -427,17 +457,6 @@ func (c *TerminalCmd) Run() error {
 			c.running = false
 		}
 	}
-
-	// cancel the context
-	cancelContext()
-
-	// stop shell message
-	if err := c.stopShell(client); err != nil {
-		return err
-	}
-
-	// return the error message (if any)
-	return c.err
 }
 
 func (c *TerminalCmd) resizeTerminal(

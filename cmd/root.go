@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -72,7 +72,9 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.LocalFlags().Parse(os.Args)
+	lflags := rootCmd.LocalFlags()
+	lflags.ParseErrorsWhitelist.UnknownFlags = true
+	err := lflags.Parse(os.Args)
 	if err != nil {
 		log.Errf("Failed to parse flags: %s\n", err)
 	}
