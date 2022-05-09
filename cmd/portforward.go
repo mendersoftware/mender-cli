@@ -367,10 +367,9 @@ func (c *PortForwardCmd) processIncomingMessages(
 		if err != nil {
 			if c.running {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			} else {
-				c.Stop()
-				break
 			}
+			c.Stop()
+			break
 		} else if m.Header.Proto == ws.ProtoTypeControl && m.Header.MsgType == ws.MessageTypePing {
 			m := &ws.ProtoMsg{
 				Header: ws.ProtoHdr{
