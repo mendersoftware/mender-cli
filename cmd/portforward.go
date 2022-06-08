@@ -67,6 +67,7 @@ var portForwardMaxDuration = 24 * time.Hour
 var errPortForwardNotImplemented = errors.New(
 	"port forward not implemented or enabled on the device",
 )
+var errRestart = errors.New("restart")
 
 func init() {
 	portForwardCmd.Flags().StringP(argBindHost, "", localhost, "binding host")
@@ -191,6 +192,14 @@ func (c *PortForwardCmd) getToken(tokenPath string) ([]byte, error) {
 
 // Run executes the command
 func (c *PortForwardCmd) Run() error {
+	for {
+		if err := c.run(); err != errRestart {
+			return err
+		}
+	}
+}
+
+func (c *PortForwardCmd) run() error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 	defer cancelContext()
 
@@ -263,13 +272,14 @@ func (c *PortForwardCmd) Run() error {
 	signal.Notify(quit, unix.SIGINT, unix.SIGTERM)
 
 	// wait for CTRL+C, signals or stop
+	restart := false
 	timeout := time.Now().Add(portForwardMaxDuration)
 	for c.running {
 		select {
 		case msg := <-msgChan:
 			err := client.WriteMessage(msg)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				c.err = err
 				break
 			}
 		case <-time.After(time.Until(timeout)):
@@ -278,6 +288,7 @@ func (c *PortForwardCmd) Run() error {
 		case <-quit:
 			c.running = false
 		case <-c.stop:
+			restart = true
 			c.running = false
 		}
 	}
@@ -287,8 +298,13 @@ func (c *PortForwardCmd) Run() error {
 
 	// close the ws session
 	err = c.closeSession(client)
-	if err != nil {
-		return err
+	if c.err == nil && err != nil {
+		c.err = err
+	}
+
+	// if stopping because of an error, restart the port-forwarding command
+	if restart {
+		return errRestart
 	}
 
 	// return the error message (if any)
@@ -296,7 +312,6 @@ func (c *PortForwardCmd) Run() error {
 }
 
 func (c *PortForwardCmd) Stop() {
-	c.running = false
 	c.stop <- struct{}{}
 }
 
@@ -378,9 +393,7 @@ func (c *PortForwardCmd) processIncomingMessages(
 	for c.running {
 		m, err := client.ReadMessage()
 		if err != nil {
-			if c.running {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			}
+			c.err = err
 			c.Stop()
 			break
 		} else if m.Header.Proto == ws.ProtoTypeControl && m.Header.MsgType == ws.MessageTypePing {
@@ -394,11 +407,16 @@ func (c *PortForwardCmd) processIncomingMessages(
 			msgChan <- m
 		} else if m.Header.Proto == ws.ProtoTypePortForward &&
 			m.Header.MsgType == ws.MessageTypeError {
-			c.err = errors.New(fmt.Sprintf(
-				"Unable to start the port-forwarding: %s",
-				string(m.Body),
-			))
-			c.Stop()
+			erro := new(ws.Error)
+			if err := msgpack.Unmarshal(m.Body, erro); err != nil &&
+				erro.MessageType != wspf.MessageTypePortForwardStop {
+				c.err = errors.New(fmt.Sprintf(
+					"Unable to start the port-forwarding: %s",
+					string(m.Body),
+				))
+				c.running = false
+				c.Stop()
+			}
 		} else if m.Header.Proto == ws.ProtoTypePortForward &&
 			(m.Header.MsgType == wspf.MessageTypePortForward ||
 				m.Header.MsgType == wspf.MessageTypePortForwardAck ||
