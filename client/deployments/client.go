@@ -92,12 +92,12 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) ListArtifacts(tokenPath string, detailLevel int) error {
+func (c *Client) ListArtifacts(token string, detailLevel int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid artifact detail")
 	}
 
-	body, err := client.DoGetRequest(tokenPath, c.artifactsListURL, c.client)
+	body, err := client.DoGetRequest(token, c.artifactsListURL, c.client)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func listArtifact(a artifactData, detailLevel int) {
 }
 
 func (c *Client) UploadArtifact(
-	description, artifactPath, tokenPath string,
+	description, artifactPath, token string,
 	noProgress bool,
 ) error {
 	var bar *pb.ProgressBar
@@ -178,11 +178,6 @@ func (c *Client) UploadArtifact(
 
 	// create multipart writer
 	writer := multipart.NewWriter(pW)
-
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 
 	req, err := http.NewRequest(http.MethodPost, c.artifactUploadURL, pR)
 	if err != nil {
@@ -255,13 +250,8 @@ func (c *Client) UploadArtifact(
 }
 
 func (c *Client) DeleteArtifact(
-	artifactID, tokenPath string,
+	artifactID, token string,
 ) error {
-
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 
 	req, err := http.NewRequest(http.MethodDelete, c.artifactDeleteURL+"/"+artifactID, nil)
 	if err != nil {

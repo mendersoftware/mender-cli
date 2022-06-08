@@ -41,7 +41,7 @@ type ArtifactDeleteCmd struct {
 	server     string
 	skipVerify bool
 	artifactID string
-	tokenPath  string
+	token      string
 }
 
 func NewArtifactDeleteCmd(cmd *cobra.Command, args []string) (*ArtifactDeleteCmd, error) {
@@ -55,16 +55,9 @@ func NewArtifactDeleteCmd(cmd *cobra.Command, args []string) (*ArtifactDeleteCmd
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argRootToken)
+	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
-	}
-
-	if token == "" {
-		token, err = getDefaultAuthTokenPath()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	artifactID := ""
@@ -75,7 +68,7 @@ func NewArtifactDeleteCmd(cmd *cobra.Command, args []string) (*ArtifactDeleteCmd
 	return &ArtifactDeleteCmd{
 		server:     server,
 		artifactID: artifactID,
-		tokenPath:  token,
+		token:      token,
 		skipVerify: skipVerify,
 	}, nil
 }
@@ -83,7 +76,7 @@ func NewArtifactDeleteCmd(cmd *cobra.Command, args []string) (*ArtifactDeleteCmd
 func (c *ArtifactDeleteCmd) Run() error {
 
 	client := deployments.NewClient(c.server, c.skipVerify)
-	err := client.DeleteArtifact(c.artifactID, c.tokenPath)
+	err := client.DeleteArtifact(c.artifactID, c.token)
 	if err != nil {
 		return err
 	}

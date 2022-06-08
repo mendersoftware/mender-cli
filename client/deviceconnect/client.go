@@ -65,14 +65,14 @@ type Client struct {
 	conn       *websocket.Conn
 	readMutex  *sync.Mutex
 	writeMutex *sync.Mutex
-	tokenPath  string
+	token      string
 	client     *http.Client
 }
 
-func NewClient(url string, tokenPath string, skipVerify bool) *Client {
+func NewClient(url string, token string, skipVerify bool) *Client {
 	return &Client{
 		url:        url,
-		tokenPath:  tokenPath,
+		token:      token,
 		skipVerify: skipVerify,
 		client:     client.NewHttpClient(skipVerify),
 		readMutex:  &sync.Mutex{},
@@ -81,7 +81,7 @@ func NewClient(url string, tokenPath string, skipVerify bool) *Client {
 }
 
 // Connect to the websocket
-func (c *Client) Connect(deviceID string, token []byte) error {
+func (c *Client) Connect(deviceID string, token string) error {
 	fmt.Printf("Connecting to the device %s...\n", deviceID)
 	u, err := url.Parse(
 		strings.TrimSuffix(
@@ -122,7 +122,7 @@ func (c *Client) Connect(deviceID string, token []byte) error {
 // GetDevice returns the device
 func (c *Client) GetDevice(deviceID string) (*Device, error) {
 	path := strings.Replace(devicePath, ":deviceID", deviceID, 1)
-	body, err := client.DoGetRequest(c.tokenPath, client.JoinURL(c.url, path), c.client)
+	body, err := client.DoGetRequest(c.token, client.JoinURL(c.url, path), c.client)
 	if err != nil {
 		return nil, err
 	}
@@ -214,11 +214,11 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
-func NewFileTransferClient(url string, tokenPath string, skipVerify bool) *Client {
+func NewFileTransferClient(url string, token string, skipVerify bool) *Client {
 	return &Client{
-		url:       url,
-		tokenPath: tokenPath,
-		client:    client.NewHttpClient(skipVerify),
+		url:    url,
+		token:  token,
+		client: client.NewHttpClient(skipVerify),
 	}
 }
 
@@ -257,10 +257,6 @@ func NewDeviceConnectError(errCode int, r io.Reader) *DeviceConnectError {
 }
 
 func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
-	token, err := ioutil.ReadFile(c.tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	file, err := os.Open(sourcePath)
@@ -295,7 +291,7 @@ func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
 		return err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", "Bearer "+string(token))
+	req.Header.Set("Authorization", "Bearer "+string(c.token))
 
 	reqDump, _ := httputil.DumpRequest(req, false)
 	log.Verbf("sending request: \n%v", string(reqDump))
@@ -327,10 +323,6 @@ func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
 }
 
 func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
-	token, err := ioutil.ReadFile(c.tokenPath)
-	if err != nil {
-		return errors.Wrap(err, "Please Login first")
-	}
 	req, err := http.NewRequest(http.MethodGet,
 		c.url+fileUploadURL+"devices/"+deviceSpec.DeviceID+"/download",
 		nil,
@@ -338,7 +330,7 @@ func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
 	if err != nil {
 		return nil
 	}
-	req.Header.Set("Authorization", "Bearer "+string(token))
+	req.Header.Set("Authorization", "Bearer "+string(c.token))
 	q := req.URL.Query()
 	q.Add("path", deviceSpec.DevicePath)
 	req.URL.RawQuery = q.Encode()

@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
 	"path/filepath"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 func CheckErr(e error) {
@@ -75,4 +78,22 @@ func getDefaultAuthTokenPath() (string, error) {
 	migrateAuthToken(oldtoken, token)
 
 	return token, nil
+}
+
+func getAuthToken(cmd *cobra.Command) (string, error) {
+	tokenValue, err := cmd.Flags().GetString(argRootTokenValue)
+	if err != nil {
+		return "", err
+	} else if tokenValue != "" {
+		return tokenValue, nil
+	}
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return "", err
+	}
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return "", errors.Wrap(err, "Please Login first")
+	}
+	return string(token), nil
 }
