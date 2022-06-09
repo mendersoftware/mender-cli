@@ -46,7 +46,7 @@ func init() {
 type DevicesListCmd struct {
 	server      string
 	skipVerify  bool
-	tokenPath   string
+	token       string
 	detailLevel int
 	rawMode     bool
 }
@@ -62,11 +62,6 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argRootToken)
-	if err != nil {
-		return nil, err
-	}
-
 	detailLevel, err := cmd.Flags().GetInt(argDetailLevel)
 	if err != nil {
 		return nil, err
@@ -77,16 +72,14 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, err
 	}
 
-	if token == "" {
-		token, err = getDefaultAuthTokenPath()
-		if err != nil {
-			return nil, err
-		}
+	token, err := getAuthToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 
 	return &DevicesListCmd{
 		server:      server,
-		tokenPath:   token,
+		token:       token,
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
 		rawMode:     rawMode,
@@ -96,5 +89,5 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 func (c *DevicesListCmd) Run() error {
 
 	client := devices.NewClient(c.server, c.skipVerify)
-	return client.ListDevices(c.tokenPath, c.detailLevel, c.rawMode)
+	return client.ListDevices(c.token, c.detailLevel, c.rawMode)
 }

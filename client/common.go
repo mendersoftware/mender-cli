@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -44,12 +44,7 @@ func JoinURL(base, url string) string {
 	return base + url
 }
 
-func DoGetRequest(tokenPath, urlPath string, client *http.Client) ([]byte, error) {
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "Please Login first")
-	}
-
+func DoGetRequest(token, urlPath string, client *http.Client) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create HTTP request")

@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ func init() {
 type ArtifactsListCmd struct {
 	server      string
 	skipVerify  bool
-	tokenPath   string
+	token       string
 	detailLevel int
 }
 
@@ -58,26 +58,19 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argRootToken)
-	if err != nil {
-		return nil, err
-	}
-
 	detailLevel, err := cmd.Flags().GetInt(argDetailLevel)
 	if err != nil {
 		return nil, err
 	}
 
-	if token == "" {
-		token, err = getDefaultAuthTokenPath()
-		if err != nil {
-			return nil, err
-		}
+	token, err := getAuthToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 
 	return &ArtifactsListCmd{
 		server:      server,
-		tokenPath:   token,
+		token:       token,
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
 	}, nil
@@ -86,5 +79,5 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 func (c *ArtifactsListCmd) Run() error {
 
 	client := deployments.NewClient(c.server, c.skipVerify)
-	return client.ListArtifacts(c.tokenPath, c.detailLevel)
+	return client.ListArtifacts(c.token, c.detailLevel)
 }

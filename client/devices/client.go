@@ -67,12 +67,12 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) ListDevices(tokenPath string, detailLevel int, raw bool) error {
+func (c *Client) ListDevices(token string, detailLevel int, raw bool) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid devices detail")
 	}
 
-	body, err := client.DoGetRequest(tokenPath, c.devicesListURL, c.client)
+	body, err := client.DoGetRequest(token, c.devicesListURL, c.client)
 	if err != nil {
 		return err
 	}

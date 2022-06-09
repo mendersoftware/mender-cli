@@ -29,6 +29,7 @@ const (
 	argRootServer     = "server"
 	argRootSkipVerify = "skip-verify"
 	argRootToken      = "token"
+	argRootTokenValue = "token-value"
 	argRootVerbose    = "verbose"
 	argRootGenerate   = "generate-autocomplete"
 	argRootVersion    = "version"
@@ -113,7 +114,8 @@ func init() {
 	_ = viper.BindPFlag(argRootServer, rootCmd.PersistentFlags().Lookup(argRootServer))
 	rootCmd.PersistentFlags().
 		BoolP(argRootSkipVerify, "k", false, "skip SSL certificate verification")
-	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "token file path")
+	rootCmd.PersistentFlags().StringP(argRootToken, "", "", "JWT token file path")
+	rootCmd.PersistentFlags().StringP(argRootTokenValue, "", "", "JWT token value (API key)")
 	rootCmd.PersistentFlags().BoolP(argRootVerbose, "v", false, "print verbose output")
 	rootCmd.Flags().Bool(argRootVersion, false, "print version")
 	rootCmd.Flags().Bool(argRootGenerate, false, "generate shell completion script")

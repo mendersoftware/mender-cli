@@ -21,7 +21,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -78,6 +77,7 @@ func init() {
 // TerminalCmd handles the terminal command
 type TerminalCmd struct {
 	server             string
+	token              string
 	skipVerify         bool
 	deviceID           string
 	sessionID          string
@@ -144,6 +144,11 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		return nil, err
 	}
 
+	token, err := getAuthToken(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	deviceID := ""
 	if len(args) == 1 {
 		deviceID = args[0]
@@ -155,6 +160,7 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 
 	return &TerminalCmd{
 		server:             server,
+		token:              token,
 		skipVerify:         skipVerify,
 		deviceID:           deviceID,
 		healthcheck:        make(chan int),
@@ -164,14 +170,6 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		terminalOutputChan: make(chan []byte),
 		playbackFile:       playbackFile,
 	}, nil
-}
-
-func (c *TerminalCmd) getToken(tokenPath string) ([]byte, error) {
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "Please Login first")
-	}
-	return token, nil
 }
 
 // send the shell start message
@@ -353,12 +351,7 @@ func (c *TerminalCmd) Run() error {
 		))
 	}
 
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return errors.Wrap(err, "Unable to determine the default auth token path")
-	}
-
-	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+	client := deviceconnect.NewClient(c.server, c.token, c.skipVerify)
 
 	// check if the device is connected
 	device, err := client.GetDevice(c.deviceID)
@@ -368,14 +361,8 @@ func (c *TerminalCmd) Run() error {
 		return errors.New("the device is not connected")
 	}
 
-	// get the JWT token
-	token, err := c.getToken(tokenPath)
-	if err != nil {
-		return err
-	}
-
 	// connect to the websocket and start the ping-pong connection health-check
-	err = client.Connect(c.deviceID, token)
+	err = client.Connect(c.deviceID, c.token)
 	if err != nil {
 		return err
 	}

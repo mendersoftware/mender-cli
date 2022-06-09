@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ type ArtifactUploadCmd struct {
 	skipVerify      bool
 	description     string
 	artifactPath    string
-	tokenPath       string
+	token           string
 	withoutProgress bool
 }
 
@@ -69,19 +69,12 @@ func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argRootToken)
+	withoutProgress, err := cmd.Flags().GetBool(argWithoutProgress)
 	if err != nil {
 		return nil, err
 	}
 
-	if token == "" {
-		token, err = getDefaultAuthTokenPath()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	withoutProgress, err := cmd.Flags().GetBool(argWithoutProgress)
+	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +82,7 @@ func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd
 	return &ArtifactUploadCmd{
 		server:          server,
 		description:     artifactDescription,
-		tokenPath:       token,
+		token:           token,
 		artifactPath:    args[0],
 		skipVerify:      skipVerify,
 		withoutProgress: withoutProgress,
@@ -99,7 +92,7 @@ func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd
 func (c *ArtifactUploadCmd) Run() error {
 
 	client := deployments.NewClient(c.server, c.skipVerify)
-	err := client.UploadArtifact(c.description, c.artifactPath, c.tokenPath, c.withoutProgress)
+	err := client.UploadArtifact(c.description, c.artifactPath, c.token, c.withoutProgress)
 	if err != nil {
 		return err
 	}

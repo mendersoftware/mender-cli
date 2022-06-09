@@ -59,16 +59,9 @@ func NewFileTransfer(cmd *cobra.Command, args []string) (*FileTransferCmd, error
 		return nil, err
 	}
 
-	token, err := cmd.Flags().GetString(argRootToken)
+	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
-	}
-
-	if token == "" {
-		token, err = getDefaultAuthTokenPath()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return &FileTransferCmd{
@@ -88,13 +81,8 @@ func (c *FileTransferCmd) Run() error {
 }
 
 func (c *FileTransferCmd) checkDevice(deviceID string) error {
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return errors.Wrap(err, "Unable to determine the default auth token path")
-	}
-
 	// check if the device is connected
-	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+	client := deviceconnect.NewClient(c.server, c.token, c.skipVerify)
 	device, err := client.GetDevice(deviceID)
 	if err != nil {
 		return errors.Wrap(err, "unable to get the device")

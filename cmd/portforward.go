@@ -17,7 +17,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
@@ -87,6 +86,7 @@ type portMapping struct {
 // PortForwardCmd handles the port-forward command
 type PortForwardCmd struct {
 	server       string
+	token        string
 	skipVerify   bool
 	deviceID     string
 	sessionID    string
@@ -170,8 +170,14 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 		return nil, err
 	}
 
+	token, err := getAuthToken(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PortForwardCmd{
 		server:       server,
+		token:        token,
 		skipVerify:   skipVerify,
 		deviceID:     args[0],
 		bindingHost:  bindingHost,
@@ -181,25 +187,12 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 	}, nil
 }
 
-func (c *PortForwardCmd) getToken(tokenPath string) ([]byte, error) {
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "Please Login first")
-	}
-	return token, nil
-}
-
 // Run executes the command
 func (c *PortForwardCmd) Run() error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 	defer cancelContext()
 
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return errors.Wrap(err, "Unable to determine the default auth token path")
-	}
-
-	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
+	client := deviceconnect.NewClient(c.server, c.token, c.skipVerify)
 
 	// check if the device is connected
 	device, err := client.GetDevice(c.deviceID)
@@ -209,14 +202,8 @@ func (c *PortForwardCmd) Run() error {
 		return errors.New("the device is not connected")
 	}
 
-	// get the JWT token
-	token, err := c.getToken(tokenPath)
-	if err != nil {
-		return err
-	}
-
 	// connect to the websocket and start the ping-pong connection health-check
-	err = client.Connect(c.deviceID, token)
+	err = client.Connect(c.deviceID, c.token)
 	if err != nil {
 		return err
 	}
