@@ -1,4 +1,4 @@
-// Copyright 2021 Northern.tech AS
+// Copyright 2022 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -36,7 +37,7 @@ type TCPPortForwarder struct {
 	listen     net.Listener
 	remoteHost string
 	remotePort uint16
-	mutexAck   *sync.Mutex
+	mutexAck   map[string]*sync.Mutex
 }
 
 func NewTCPPortForwarder(
@@ -54,7 +55,7 @@ func NewTCPPortForwarder(
 		listen:     listen,
 		remoteHost: remoteHost,
 		remotePort: remotePort,
-		mutexAck:   &sync.Mutex{},
+		mutexAck:   map[string]*sync.Mutex{},
 	}, nil
 }
 
@@ -109,6 +110,11 @@ func (p *TCPPortForwarder) handleRequest(
 ) {
 	defer conn.Close()
 
+	p.mutexAck[connectionID] = &sync.Mutex{}
+	defer func() {
+		delete(p.mutexAck, connectionID)
+	}()
+
 	errChan := make(chan error)
 	dataChan := make(chan []byte)
 
@@ -158,7 +164,7 @@ func (p *TCPPortForwarder) handleRequest(
 	go p.handleRequestConnection(dataChan, errChan, conn)
 
 	// go routine to handle received messages
-	go func() {
+	go func(connectionID string) {
 		for {
 			select {
 			case m := <-recvChan:
@@ -170,7 +176,9 @@ func (p *TCPPortForwarder) handleRequest(
 					m.Header.MsgType == wspf.MessageTypePortForward {
 					_, err := conn.Write(m.Body)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
+						if errors.Unwrap(err) != net.ErrClosed {
+							fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
+						}
 					} else {
 						// send the ack
 						m := &ws.ProtoMsg{
@@ -187,13 +195,15 @@ func (p *TCPPortForwarder) handleRequest(
 					}
 				} else if m.Header.Proto == ws.ProtoTypePortForward &&
 					m.Header.MsgType == wspf.MessageTypePortForwardAck {
-					p.mutexAck.Unlock()
+					if m, ok := p.mutexAck[connectionID]; ok {
+						m.Unlock()
+					}
 				}
 			case <-ctx.Done():
 				return
 			}
 		}
-	}()
+	}(connectionID)
 
 	// go routine to handle sent messages
 	for {
@@ -205,7 +215,7 @@ func (p *TCPPortForwarder) handleRequest(
 			return
 		case data := <-dataChan:
 			// lock the ack mutex, we don't allow more than one in-flight message
-			p.mutexAck.Lock()
+			p.mutexAck[connectionID].Lock()
 
 			m := &ws.ProtoMsg{
 				Header: ws.ProtoHdr{
