@@ -192,21 +192,21 @@ func (c *PortForwardCmd) getToken(tokenPath string) ([]byte, error) {
 
 // Run executes the command
 func (c *PortForwardCmd) Run() error {
+	tokenPath, err := getDefaultAuthTokenPath()
+	if err != nil {
+		return errors.Wrap(err, "Unable to determine the default auth token path")
+	}
+
 	for {
-		if err := c.run(); err != errRestart {
+		if err := c.run(tokenPath); err != errRestart {
 			return err
 		}
 	}
 }
 
-func (c *PortForwardCmd) run() error {
+func (c *PortForwardCmd) run(tokenPath string) error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 	defer cancelContext()
-
-	tokenPath, err := getDefaultAuthTokenPath()
-	if err != nil {
-		return errors.Wrap(err, "Unable to determine the default auth token path")
-	}
 
 	client := deviceconnect.NewClient(c.server, tokenPath, c.skipVerify)
 
