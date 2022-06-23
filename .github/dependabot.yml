@@ -1,14 +1,16 @@
 version: 2
 updates:
   - commit-message:
-      prefix: "chore"
+      prefix: chore
     directory: /
     package-ecosystem: gomod
     schedule:
-      interval: weekly
+      interval: monthly
+      day: saturday
   - commit-message:
-      prefix: "chore"
+      prefix: chore
     directory: /
     package-ecosystem: docker
     schedule:
-      interval: weekly
+      interval: monthly
+      day: saturday
