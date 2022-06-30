@@ -17,6 +17,7 @@ variables:
   S3_BUCKET_NAME: "mender"
   S3_BUCKET_PATH: "mender-cli"
   BUILD_DIR: build
+  LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
 
 stages:
   - build
