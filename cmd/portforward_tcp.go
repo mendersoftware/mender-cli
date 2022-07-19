@@ -22,7 +22,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -37,7 +36,6 @@ type TCPPortForwarder struct {
 	listen     net.Listener
 	remoteHost string
 	remotePort uint16
-	mutexAck   map[string]*sync.Mutex
 }
 
 func NewTCPPortForwarder(
@@ -55,7 +53,6 @@ func NewTCPPortForwarder(
 		listen:     listen,
 		remoteHost: remoteHost,
 		remotePort: remotePort,
-		mutexAck:   map[string]*sync.Mutex{},
 	}, nil
 }
 
@@ -109,11 +106,6 @@ func (p *TCPPortForwarder) handleRequest(
 	msgChan chan *ws.ProtoMsg,
 ) {
 	defer conn.Close()
-
-	p.mutexAck[connectionID] = &sync.Mutex{}
-	defer func() {
-		delete(p.mutexAck, connectionID)
-	}()
 
 	errChan := make(chan error)
 	dataChan := make(chan []byte)
@@ -193,11 +185,6 @@ func (p *TCPPortForwarder) handleRequest(
 						}
 						msgChan <- m
 					}
-				} else if m.Header.Proto == ws.ProtoTypePortForward &&
-					m.Header.MsgType == wspf.MessageTypePortForwardAck {
-					if m, ok := p.mutexAck[connectionID]; ok {
-						m.Unlock()
-					}
 				}
 			case <-ctx.Done():
 				return
@@ -214,9 +201,6 @@ func (p *TCPPortForwarder) handleRequest(
 			}
 			return
 		case data := <-dataChan:
-			// lock the ack mutex, we don't allow more than one in-flight message
-			p.mutexAck[connectionID].Lock()
-
 			m := &ws.ProtoMsg{
 				Header: ws.ProtoHdr{
 					Proto:     ws.ProtoTypePortForward,
