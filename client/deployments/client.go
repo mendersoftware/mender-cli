@@ -233,16 +233,12 @@ func (c *Client) UploadArtifact(
 	log.Verbf("response: \n%v\n", string(rspDump))
 
 	if rsp.StatusCode != http.StatusCreated {
-		body, err := ioutil.ReadAll(rsp.Body)
-		if err != nil {
-			return errors.Wrap(err, "can't read request body")
-		}
 		if rsp.StatusCode == http.StatusUnauthorized {
-			log.Verbf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body)
+			log.Verbf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode)
 			return errors.New("Unauthorized. Please Login first")
 		}
 		return errors.New(
-			fmt.Sprintf("artifact upload failed with status %d, reason: %s", rsp.StatusCode, body),
+			fmt.Sprintf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode),
 		)
 	}
 

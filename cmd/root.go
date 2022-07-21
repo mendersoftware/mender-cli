@@ -15,6 +15,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -100,6 +101,15 @@ func Execute() {
 	CheckErr(rootCmd.Execute())
 }
 
+func validateConfiguration() {
+	server := viper.GetString(argRootServer)
+	u, _ := url.Parse(server)
+	if u.Scheme == "" {
+		viper.Set(argRootServer, "https://"+server)
+		log.Info("Protocol is not specified, HTTPS is used by default.")
+	}
+}
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -126,4 +136,5 @@ func init() {
 	rootCmd.AddCommand(terminalCmd)
 	rootCmd.AddCommand(portForwardCmd)
 	rootCmd.AddCommand(fileTransferCmd)
+	validateConfiguration()
 }
