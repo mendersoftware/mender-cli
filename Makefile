@@ -81,7 +81,7 @@ build-acceptance-tools:
 		echo "aborting: PROJECT_DIR not set";\
 	    exit 1;\
 	 fi
-	wget -q -O ${PROJECT_DIR}/mender-artifact https://downloads.mender.io/mender-artifact/master/mender-artifact
+	wget -q -O ${PROJECT_DIR}/mender-artifact https://downloads.mender.io/mender-artifact/master/linux/mender-artifact
 	chmod +x ${PROJECT_DIR}/mender-artifact
 
 build-acceptance-image:
