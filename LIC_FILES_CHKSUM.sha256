@@ -41,10 +41,14 @@ feb6d17a0e7a64e5ab0f7e2b0e0ee3e69c1a6396626fd554dc0cddaa06851b44  vendor/github.
 feb6d17a0e7a64e5ab0f7e2b0e0ee3e69c1a6396626fd554dc0cddaa06851b44  vendor/github.com/spf13/viper/LICENSE
 1fd29c692f599736d92f7c02b7826836c0d2ccc838689b21822f4ce0253c39df  vendor/github.com/subosito/gotenv/LICENSE
 87d700d1dfac26ddcecc73971b854b5d00c4734214fb8252961212f9e06d2388  vendor/github.com/pelletier/go-toml/LICENSE
+e35cc791b3c8e48b4a42a0d2719f9cdd51677fcffab0bb5dae1e63f0a53c9ee0  vendor/github.com/pelletier/go-toml/v2/LICENSE
 22adc4abdece712a737573672f082fd61ac2b21df878efb87ffcff4354a07f26  vendor/github.com/mitchellh/mapstructure/LICENSE
 feb6d17a0e7a64e5ab0f7e2b0e0ee3e69c1a6396626fd554dc0cddaa06851b44  vendor/github.com/spf13/jwalterweatherman/LICENSE
 a94710b55e03b5285f77d048c5ba61bb9d6ee04a06c0eb90e68821e11b0c707a  vendor/gopkg.in/yaml.v2/LICENSE.libyaml
 a59885f5f0f3b3c07cf9444db5fe399b6f0791eac82055f7b85cc65500551039  vendor/github.com/rivo/uniseg/LICENSE.txt
+
+# MIT and Apache 2.0
+d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b  vendor/gopkg.in/yaml.v3/LICENSE
 
 # Mozilla Public License 2.0
 bef1747eda88b9ed46e94830b0d978c3499dad5dfe38d364971760881901dadd  vendor/github.com/hashicorp/hcl/LICENSE
