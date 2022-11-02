@@ -1,6 +1,6 @@
 # Apache 2.0
 1033348db7606a7e61b6484f293847cf8d7a35766efebb97e304d4bd5d7f3f6b  LICENSE
-f42d670262f9aed37a33c97d93fa2c1324f439ee03d7690710c5fe002561b0b5  vendor/github.com/inconshreveable/mousetrap/LICENSE
+4819582701f150b28a563a6cd8ed0bf5a754e3c67b90ad38d78ba4131bf77795  vendor/github.com/inconshreveable/mousetrap/LICENSE
 5e3400b93bbb099e83e52bab885e7441750673c21f97988ca3f1240639b63283  vendor/github.com/spf13/cobra/LICENSE.txt
 b8514c577c1c4b46cee454d5a882b15fa411e72c5bd7f801f241591789fce61a  vendor/github.com/spf13/pflag/LICENSE
 f6918bd93ffe07f4b2c61b8287c32cb3122e08aed0be50f1c7d0eddc87877a8f  vendor/gopkg.in/ini.v1/LICENSE
