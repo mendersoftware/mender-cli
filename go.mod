@@ -10,8 +10,8 @@ require (
 	github.com/mendersoftware/go-lib-micro v0.0.0-20210322083710-42186ab64a1e
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
-	github.com/spf13/viper v1.13.0
+	github.com/spf13/viper v1.14.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+	golang.org/x/sys v0.0.0-20220908164124-27713097b956
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 )
