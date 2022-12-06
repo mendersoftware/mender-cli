@@ -84,7 +84,7 @@ test_acceptance_build:image:
   stage: test_acceptance_build
   image: docker
   services:
-    - docker:19.03.5-dind
+    - docker:20.10.21-dind
   needs: []
   script:
     - apk add --no-cache make
@@ -103,7 +103,7 @@ test_acceptance:run:
     - test_acceptance_build:tools
     - test_acceptance_build:image
   services:
-    - docker:19.03.5-dind
+    - docker:20.10.21-dind
   script:
     - apk add --no-cache git bash make
     - docker load -i acceptance_testing_image.tar
