@@ -1,6 +1,6 @@
 FROM tiangolo/docker-with-compose
 
-RUN apk add bash python3
+RUN apk add bash python3 openssl1.1-compat
 RUN pip3 install requests minio pytest
 
 RUN mkdir -p /tests
