@@ -1,6 +1,6 @@
 FROM tiangolo/docker-with-compose
 
-RUN apk add bash python3 libc6-compat xz-dev
+RUN apk add bash python3
 RUN pip3 install requests minio pytest
 
 RUN mkdir -p /tests
