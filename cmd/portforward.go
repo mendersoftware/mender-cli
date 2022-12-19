@@ -27,6 +27,7 @@ import (
 	wspf "github.com/mendersoftware/go-lib-micro/ws/portforward"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/vmihailenco/msgpack"
 	"golang.org/x/sys/unix"
 
@@ -151,9 +152,9 @@ func getPortMappings(args []string) ([]portMapping, error) {
 
 // NewPortForwardCmd returns a new PortForwardCmd
 func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, error) {
-	server, err := cmd.Flags().GetString(argRootServer)
-	if err != nil {
-		return nil, err
+	server := viper.GetString(argRootServer)
+	if server == "" {
+		return nil, errors.New("No server")
 	}
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
