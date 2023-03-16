@@ -15,3 +15,8 @@ services:
         volumes:
             - "${TESTS_DIR}:/tests"
             - /var/run/docker.sock:/var/run/docker.sock
+
+    mender-deployments:
+        environment:
+            DEPLOYMENTS_STORAGE_ENABLE_DIRECT_UPLOAD: true
+
