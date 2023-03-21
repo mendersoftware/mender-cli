@@ -1,16 +1,16 @@
-// Copyright 2022 Northern.tech AS
+// Copyright 2023 Northern.tech AS
 //
-//    Licensed under the Apache License, Version 2.0 (the "License");
-//    you may not use this file except in compliance with the License.
-//    You may obtain a copy of the License at
+//	Licensed under the Apache License, Version 2.0 (the "License");
+//	you may not use this file except in compliance with the License.
+//	You may obtain a copy of the License at
 //
-//        http://www.apache.org/licenses/LICENSE-2.0
+//	    http://www.apache.org/licenses/LICENSE-2.0
 //
-//    Unless required by applicable law or agreed to in writing, software
-//    distributed under the License is distributed on an "AS IS" BASIS,
-//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//    See the License for the specific language governing permissions and
-//    limitations under the License.
+//	Unless required by applicable law or agreed to in writing, software
+//	distributed under the License is distributed on an "AS IS" BASIS,
+//	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//	See the License for the specific language governing permissions and
+//	limitations under the License.
 package deployments
 
 import (
@@ -23,6 +23,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -30,6 +31,10 @@ import (
 
 	"github.com/mendersoftware/mender-cli/client"
 	"github.com/mendersoftware/mender-cli/log"
+)
+
+const (
+	httpErrorBoundary = 300
 )
 
 type artifactsList struct {
@@ -69,9 +74,11 @@ type artifactData struct {
 }
 
 const (
-	artifactUploadURL  = "/api/management/v1/deployments/artifacts"
-	artifactsListURL   = artifactUploadURL
-	artifactsDeleteURL = artifactUploadURL
+	artifactUploadURL   = "/api/management/v1/deployments/artifacts"
+	artifactsListURL    = artifactUploadURL
+	artifactsDeleteURL  = artifactUploadURL
+	directUploadURL     = "/api/management/v1/deployments/artifacts/directupload"
+	transferCompleteURL = "/api/management/v1/deployments/artifacts/directupload/:id/complete"
 )
 
 type Client struct {
@@ -79,7 +86,19 @@ type Client struct {
 	artifactUploadURL string
 	artifactsListURL  string
 	artifactDeleteURL string
+	directUploadURL   string
 	client            *http.Client
+}
+
+type Link struct {
+	Uri    string            `json:"uri"`
+	Header map[string]string `json:"header,omitempty"`
+}
+
+type UploadLink struct {
+	ArtifactID string `json:"id"`
+
+	Link
 }
 
 func NewClient(url string, skipVerify bool) *Client {
@@ -88,8 +107,25 @@ func NewClient(url string, skipVerify bool) *Client {
 		artifactUploadURL: client.JoinURL(url, artifactUploadURL),
 		artifactsListURL:  client.JoinURL(url, artifactsListURL),
 		artifactDeleteURL: client.JoinURL(url, artifactsDeleteURL),
+		directUploadURL:   client.JoinURL(url, directUploadURL),
 		client:            client.NewHttpClient(skipVerify),
 	}
+}
+
+func (c *Client) DirectDownloadLink(token string) (*UploadLink, error) {
+	var link UploadLink
+
+	body, err := client.DoPostRequest(token, c.directUploadURL, c.client)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(body, &link)
+	if err != nil {
+		return nil, err
+	}
+
+	return &link, nil
 }
 
 func (c *Client) ListArtifacts(token string, detailLevel int) error {
@@ -155,6 +191,77 @@ func listArtifact(a artifactData, detailLevel int) {
 	}
 
 	fmt.Println("--------------------------------------------------------------------------------")
+}
+
+func (c *Client) DirectUpload(
+	token, artifactPath, id, url string,
+	headers map[string]string,
+	noProgress bool,
+) error {
+	var bar *pb.ProgressBar
+
+	artifact, err := os.Open(artifactPath)
+	if err != nil {
+		return errors.Wrap(err, "Cannot read artifact file")
+	}
+	defer artifact.Close()
+
+	artifactStats, err := artifact.Stat()
+	if err != nil {
+		return errors.Wrap(err, "Cannot read artifact file stats")
+	}
+
+	var req *http.Request
+	if !noProgress {
+		// create progress bar
+		bar = pb.New64(artifactStats.Size()).
+			Set(pb.Bytes, true).
+			SetRefreshRate(time.Millisecond * 100)
+		bar.Start()
+		req, err = http.NewRequest(http.MethodPut, url, bar.NewProxyReader(artifact))
+	} else {
+		req, err = http.NewRequest(http.MethodPut, url, artifact)
+	}
+	if err != nil {
+		return errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Content-Type", "application/vnd.mender-artifact")
+	req.ContentLength = artifactStats.Size()
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	for k, h := range headers {
+		req.Header.Set(k, h)
+	}
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "POST /artifacts request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	if rsp.StatusCode >= httpErrorBoundary {
+		return errors.New(
+			fmt.Sprintf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode),
+		)
+	} else {
+		_, err := client.DoPostRequest(
+			token,
+			client.JoinURL(
+				c.url,
+				strings.ReplaceAll(transferCompleteURL, ":id", id),
+			),
+			c.client,
+		)
+		if err != nil {
+			return errors.Wrap(err, "failed to notify on complete upload")
+		}
+	}
+
+	return nil
 }
 
 func (c *Client) UploadArtifact(

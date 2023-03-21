@@ -1,20 +1,20 @@
-// Copyright 2022 Northern.tech AS
+// Copyright 2023 Northern.tech AS
 //
-//    Licensed under the Apache License, Version 2.0 (the "License");
-//    you may not use this file except in compliance with the License.
-//    You may obtain a copy of the License at
+//	Licensed under the Apache License, Version 2.0 (the "License");
+//	you may not use this file except in compliance with the License.
+//	You may obtain a copy of the License at
 //
-//        http://www.apache.org/licenses/LICENSE-2.0
+//	    http://www.apache.org/licenses/LICENSE-2.0
 //
-//    Unless required by applicable law or agreed to in writing, software
-//    distributed under the License is distributed on an "AS IS" BASIS,
-//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//    See the License for the specific language governing permissions and
-//    limitations under the License.
+//	Unless required by applicable law or agreed to in writing, software
+//	distributed under the License is distributed on an "AS IS" BASIS,
+//	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//	See the License for the specific language governing permissions and
+//	limitations under the License.
 package cmd
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,6 +26,7 @@ import (
 const (
 	argArtifactDescription = "description"
 	argWithoutProgress     = "no-progress"
+	argDirect              = "direct"
 )
 
 var artifactUploadCmd = &cobra.Command{
@@ -42,6 +43,7 @@ var artifactUploadCmd = &cobra.Command{
 func init() {
 	artifactUploadCmd.Flags().StringP(argArtifactDescription, "", "", "artifact description")
 	artifactUploadCmd.Flags().BoolP(argWithoutProgress, "", false, "disable progress bar")
+	artifactUploadCmd.Flags().BoolP(argDirect, "", false, "upload directly to storage")
 }
 
 type ArtifactUploadCmd struct {
@@ -51,6 +53,7 @@ type ArtifactUploadCmd struct {
 	artifactPath    string
 	token           string
 	withoutProgress bool
+	direct          bool
 }
 
 func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd, error) {
@@ -74,6 +77,11 @@ func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd
 		return nil, err
 	}
 
+	direct, err := cmd.Flags().GetBool(argDirect)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
@@ -86,15 +94,36 @@ func NewArtifactUploadCmd(cmd *cobra.Command, args []string) (*ArtifactUploadCmd
 		artifactPath:    args[0],
 		skipVerify:      skipVerify,
 		withoutProgress: withoutProgress,
+		direct:          direct,
 	}, nil
 }
 
 func (c *ArtifactUploadCmd) Run() error {
-
 	client := deployments.NewClient(c.server, c.skipVerify)
-	err := client.UploadArtifact(c.description, c.artifactPath, c.token, c.withoutProgress)
-	if err != nil {
-		return err
+	if c.direct {
+		log.Infof("getting direct link.\n")
+		link, err := client.DirectDownloadLink(c.token)
+		if err != nil {
+			return errors.Wrap(err, "failed to get the direct pre-signed URL")
+		}
+
+		log.Infof("uploading the artifact.\n")
+		err = client.DirectUpload(
+			c.token,
+			c.artifactPath,
+			link.ArtifactID,
+			link.Uri,
+			link.Header,
+			c.withoutProgress,
+		)
+		if err != nil {
+			return errors.Wrap(err, "failed to upload the artifact")
+		}
+	} else {
+		err := client.UploadArtifact(c.description, c.artifactPath, c.token, c.withoutProgress)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Info("upload successful")
