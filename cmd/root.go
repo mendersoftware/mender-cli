@@ -14,11 +14,13 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/mendersoftware/mender-cli/log"
@@ -77,7 +79,7 @@ func Execute() {
 	lflags := rootCmd.LocalFlags()
 	lflags.ParseErrorsWhitelist.UnknownFlags = true
 	err := lflags.Parse(os.Args)
-	if err != nil {
+	if err != nil && !errors.Is(err, pflag.ErrHelp) {
 		log.Errf("Failed to parse flags: %s\n", err)
 	}
 	b, _ := rootCmd.Flags().GetBool(argRootGenerate)
