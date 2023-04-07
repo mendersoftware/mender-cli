@@ -1,20 +1,20 @@
 module github.com/mendersoftware/mender-cli
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
-	github.com/mendersoftware/go-lib-micro v0.0.0-20210322083710-42186ab64a1e
+	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
+	github.com/mendersoftware/go-lib-micro v0.0.0-20221025103319-e1f941fb3145
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/sys v0.5.0
-	golang.org/x/term v0.5.0
+	golang.org/x/sys v0.6.0
+	golang.org/x/term v0.6.0
 )
 
 require (
@@ -35,7 +35,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
