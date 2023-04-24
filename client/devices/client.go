@@ -78,7 +78,7 @@ func (c *Client) ListDevices(token string, detailLevel int, raw bool) error {
 	}
 
 	if raw {
-		print(string(body))
+		fmt.Println(string(body))
 	} else {
 
 		var list devicesList
