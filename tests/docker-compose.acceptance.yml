@@ -1,4 +1,4 @@
-version: '2.1'
+version: '2.3'
 services:
     acceptance:
         image: testing
@@ -18,5 +18,5 @@ services:
 
     mender-deployments:
         environment:
-            DEPLOYMENTS_STORAGE_ENABLE_DIRECT_UPLOAD: true
+            DEPLOYMENTS_STORAGE_ENABLE_DIRECT_UPLOAD: "true"
 
