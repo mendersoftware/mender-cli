@@ -2,6 +2,7 @@ version: '2.1'
 services:
     acceptance:
         image: testing
+        entrypoint: ['/bin/sh', '/tests/run.sh']
         networks:
             - mender
         depends_on:
