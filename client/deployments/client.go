@@ -79,15 +79,19 @@ const (
 	artifactsDeleteURL  = artifactUploadURL
 	directUploadURL     = "/api/management/v1/deployments/artifacts/directupload"
 	transferCompleteURL = "/api/management/v1/deployments/artifacts/directupload/:id/complete"
+	artifactURL         = "/api/management/v1/deployments/artifacts/:id"
+	artifactDownloadURL = "/api/management/v1/deployments/artifacts/:id/download"
 )
 
 type Client struct {
-	url               string
-	artifactUploadURL string
-	artifactsListURL  string
-	artifactDeleteURL string
-	directUploadURL   string
-	client            *http.Client
+	url                 string
+	artifactUploadURL   string
+	artifactURL         string
+	artifactDownloadURL string
+	artifactsListURL    string
+	artifactDeleteURL   string
+	directUploadURL     string
+	client              *http.Client
 }
 
 type Link struct {
@@ -103,12 +107,14 @@ type UploadLink struct {
 
 func NewClient(url string, skipVerify bool) *Client {
 	return &Client{
-		url:               url,
-		artifactUploadURL: client.JoinURL(url, artifactUploadURL),
-		artifactsListURL:  client.JoinURL(url, artifactsListURL),
-		artifactDeleteURL: client.JoinURL(url, artifactsDeleteURL),
-		directUploadURL:   client.JoinURL(url, directUploadURL),
-		client:            client.NewHttpClient(skipVerify),
+		url:                 url,
+		artifactUploadURL:   client.JoinURL(url, artifactUploadURL),
+		artifactURL:         client.JoinURL(url, artifactURL),
+		artifactDownloadURL: client.JoinURL(url, artifactDownloadURL),
+		artifactsListURL:    client.JoinURL(url, artifactsListURL),
+		artifactDeleteURL:   client.JoinURL(url, artifactsDeleteURL),
+		directUploadURL:     client.JoinURL(url, directUploadURL),
+		client:              client.NewHttpClient(skipVerify),
 	}
 }
 
@@ -388,5 +394,205 @@ func (c *Client) DeleteArtifact(
 		)
 	}
 
+	return nil
+}
+
+func (c *Client) DownloadArtifact(
+	sourcePath, artifactID, token string, noProgress bool,
+) error {
+
+	link, err := c.getLink(artifactID, token)
+	if err != nil {
+		return errors.Wrap(err, "Cannot get artifact link")
+	}
+	artifact, err := c.getArtifact(artifactID, token)
+	if err != nil {
+		return errors.Wrap(err, "Cannot get artifact details")
+	}
+	log.Verbf("link: \n%v\n", link.Uri)
+	log.Verbf("artifact: \n%v\n", artifact.Size)
+
+	if sourcePath != "" {
+		sourcePath += "/"
+	}
+	sourcePath += artifact.Name + ".mender"
+
+	req, err := http.NewRequest(http.MethodGet, link.Uri, nil)
+	if err != nil {
+		return errors.Wrap(err, "Cannot create request")
+	}
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "GET /artifacts request failed")
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return c.downloadFile(artifact.Size, sourcePath, resp, noProgress)
+	case http.StatusBadRequest:
+		return errors.New("Bad request\n")
+	case http.StatusForbidden:
+		return errors.New("Forbidden")
+	case http.StatusNotFound:
+		return errors.New("File not found on the device\n")
+	case http.StatusConflict:
+		return errors.New("The device is not connected\n")
+	case http.StatusInternalServerError:
+		return errors.New("Internal server error\n")
+	default:
+		return errors.New("Error: Received unexpected response code: " +
+			strconv.Itoa(resp.StatusCode))
+	}
+}
+
+type DownloadLink struct {
+	Uri    string    `json:"uri"`
+	Expire time.Time `json:"expire"`
+}
+
+type Artifact struct {
+	Size int64  `json:"size"`
+	Name string `json:"name"`
+}
+
+func (c *Client) getArtifact(
+	artifactID, token string,
+) (*Artifact, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		strings.ReplaceAll(c.artifactURL, ":id", artifactID), nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	body, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+
+	var artifact Artifact
+	err = json.Unmarshal(body, &artifact)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+
+	return &artifact, nil
+}
+
+func (c *Client) getLink(
+	artifactID, token string,
+) (*DownloadLink, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		strings.ReplaceAll(c.artifactDownloadURL, ":id", artifactID), nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	body, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+
+	var link DownloadLink
+	err = json.Unmarshal(body, &link)
+	if err != nil {
+		return nil, errors.Wrap(err, "GET /artifacts request failed")
+	}
+
+	return &link, nil
+}
+
+func (c *Client) downloadFile(size int64, localFileName string, resp *http.Response,
+	noProgress bool) error {
+	path := resp.Header.Get("X-MEN-FILE-PATH")
+	uid := resp.Header.Get("X-MEN-FILE-UID")
+	gid := resp.Header.Get("X-MEN-FILE-GID")
+	var n int64
+
+	file, err := os.Create(localFileName)
+	if err != nil {
+		return errors.Wrap(err, "Cannot create file")
+	}
+	defer file.Close()
+	if err != nil {
+		log.Errf("Failed to create the file %s locally\n", path)
+		return err
+	}
+
+	if resp.Header.Get("Content-Type") != "application/vnd.mender-artifact" {
+		return fmt.Errorf("Unexpected Content-Type header: %s", resp.Header.Get("Content-Type"))
+	}
+	if err != nil {
+		log.Err("downloadFile: Failed to parse the Content-Type header")
+		return err
+	}
+	i, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
+	sourceSize := int64(i)
+	source := resp.Body
+
+	if !noProgress {
+		var bar *pb.ProgressBar = pb.New64(sourceSize).
+			Set(pb.Bytes, true).
+			SetRefreshRate(time.Millisecond * 100)
+		bar.Start()
+		// create proxy reader
+		reader := bar.NewProxyReader(source)
+		n, err = io.Copy(file, reader)
+	} else {
+		n, err = io.Copy(file, source)
+	}
+	log.Verbf("wrote: %d\n", n)
+	if err != nil {
+		return err
+	}
+	if n != size {
+		return errors.New(
+			"The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'",
+		)
+	}
+	// Set the proper permissions and {G,U}ID's if present
+	if uid != "" && gid != "" {
+		uidi, err := strconv.Atoi(uid)
+		if err != nil {
+			return err
+		}
+		gidi, err := strconv.Atoi(gid)
+		if err != nil {
+			return err
+		}
+		err = os.Chown(file.Name(), uidi, gidi)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

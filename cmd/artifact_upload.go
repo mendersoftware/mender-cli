@@ -25,7 +25,6 @@ import (
 
 const (
 	argArtifactDescription = "description"
-	argWithoutProgress     = "no-progress"
 	argDirect              = "direct"
 )
 
