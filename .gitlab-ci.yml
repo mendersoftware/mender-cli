@@ -89,6 +89,7 @@ test_acceptance_build:image:
   script:
     - apk add --no-cache make
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
+    - ls -lah tests/
     - make build-acceptance-image
     - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
   artifacts:
