@@ -1,4 +1,4 @@
-// Copyright 2022 Northern.tech AS
+// Copyright 2023 Northern.tech AS
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -84,16 +85,32 @@ func getAuthToken(cmd *cobra.Command) (string, error) {
 	tokenValue, err := cmd.Flags().GetString(argRootTokenValue)
 	if err != nil {
 		return "", err
-	} else if tokenValue != "" {
-		return tokenValue, nil
 	}
-	tokenPath, err := getDefaultAuthTokenPath()
+	tokenPath, err := cmd.Flags().GetString(argRootToken)
 	if err != nil {
 		return "", err
 	}
+
+	if tokenValue != "" && tokenPath != "" {
+		return "", fmt.Errorf("cannot specify both --%s and --%s",
+			argRootTokenValue, argRootToken)
+	}
+
+	if tokenValue != "" {
+		return tokenValue, nil
+	}
+
+	if tokenPath == "" {
+		tokenPath, err = getDefaultAuthTokenPath()
+		if err != nil {
+			return "", err
+		}
+	}
+
 	token, err := ioutil.ReadFile(tokenPath)
 	if err != nil {
 		return "", errors.Wrap(err, "Please Login first")
 	}
-	return string(token), nil
+	tokenValue = strings.TrimSpace(string(token))
+	return tokenValue, nil
 }
