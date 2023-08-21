@@ -400,11 +400,10 @@ func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
 		return err
 	}
 	n, err = io.Copy(file, resp.Body)
+	log.Verbf("wrote: %d\n", n)
 	if err != nil {
-		log.Verbf("wrote: %d\n", n)
 		return err
 	}
-	log.Verbf("wrote: %d\n", n)
 	if n != size {
 		return errors.New(
 			"The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'",

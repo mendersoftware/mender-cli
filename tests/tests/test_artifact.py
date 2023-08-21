@@ -175,3 +175,50 @@ class TestArtifactDelete:
 
         assert r.returncode!=0
         expect_output(r.stderr, 'FAILURE', 'Please Login first')
+
+class TestArtifactDownload:
+    @pytest.mark.usefixtures('clean_deployments_db', 'clean_mender_storage')
+    def test_ok(self, logged_in_single_user, valid_artifact):
+        c = cli.MenderCliCoverage()
+
+        # upload artifact first
+        r = c.run('--server', 'https://mender-api-gateway', \
+            '--skip-verify', \
+            'artifacts', 'upload', \
+            '--description', 'foo',
+            valid_artifact)
+
+        assert r.returncode==0, r.stderr
+        expect_output(r.stdout, 'upload successful')
+
+        r = c.run('--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  'artifacts', 'list')
+
+        regex = re.compile(r"[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z", re.I)
+        artifact_id = None
+        for line in r.stdout.split("\n"):
+            match = regex.search(line)
+            if match:
+                artifact_id = match.group()
+                break
+
+        assert r.returncode==0, r.stderr
+        assert artifact_id is not None
+
+        r = c.run('--server', 'https://mender-api-gateway', \
+            '--skip-verify', \
+            'artifacts', 'download',
+            artifact_id)
+        assert r.returncode==0, r.stderr
+        expect_output(r.stdout, 'download successful')
+
+    def test_error_no_login(self):
+        c = cli.MenderCliCoverage()
+        r = c.run('--server', 'https://mender-api-gateway', \
+                  '--skip-verify', \
+                  'artifacts', 'download', \
+                  "some_artifact_id")
+
+        assert r.returncode!=0
+        expect_output(r.stderr, 'FAILURE', 'Please Login first')

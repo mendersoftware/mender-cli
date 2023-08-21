@@ -17,6 +17,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	argWithoutProgress = "no-progress"
+)
+
 var artifactsCmd = &cobra.Command{
 	Use:       "artifacts",
 	Short:     "Operations on mender artifacts.",
@@ -27,4 +31,5 @@ func init() {
 	artifactsCmd.AddCommand(artifactUploadCmd)
 	artifactsCmd.AddCommand(artifactsListCmd)
 	artifactsCmd.AddCommand(artifactDeleteCmd)
+	artifactsCmd.AddCommand(artifactDownloadCmd)
 }
