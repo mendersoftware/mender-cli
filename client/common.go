@@ -80,12 +80,17 @@ func DoGetRequest(token, urlPath string, client *http.Client) ([]byte, error) {
 	return body, nil
 }
 
-func DoPostRequest(token, urlPath string, client *http.Client) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodPost, urlPath, nil)
+func DoPostRequest(
+	token, urlPath string,
+	client *http.Client,
+	requestBody io.Reader,
+) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodPost, urlPath, requestBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create HTTP request")
 	}
 	req.Header.Set("Authorization", "Bearer "+string(token))
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
 	reqDump, err := httputil.DumpRequest(req, false)
 	if err != nil {

@@ -14,6 +14,7 @@
 package deployments
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +29,8 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/pkg/errors"
+
+	"github.com/mendersoftware/mender-artifact/areader"
 
 	"github.com/mendersoftware/mender-cli/client"
 	"github.com/mendersoftware/mender-cli/log"
@@ -115,7 +118,7 @@ func NewClient(url string, skipVerify bool) *Client {
 func (c *Client) DirectDownloadLink(token string) (*UploadLink, error) {
 	var link UploadLink
 
-	body, err := client.DoPostRequest(token, c.directUploadURL, c.client)
+	body, err := client.DoPostRequest(token, c.directUploadURL, c.client, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +196,82 @@ func listArtifact(a artifactData, detailLevel int) {
 	fmt.Println("--------------------------------------------------------------------------------")
 }
 
+// Type info structure
+type ArtifactUpdateTypeInfo struct {
+	Type *string `json:"type" valid:"required"`
+}
+
+// Update file structure
+type UpdateFile struct {
+	// Image name
+	Name string `json:"name" valid:"required"`
+
+	// Image file checksum
+	Checksum string `json:"checksum" valid:"optional"`
+
+	// Image size
+	Size int64 `json:"size" valid:"optional"`
+
+	// Date build
+	Date *time.Time `json:"date" valid:"optional"`
+}
+
+// Update structure
+type Update struct {
+	TypeInfo ArtifactUpdateTypeInfo `json:"type_info" valid:"required"`
+	Files    []UpdateFile           `json:"files"`
+	MetaData interface{}            `json:"meta_data,omitempty" valid:"optional"`
+}
+
+type DirectUploadMetadata struct {
+	Size    int64    `json:"size,omitempty" valid:"-"`
+	Updates []Update `json:"updates" valid:"-"`
+}
+
+func readArtifactMetadata(path string, size int64) io.Reader {
+	log.Verbf("reading artifact file...")
+	r, err := os.Open(path)
+	if err != nil {
+		log.Verbf("failed to open artifact file: %s", err.Error())
+		return nil
+	}
+	defer r.Close()
+	ar := areader.NewReader(r)
+	err = ar.ReadArtifact()
+	if err != nil {
+		log.Verbf("failed to read artifact file: %s", err.Error())
+		return nil
+	}
+	handlers := ar.GetHandlers()
+	directUploads := make([]Update, len(handlers))
+	for i, p := range handlers {
+		files := p.GetUpdateAllFiles()
+		if len(files) < 1 {
+			log.Verbf("the artifact has no files information")
+			return nil
+		}
+		for _, f := range files {
+			directUploads[i].Files = append(directUploads[i].Files, UpdateFile{
+				Name:     f.Name,
+				Checksum: string(f.Checksum),
+				Size:     f.Size,
+				Date:     &f.Date,
+			})
+		}
+	}
+	directMetadata := DirectUploadMetadata{
+		Size:    size,
+		Updates: directUploads,
+	}
+	data, err := json.Marshal(directMetadata)
+	if err != nil {
+		log.Verbf("failed to parse artifact metadata: %s", err.Error())
+		return nil
+	}
+	log.Verbf("done reading artifact file.")
+	return bytes.NewBuffer(data)
+}
+
 func (c *Client) DirectUpload(
 	token, artifactPath, id, url string,
 	headers map[string]string,
@@ -248,6 +327,7 @@ func (c *Client) DirectUpload(
 			fmt.Sprintf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode),
 		)
 	} else {
+		body := readArtifactMetadata(artifactPath, artifactStats.Size())
 		_, err := client.DoPostRequest(
 			token,
 			client.JoinURL(
@@ -255,6 +335,7 @@ func (c *Client) DirectUpload(
 				strings.ReplaceAll(transferCompleteURL, ":id", id),
 			),
 			c.client,
+			body,
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed to notify on complete upload")
