@@ -14,6 +14,7 @@
 package deployments
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -81,6 +82,7 @@ const (
 	transferCompleteURL = "/api/management/v1/deployments/artifacts/directupload/:id/complete"
 	artifactURL         = "/api/management/v1/deployments/artifacts/:id"
 	artifactDownloadURL = "/api/management/v1/deployments/artifacts/:id/download"
+	deploymentCreateURL = "/api/management/v1/deployments/deployments"
 )
 
 type Client struct {
@@ -91,6 +93,7 @@ type Client struct {
 	artifactsListURL    string
 	artifactDeleteURL   string
 	directUploadURL     string
+	deploymentCreateURL string
 	client              *http.Client
 }
 
@@ -114,6 +117,7 @@ func NewClient(url string, skipVerify bool) *Client {
 		artifactsListURL:    client.JoinURL(url, artifactsListURL),
 		artifactDeleteURL:   client.JoinURL(url, artifactsDeleteURL),
 		directUploadURL:     client.JoinURL(url, directUploadURL),
+		deploymentCreateURL: client.JoinURL(url, deploymentCreateURL),
 		client:              client.NewHttpClient(skipVerify),
 	}
 }
@@ -352,6 +356,52 @@ func (c *Client) UploadArtifact(
 		}
 		return errors.New(
 			fmt.Sprintf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode),
+		)
+	}
+
+	return nil
+}
+
+func (c *Client) CreateDeployment(
+	deploymentName, artifactID, deviceList, token string,
+) error {
+
+	deploymentJson := "{\"name\": \"" + deploymentName + "\", \"artifact_name\": \"" + artifactID + "\", \"devices\": " + deviceList + "}"
+	//"{\"token2fa\":\"" + token + "\"}"
+	reader := bytes.NewReader([]byte(deploymentJson))
+
+	req, err := http.NewRequest(http.MethodPost, c.deploymentCreateURL, reader)
+	if err != nil {
+		return errors.Wrap(err, "Cannot create request")
+	}
+	req.Header.Set("Authorization", "Bearer "+string(token))
+	req.Header.Set("Content-Type", "application/json")
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "POST /deployments request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	if rsp.StatusCode != http.StatusNoContent {
+		body, err := ioutil.ReadAll(rsp.Body)
+		if err != nil {
+			return errors.Wrap(err, "can't read request body")
+		}
+		if rsp.StatusCode == http.StatusUnauthorized {
+			log.Verbf("deployment create failed with status %d, reason: %s",
+				rsp.StatusCode, body)
+			return errors.New("Unauthorized. Please Login first")
+		}
+		return errors.New(
+			fmt.Sprintf("deployment create failed with status %d, reason: %s",
+				rsp.StatusCode, body),
 		)
 	}
 
