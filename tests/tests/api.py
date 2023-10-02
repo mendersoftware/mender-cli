@@ -25,13 +25,25 @@ def make_api_url(url, path):
 
 
 class Deployments:
-    def __init__(self, token, url='https://mender-api-gateway/api/management/v1/deployments'):
-        self.url=url
-        self.token=token
+    def __init__(
+        self, token, url="https://mender-api-gateway/api/management/v1/deployments"
+    ):
+        self.url = url
+        self.token = token
 
     def get_artifacts(self):
-        auth = {'Authorization': 'Bearer {}'.format(self.token)}
-        return requests.get(make_api_url(self.url, "/artifacts"), verify=False, headers=auth)
+        auth = {"Authorization": "Bearer {}".format(self.token)}
+        return requests.get(
+            make_api_url(self.url, "/artifacts"), verify=False, headers=auth
+        )
+
+    def get_releases(self, name):
+        auth = {"Authorization": "Bearer {}".format(self.token)}
+        return requests.get(
+            make_api_url(self.url, "/deployments/releases?name=" + name),
+            verify=False,
+            headers=auth,
+        )
 
 
 class DevicesDevauth:

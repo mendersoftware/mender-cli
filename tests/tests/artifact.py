@@ -17,25 +17,35 @@ import logging
 
 import cli
 
-MENDER_ARTIFACT_TOOL='tests/mender-artifact'
+MENDER_ARTIFACT_TOOL = "tests/mender-artifact"
 
-def create_artifact_file(outpath):
-    with tempfile.NamedTemporaryFile(prefix='menderin') as infile:
-        logging.info('writing mender artifact to %s', outpath)
 
-        infile.write(b'bogus test data')
+def create_artifact_file(outpath, name="artifact-foo"):
+    with tempfile.NamedTemporaryFile(prefix="menderin") as infile:
+        logging.info("writing mender artifact to %s", outpath)
+
+        infile.write(b"bogus test data")
         infile.flush()
 
         c = cli.Cli(MENDER_ARTIFACT_TOOL)
-        r = c.run('write', 'rootfs-image',
-                  '--device-type', 'device-foo',\
-                  '--file', infile.name, \
-                  '--artifact-name', 'artifact-foo',\
-                  '--output-path', outpath)
+        r = c.run(
+            "write",
+            "rootfs-image",
+            "--device-type",
+            "device-foo",
+            "--file",
+            infile.name,
+            "--artifact-name",
+            name,
+            "--output-path",
+            outpath,
+        )
 
         if r.returncode != 0:
-            msg = 'mender-artifact failed with code {}, \nstdout: \n{}stderr: {}\n'.format(r.returncode, r.stdout, r.stderr)
+            msg = "mender-artifact failed with code {}, \nstdout: \n{}stderr: {}\n".format(
+                r.returncode, r.stdout, r.stderr
+            )
             logging.error(msg)
             raise RuntimeError(msg)
 
-        logging.info('mender artifact written to %s', outpath)
+        logging.info("mender artifact written to %s", outpath)
