@@ -430,6 +430,9 @@ func (c *Client) UploadArtifact(
 		if rsp.StatusCode == http.StatusUnauthorized {
 			log.Verbf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode)
 			return errors.New("Unauthorized. Please Login first")
+		} else if rsp.StatusCode == http.StatusConflict {
+			log.Verbf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode)
+			return errors.New("Artifact with same name or depends exists already")
 		}
 		return errors.New(
 			fmt.Sprintf("artifact upload to '%s' failed with status %d", req.Host, rsp.StatusCode),
