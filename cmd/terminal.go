@@ -317,17 +317,6 @@ func (c *TerminalCmd) Run() error {
 	termWidth := defaultTermWidth
 	termHeight := defaultTermHeight
 	termID := int(os.Stdout.Fd())
-	isTerminal := false
-
-	stat, _ := os.Stdout.Stat()
-	if (stat.Mode() & os.ModeCharDevice) > 0 {
-		var err error
-		termWidth, termHeight, err = term.GetSize(termID)
-		if err != nil {
-			return errors.Wrap(err, "Unable to get the terminal size")
-		}
-		isTerminal = true
-	}
 
 	// when playing back, no further processing is required
 	if c.playbackFile != "" {
@@ -371,7 +360,12 @@ func (c *TerminalCmd) Run() error {
 	defer client.Close()
 
 	// set the terminal in raw mode
-	if isTerminal {
+	if term.IsTerminal(termID) {
+		termWidth, termHeight, err = term.GetSize(termID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to get the terminal size")
+		}
+
 		fmt.Fprintln(os.Stderr, "Press CTRL+] to quit the session")
 
 		oldState, err := term.MakeRaw(termID)
