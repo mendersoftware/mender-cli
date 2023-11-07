@@ -82,7 +82,7 @@ func NewClient(url string, token string, skipVerify bool) *Client {
 
 // Connect to the websocket
 func (c *Client) Connect(deviceID string, token string) error {
-	fmt.Printf("Connecting to the device %s...\n", deviceID)
+	fmt.Fprintf(os.Stderr, "Connecting to the device %s...\n", deviceID)
 	u, err := url.Parse(
 		strings.TrimSuffix(
 			c.url,
