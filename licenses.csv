@@ -18,10 +18,10 @@ github.com/mitchellh/mapstructure,MIT
 github.com/pelletier/go-toml/v2,MIT
 github.com/pkg/errors,BSD-2-Clause
 github.com/rivo/uniseg,MIT
+github.com/sagikazarmark/slog-shim,BSD-3-Clause
 github.com/spf13/afero,Apache-2.0
 github.com/spf13/cast,MIT
 github.com/spf13/cobra,Apache-2.0
-github.com/spf13/jwalterweatherman,MIT
 github.com/spf13/pflag,BSD-3-Clause
 github.com/spf13/viper,MIT
 github.com/subosito/gotenv,MIT
