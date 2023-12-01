@@ -10,7 +10,7 @@ require (
 	github.com/mendersoftware/go-lib-micro v0.0.0-20221025103319-e1f941fb3145
 	github.com/mendersoftware/mender-artifact v0.0.0-20211202103248-a143afebe434
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
