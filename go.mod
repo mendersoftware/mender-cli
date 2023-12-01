@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/google/uuid v1.4.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mendersoftware/go-lib-micro v0.0.0-20221025103319-e1f941fb3145
 	github.com/mendersoftware/mender-artifact v0.0.0-20211202103248-a143afebe434
