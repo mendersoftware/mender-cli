@@ -3,7 +3,7 @@ github.com/cheggaaa/pb/v3,BSD-3-Clause
 github.com/fatih/color,MIT
 github.com/fsnotify/fsnotify,BSD-3-Clause
 github.com/google/uuid,BSD-3-Clause
-github.com/gorilla/websocket,BSD-2-Clause
+github.com/gorilla/websocket,BSD-3-Clause
 github.com/hashicorp/hcl,MPL-2.0
 github.com/howeyc/gopass,ISC
 github.com/klauspost/compress/flate,Apache-2.0
@@ -27,6 +27,7 @@ github.com/spf13/viper,MIT
 github.com/subosito/gotenv,MIT
 github.com/vmihailenco/msgpack,BSD-2-Clause
 golang.org/x/crypto/ssh/terminal,BSD-3-Clause
+golang.org/x/net,BSD-3-Clause
 golang.org/x/sys/unix,BSD-3-Clause
 golang.org/x/term,BSD-3-Clause
 golang.org/x/text,BSD-3-Clause
