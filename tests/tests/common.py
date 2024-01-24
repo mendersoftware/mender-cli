@@ -39,7 +39,7 @@ def single_user():
 def clean_useradm_db():
     r = docker.exec('mender-mongo', \
                     docker.BASE_COMPOSE_FILES, \
-                    'mongo', 'useradm', '--eval', 'db.dropDatabase()')
+                    'mongosh', 'useradm', '--eval', 'db.dropDatabase()')
 
     assert r.returncode == 0, r.stderr
 
