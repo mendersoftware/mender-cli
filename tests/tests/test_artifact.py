@@ -59,7 +59,7 @@ def clean_deployments_db():
     yield
     r = docker.exec('mender-mongo', \
                     docker.BASE_COMPOSE_FILES, \
-                    'mongo', 'deployment_service', '--eval', 'db.dropDatabase()')
+                    'mongosh', 'deployment_service', '--eval', 'db.dropDatabase()')
     assert r.returncode == 0, r.stderr
 
 @pytest.fixture(scope="function")

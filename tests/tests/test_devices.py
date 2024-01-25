@@ -51,7 +51,7 @@ def clean_devauth_db():
     r = docker.exec(
         "mender-mongo",
         docker.BASE_COMPOSE_FILES,
-        "mongo",
+        "mongosh",
         "deviceauth",
         "--eval",
         "db.dropDatabase()",
