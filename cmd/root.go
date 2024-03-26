@@ -41,9 +41,9 @@ const (
 func init() {
 	viper.SetConfigName(".mender-clirc")
 	viper.SetConfigType("json")
-	viper.AddConfigPath("/etc/mender-cli/")
-	viper.AddConfigPath("$HOME/")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/")
+	viper.AddConfigPath("/etc/mender-cli/")
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			log.Info(fmt.Sprintf("Failed to read config: %s", err))
