@@ -135,6 +135,7 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(artifactsCmd)
 	rootCmd.AddCommand(devicesCmd)
+	rootCmd.AddCommand(deploymentsCmd)
 	rootCmd.AddCommand(terminalCmd)
 	rootCmd.AddCommand(portForwardCmd)
 	rootCmd.AddCommand(fileTransferCmd)
