@@ -112,7 +112,8 @@ test_acceptance:run:
     - make run-acceptance
     - tar -cvf $CI_PROJECT_DIR/acceptance-coverage.tar -C ${SHARED_PATH} cover
   tags:
-    - hetzner-amd-beefy
+    # needs a one-off runner without preexisting /builds/Northern.tech/Mender/shared/integration folder
+    - mender-qa-worker-generic-light
   artifacts:
     expire_in: 2w
     paths:
