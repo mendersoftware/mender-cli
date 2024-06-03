@@ -14,8 +14,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/sys v0.19.0
-	golang.org/x/term v0.19.0
+	golang.org/x/sys v0.20.0
+	golang.org/x/term v0.20.0
 )
 
 require (
