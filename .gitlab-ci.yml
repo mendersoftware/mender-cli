@@ -24,6 +24,7 @@ stages:
   - test
   - test_acceptance_build
   - test_acceptance
+  - build_release
   - publish
 
 compile:
@@ -119,6 +120,21 @@ test_acceptance:run:
     paths:
       - acceptance-coverage.tar
 
+build_release:
+  stage: build_release
+  image: golang:1.23
+  variables:
+    GIT_CLIFF_VERSION: "2.5.0"
+    GORELEASER_PREVIOUS_TAG: "1.11.0"
+  script:
+    - go install github.com/goreleaser/goreleaser/v2@latest
+    - wget https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}/git-cliff-${GIT_CLIFF_VERSION}.deb
+    - apt install ./git-cliff-${GIT_CLIFF_VERSION}.deb
+    - goreleaser release
+  artifacts:
+    expire_in: 2w
+    paths:
+      - dist
 
 publish:acceptance:
   stage: publish
