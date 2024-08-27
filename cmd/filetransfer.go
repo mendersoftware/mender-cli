@@ -31,7 +31,7 @@ const (
 var fileTransferCmd = &cobra.Command{
 	Use:   "cp device_id:file_path file_path",
 	Short: "Transfer files from/to a device",
-	Long:  "A CLI interface for copying files from/to devices in your setup",
+	Long:  "A CLI interface for copying files from/to devices in your setup (Download: device_id:file_path file_path | Uplaod: file_path device_id:file_path)",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewFileTransfer(c, args)
@@ -74,7 +74,7 @@ func NewFileTransfer(cmd *cobra.Command, args []string) (*FileTransferCmd, error
 }
 
 func (c *FileTransferCmd) Run() error {
-	if strings.Contains(c.destination, ":") {
+	if strings.Contains(c.destination, deviceDelimiter) {
 		return c.upload()
 	}
 	return c.download()
@@ -116,7 +116,7 @@ func deviceSpecification(s string) (*deviceconnect.DeviceSpec, error) {
 		return nil, errors.New("The device specification contains multiple ':' delimeters")
 	}
 	if len(d) != 2 {
-		return nil, errors.New("The device specification is missing the ':' separator")
+		return nil, errors.New("The device specification is missing the ':' delimiter")
 	}
 	return &deviceconnect.DeviceSpec{DeviceID: d[0], DevicePath: d[1]}, nil
 }
@@ -134,6 +134,6 @@ func (c *FileTransferCmd) download() error {
 		return err
 	}
 	log.Infof("Successfully downloaded the file: %q from device %q to %q\n",
-		d.DevicePath, d.DeviceID, c.source)
+		d.DevicePath, d.DeviceID, c.destination)
 	return nil
 }
