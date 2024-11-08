@@ -21,10 +21,10 @@ BASE_COMPOSE_FILES = [
 ]
 
 def exec(service, files, *argv):
-    c = cli.Cli('/usr/bin/docker-compose')
+    c = cli.Cli('docker')
 
     # set by run-test-environment
-    args = ['-p', 'acceptance-tests']
+    args = ['compose', '-p', 'acceptance-tests']
 
     for f in files:
         args += ['-f', f]
