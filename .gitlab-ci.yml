@@ -18,6 +18,28 @@ variables:
   S3_BUCKET_PATH: "mender-cli"
   BUILD_DIR: build
   LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
+  # release and changelog generators
+  GITHUB_REPO_URL:
+    description: "The Github Repo URL for release-please, in the format of 'owner/repo'"
+    value: "mendersoftware/mender-cli"
+  GITHUB_USER_NAME:
+    description: "The Github username for release-please"
+    value: "mender-test-bot"
+  GITHUB_USER_EMAIL:
+    description: "The Github user email for release-please"
+    value: "mender@northern.tech"
+  GIT_CLIFF:
+    description: "Run git cliff to override the release-please changelog"
+    value: "true"
+    options:
+      - "true"
+      - "false"
+  GITHUB_CHANGELOG_REPO_URL:
+    description: "The Github Repo URL where to push the changelog"
+    value: "mendersoftware/mender-docs-changelog"
+  CHANGELOG_REMOTE_FILE:
+    description: "The changelog file in the remote changelog repo"
+    value: "31.mender-cli/docs.md"
 
 stages:
   - build
@@ -25,6 +47,7 @@ stages:
   - test_acceptance_build
   - test_acceptance
   - publish
+  - changelog
 
 compile:
   stage: build
@@ -168,3 +191,90 @@ publish:s3:
         --key $S3_BUCKET_PATH/${CI_COMMIT_REF_NAME}/darwin/mender-cli
   only:
     - /^(master|[0-9]+\.[0-9]+\.x)$/
+
+changelog:
+  stage: changelog
+  image: "registry.gitlab.com/northern.tech/mender/mender-test-containers:release-please-v1-master"
+  variables:
+    GIT_DEPTH: 0 # Always get the full history
+    GIT_STRATEGY: clone
+    GIT_CLIFF__BUMP__INITIAL_TAG: "1.13.0"  # TODO: after the new tag is created,
+                                            # remove this variable
+  tags:
+    - hetzner-amd-beefy
+  rules:
+    # Only run for protected branches (main and maintenance branches)
+    - if: $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH != ""
+  before_script:
+    # Setting up git
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
+    - git config --global user.name "${GITHUB_USER_NAME}"
+    # GITHUB_TOKEN for Github cli authentication
+    - export GITHUB_TOKEN=${GITHUB_CLI_TOKEN}
+  script:
+    - release-please release-pr
+        --token=${GITHUB_BOT_TOKEN_REPO_FULL}
+        --repo-url=${GITHUB_REPO_URL}
+        --target-branch=${CI_COMMIT_REF_NAME} || echo "INFO - release already exists" # workaround because we shifted to prerelease versioning strategy and there's already a PR open
+    # git cliff: override the changelog
+    - test $GIT_CLIFF == "false" && echo "INFO - Skipping git-cliff" && exit 0
+    - git remote add github-${CI_JOB_ID} https://${GITHUB_USER_NAME}:${GITHUB_BOT_TOKEN_REPO_FULL}@github.com/${GITHUB_REPO_URL} || true  # Ignore already existing remote
+    - gh repo set-default https://${GITHUB_USER_NAME}:${GITHUB_BOT_TOKEN_REPO_FULL}@github.com/${GITHUB_REPO_URL}
+    - RELEASE_PLEASE_PR=$(gh pr list --author "${GITHUB_USER_NAME}" --head "release-please--branches--${CI_COMMIT_REF_NAME}" --json number | jq -r '.[0].number // empty')
+    - test -z "$RELEASE_PLEASE_PR" && echo "No release-please PR found" && exit 0
+    - gh pr checkout --force $RELEASE_PLEASE_PR
+    - wget --output-document cliff.toml https://raw.githubusercontent.com/mendersoftware/mendertesting/master/utils/cliff.toml
+    - git cliff --bump --output CHANGELOG.md --github-repo ${GITHUB_REPO_URL} --use-branch-tags
+    - git add CHANGELOG.md
+    - git commit --amend -s --no-edit
+    - git push github-${CI_JOB_ID} --force
+    # Update the PR body
+    - git cliff --unreleased --bump -o tmp_pr_body.md --github-repo ${GITHUB_REPO_URL} --use-branch-tags
+    - gh pr edit $RELEASE_PLEASE_PR --body-file tmp_pr_body.md
+    - rm tmp_pr_body.md
+  after_script:
+    - git remote remove github-${CI_JOB_ID}
+
+release:github:
+  stage: .post
+  image: "registry.gitlab.com/northern.tech/mender/mender-test-containers:release-please-v1-master"
+  rules:
+    # Only make available for protected branches (main and maintenance branches)
+    - if: $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH != ""
+      when: manual
+      allow_failure: true
+  needs:
+    - job: changelog
+  script:
+    - npm install -g release-please
+    - release-please github-release
+        --token=${GITHUB_BOT_TOKEN_REPO_FULL}
+        --repo-url=${GITHUB_REPO_URL}
+        --target-branch=${CI_COMMIT_REF_NAME}
+
+release:mender-docs-changelog:
+  image: "registry.gitlab.com/northern.tech/mender/mender-test-containers:release-please-v1-master"
+  stage: .post
+  tags:
+    - hetzner-amd-beefy
+  rules:
+    # Only make available for protected branches (main and maintenance branches)
+    - if: $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH != ""
+      allow_failure: true
+  before_script:
+    # Setting up git
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
+    - git config --global user.name "${GITHUB_USER_NAME}"
+    # GITHUB_TOKEN for Github cli authentication
+    - export GITHUB_TOKEN=${GITHUB_CLI_TOKEN}
+  script:
+    - git clone https://${GITHUB_USER}:${GITHUB_TOKEN_NT}@github.com/${GITHUB_CHANGELOG_REPO_URL}
+    - cd ${GITHUB_CHANGELOG_REPO_URL#*/}
+    - git checkout -b changelog-${CI_JOB_ID}
+    - |
+      cat ../docs_header.md > ${CHANGELOG_REMOTE_FILE}
+      cat ../CHANGELOG.md | grep -v -E '^---' >> ${CHANGELOG_REMOTE_FILE}
+      git add ${CHANGELOG_REMOTE_FILE}
+      git commit -s -m "chore: add mender-cli changelog"
+      git push origin changelog-${CI_JOB_ID}
+    - gh pr create --title "Update CHANGELOG.md" --body "Automated change to the CHANGELOG.md file" --base master --head changelog-${CI_JOB_ID}
