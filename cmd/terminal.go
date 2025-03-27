@@ -36,6 +36,7 @@ import (
 	wsshell "github.com/mendersoftware/go-lib-micro/ws/shell"
 
 	"github.com/mendersoftware/mender-cli/client/deviceconnect"
+	"github.com/mendersoftware/mender-cli/client/inventory"
 	"github.com/mendersoftware/mender-cli/log"
 )
 
@@ -50,6 +51,7 @@ const (
 	// cli args
 	argRecord   = "record"
 	argPlayback = "playback"
+	argSelect   = "select"
 )
 
 var terminalCmd = &cobra.Command{
@@ -72,6 +74,7 @@ func init() {
 	terminalCmd.Flags().StringP(argRecord, "", "", "recording file path to save the session to")
 	terminalCmd.Flags().
 		StringP(argPlayback, "", "", "recording file path to playback the session from")
+	terminalCmd.Flags().StringP(argSelect, "s", "", "Select device by key=value pair")
 }
 
 // TerminalCmd handles the terminal command
@@ -80,6 +83,7 @@ type TerminalCmd struct {
 	token              string
 	skipVerify         bool
 	deviceID           string
+	deviceSelector     map[string]string
 	sessionID          string
 	running            bool
 	healthcheck        chan int
@@ -144,6 +148,11 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		return nil, err
 	}
 
+	selectMap, err := getSelectMap(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
@@ -154,8 +163,8 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		deviceID = args[0]
 	}
 
-	if playbackFile == "" && deviceID == "" {
-		return nil, errors.New("No device specified")
+	if playbackFile == "" && deviceID == "" && len(selectMap) == 0 {
+		return nil, errors.New("Please specify a device id, --select flag or playback file")
 	}
 
 	return &TerminalCmd{
@@ -163,6 +172,7 @@ func NewTerminalCmd(cmd *cobra.Command, args []string) (*TerminalCmd, error) {
 		token:              token,
 		skipVerify:         skipVerify,
 		deviceID:           deviceID,
+		deviceSelector:     selectMap,
 		healthcheck:        make(chan int),
 		stop:               make(chan struct{}),
 		recordFile:         recordFile,
@@ -341,6 +351,17 @@ func (c *TerminalCmd) Run() error {
 	}
 
 	client := deviceconnect.NewClient(c.server, c.token, c.skipVerify)
+
+	if c.deviceID == "" && len(c.deviceSelector) != 0 {
+		log.Verbf("No deviceID specified, using device selectors %s\n", c.deviceSelector)
+		client := inventory.NewClient(c.server, c.token, c.skipVerify)
+
+		c.deviceID = getDeviceIdBySelector(client, c.deviceSelector)
+	}
+
+	if c.deviceID == "" {
+		return errors.New("No deviceID specified nor resolved through select flag.")
+	}
 
 	// check if the device is connected
 	device, err := client.GetDevice(c.deviceID)

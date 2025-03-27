@@ -22,6 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mendersoftware/mender-cli/client/inventory"
+	"github.com/mendersoftware/mender-cli/log"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +49,7 @@ func migrateAuthToken(oldtoken string, token string) {
 	}
 
 	// Attempt migration, ignore errors (but log them?)
-	if err := os.MkdirAll(filepath.Dir(token), 0700); err == nil {
+	if err := os.MkdirAll(filepath.Dir(token), 0o700); err == nil {
 		// log that token was moved?
 		_ = os.Rename(oldtoken, token)
 	}
@@ -113,4 +116,66 @@ func getAuthToken(cmd *cobra.Command) (string, error) {
 	}
 	tokenValue = strings.TrimSpace(string(token))
 	return tokenValue, nil
+}
+
+func getSelectMap(cmd *cobra.Command) (map[string]string, error) {
+	selectorString, err := cmd.Flags().GetString(argSelect)
+	if err != nil {
+		return make(map[string]string), err
+	}
+
+	if selectorString == "" {
+		return make(map[string]string), nil
+	}
+	selectors := make(map[string]string)
+	pairs := strings.Split(selectorString, ",")
+	for _, v := range pairs {
+		pair := strings.Split(v, "=")
+		selectors[pair[0]] = pair[1]
+	}
+	return selectors, nil
+}
+
+func getDeviceIdBySelector(client *inventory.Client, selectors map[string]string) string {
+	var filters []inventory.FilterPredicate
+
+	attributes, err := client.ListAttributes()
+	if err != nil {
+		log.Errf("Wasn't able to load inventory attributes, %s", err)
+	}
+
+	for key, value := range selectors {
+		var attribute *inventory.InventoryAttribute
+		for _, attr := range *attributes {
+			if strings.EqualFold(attr.Name, key) {
+				log.Verbf("for key: %s selected attribute: %s\n", key, attr)
+				attribute = &attr
+				break
+			}
+		}
+		if attribute == nil {
+			log.Errf("Key: %s isn't available on %s\n", key, client.BaseURL)
+			return ""
+		}
+		filters = append(filters, inventory.FilterPredicate{
+			Attribute: attribute.Name,
+			Value:     value,
+			Type:      "$eq",
+			Scope:     attribute.Scope,
+		})
+	}
+	result, err := client.SearchDevices(filters)
+	if err != nil {
+		log.Errf("Device Search failed: %s", err)
+	}
+	log.Verbf("devices found: %s", result)
+	if result == nil || result.Devices == nil || len(result.Devices) == 0 {
+		log.Verbf("No Devices found for selectors: %s \n", selectors)
+		return ""
+	}
+	if len(result.Devices) > 1 {
+		log.Errf("Found more then one device, be more specific")
+		return ""
+	}
+	return result.Devices[0].ID
 }
