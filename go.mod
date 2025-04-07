@@ -1,6 +1,6 @@
 module github.com/mendersoftware/mender-cli
 
-go 1.18
+go 1.23.0
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.7
