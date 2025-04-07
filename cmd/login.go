@@ -16,7 +16,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -168,7 +167,7 @@ func (c *LoginCmd) saveToken(t []byte) error {
 
 	}
 
-	err = ioutil.WriteFile(c.tokenPath, t, 0600)
+	err = os.WriteFile(c.tokenPath, t, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
 	}

@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
@@ -243,7 +242,7 @@ func (d *DeviceConnectError) Error() string {
 }
 
 func NewDeviceConnectError(errCode int, r io.Reader) *DeviceConnectError {
-	body, err := ioutil.ReadAll(r)
+	body, err := io.ReadAll(r)
 	if err != nil {
 		return &DeviceConnectError{
 			ErrorStr: fmt.Sprintf("Failed to upload the file. HTTP status code: %d", errCode),
