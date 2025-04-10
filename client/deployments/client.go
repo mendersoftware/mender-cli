@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
@@ -471,7 +470,7 @@ func (c *Client) DeleteArtifact(
 	log.Verbf("response: \n%v\n", string(rspDump))
 
 	if rsp.StatusCode != http.StatusNoContent {
-		body, err := ioutil.ReadAll(rsp.Body)
+		body, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return errors.Wrap(err, "can't read request body")
 		}
