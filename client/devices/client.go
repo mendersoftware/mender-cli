@@ -16,14 +16,16 @@ package devices
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
+	"strconv"
 
 	"github.com/mendersoftware/mender-cli/client"
+	"github.com/mendersoftware/mender-cli/log"
 )
-
-type devicesList struct {
-	devices []deviceData
-}
 
 type deviceData struct {
 	ID           string `json:"id"`
@@ -67,26 +69,50 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) ListDevices(token string, detailLevel int, raw bool) error {
+func (c *Client) ListDevices(token string, detailLevel, perPage, page int, raw bool) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid devices detail")
 	}
 
-	body, err := client.DoGetRequest(token, c.devicesListURL, c.client)
+	req, err := http.NewRequest(http.MethodGet, c.devicesListURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to prepare request: %w", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	q := url.Values{
+		"per_page": []string{strconv.Itoa(perPage)},
+		"page":     []string{strconv.Itoa(page)},
+	}
+	req.URL.RawQuery = q.Encode()
+
+	reqDump, err := httputil.DumpRequest(req, false)
 	if err != nil {
 		return err
 	}
+	log.Verbf("sending request: \n%s", string(reqDump))
+
+	rsp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != 200 {
+		return fmt.Errorf("GET %s request failed with status %d",
+			req.URL.RequestURI(), rsp.StatusCode)
+	}
 
 	if raw {
-		fmt.Println(string(body))
+		_, err := io.Copy(os.Stdout, rsp.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response body: %w", err)
+		}
 	} else {
-
-		var list devicesList
-		err = json.Unmarshal(body, &list.devices)
+		var list []deviceData
+		err = json.NewDecoder(rsp.Body).Decode(&list)
 		if err != nil {
 			return err
 		}
-		for _, v := range list.devices {
+		for _, v := range list {
 			listDevice(v, detailLevel)
 		}
 	}
@@ -133,5 +159,7 @@ func listDevice(a deviceData, detailLevel int) {
 		}
 	}
 
-	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println(
+		"--------------------------------------------------------------------------------",
+	)
 }

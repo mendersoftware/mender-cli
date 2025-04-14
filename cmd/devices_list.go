@@ -32,10 +32,16 @@ var devicesListCmd = &cobra.Command{
 	},
 }
 
-const argRawMode = "raw"
+const (
+	argRawMode = "raw"
+	argPerPage = "per-page"
+	argPage    = "page"
+)
 
 func init() {
 	devicesListCmd.Flags().IntP(argDetailLevel, "d", 0, "devices list detail level [0..3]")
+	devicesListCmd.Flags().IntP(argPerPage, "N", 20, "Number of results to display")
+	devicesListCmd.Flags().IntP(argPage, "P", 1, "Page number to return")
 	devicesListCmd.Flags().BoolP(
 		argRawMode,
 		"r",
@@ -44,11 +50,12 @@ func init() {
 }
 
 type DevicesListCmd struct {
-	server      string
-	skipVerify  bool
-	token       string
-	detailLevel int
-	rawMode     bool
+	server        string
+	skipVerify    bool
+	token         string
+	detailLevel   int
+	rawMode       bool
+	page, perPage int
 }
 
 func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, error) {
@@ -57,17 +64,29 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, errors.New("No server")
 	}
 
-	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
+	flags := cmd.Flags()
+
+	skipVerify, err := flags.GetBool(argRootSkipVerify)
 	if err != nil {
 		return nil, err
 	}
 
-	detailLevel, err := cmd.Flags().GetInt(argDetailLevel)
+	detailLevel, err := flags.GetInt(argDetailLevel)
 	if err != nil {
 		return nil, err
 	}
 
-	rawMode, err := cmd.Flags().GetBool(argRawMode)
+	rawMode, err := flags.GetBool(argRawMode)
+	if err != nil {
+		return nil, err
+	}
+
+	perPage, err := flags.GetInt(argPerPage)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := flags.GetInt(argPage)
 	if err != nil {
 		return nil, err
 	}
@@ -83,11 +102,13 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
 		rawMode:     rawMode,
+		perPage:     perPage,
+		page:        page,
 	}, nil
 }
 
 func (c *DevicesListCmd) Run() error {
 
 	client := devices.NewClient(c.server, c.skipVerify)
-	return client.ListDevices(c.token, c.detailLevel, c.rawMode)
+	return client.ListDevices(c.token, c.detailLevel, c.perPage, c.page, c.rawMode)
 }
