@@ -59,6 +59,7 @@ type Client struct {
 	url            string
 	devicesListURL string
 	client         *http.Client
+	output         io.Writer
 }
 
 func NewClient(url string, skipVerify bool) *Client {
@@ -66,6 +67,7 @@ func NewClient(url string, skipVerify bool) *Client {
 		url:            url,
 		devicesListURL: client.JoinURL(url, devicesListURL),
 		client:         client.NewHttpClient(skipVerify),
+		output:         os.Stdout,
 	}
 }
 
@@ -113,53 +115,53 @@ func (c *Client) ListDevices(token string, detailLevel, perPage, page int, raw b
 			return err
 		}
 		for _, v := range list {
-			listDevice(v, detailLevel)
+			listDevice(c.output, v, detailLevel)
 		}
 	}
 	return nil
 }
 
-func listDevice(a deviceData, detailLevel int) {
-	fmt.Printf("ID: %s\n", a.ID)
-	fmt.Printf("Status: %s\n", a.Status)
+func listDevice(out io.Writer, a deviceData, detailLevel int) {
+	fmt.Fprintf(out, "ID: %s\n", a.ID)
+	fmt.Fprintf(out, "Status: %s\n", a.Status)
 	if detailLevel >= 1 {
 		fmt.Println("IdentityData:")
 		if a.IdentityData.Mac != "" {
-			fmt.Printf("  MAC address: %s\n", a.IdentityData.Mac)
+			fmt.Fprintf(out, "  MAC address: %s\n", a.IdentityData.Mac)
 		}
 		if a.IdentityData.Sku != "" {
-			fmt.Printf("  Stock keeping unit: %s\n", a.IdentityData.Sku)
+			fmt.Fprintf(out, "  Stock keeping unit: %s\n", a.IdentityData.Sku)
 		}
 		if a.IdentityData.Sn != "" {
-			fmt.Printf("  Serial number: %s\n", a.IdentityData.Sn)
+			fmt.Fprintf(out, "  Serial number: %s\n", a.IdentityData.Sn)
 		}
 	}
 	if detailLevel >= 1 {
-		fmt.Printf("CreatedTs: %s\n", a.CreatedTs)
-		fmt.Printf("UpdatedTs: %s\n", a.UpdatedTs)
-		fmt.Printf("Decommissioning: %t\n", a.Decommissioning)
+		fmt.Fprintf(out, "CreatedTs: %s\n", a.CreatedTs)
+		fmt.Fprintf(out, "UpdatedTs: %s\n", a.UpdatedTs)
+		fmt.Fprintf(out, "Decommissioning: %t\n", a.Decommissioning)
 	}
 	if detailLevel >= 2 {
 		for i, v := range a.AuthSets {
-			fmt.Printf("AuthSet[%d]:\n", i)
-			fmt.Printf("  ID: %s\n", v.ID)
-			fmt.Printf("  PubKey:\n%s", v.PubKey)
+			fmt.Fprintf(out, "AuthSet[%d]:\n", i)
+			fmt.Fprintf(out, "  ID: %s\n", v.ID)
+			fmt.Fprintf(out, "  PubKey:\n%s", v.PubKey)
 			fmt.Println("  IdentityData:")
 			if v.IdentityData.Mac != "" {
-				fmt.Printf("    MAC address: %s\n", v.IdentityData.Mac)
+				fmt.Fprintf(out, "    MAC address: %s\n", v.IdentityData.Mac)
 			}
 			if v.IdentityData.Sku != "" {
-				fmt.Printf("    Stock keeping unit: %s\n", v.IdentityData.Sku)
+				fmt.Fprintf(out, "    Stock keeping unit: %s\n", v.IdentityData.Sku)
 			}
 			if v.IdentityData.Sn != "" {
-				fmt.Printf("    Serial number: %s\n", v.IdentityData.Sn)
+				fmt.Fprintf(out, "    Serial number: %s\n", v.IdentityData.Sn)
 			}
-			fmt.Printf("  Status: %s\n", v.Status)
-			fmt.Printf("  Ts: %s\n", v.Ts)
+			fmt.Fprintf(out, "  Status: %s\n", v.Status)
+			fmt.Fprintf(out, "  Ts: %s\n", v.Ts)
 		}
 	}
 
-	fmt.Println(
-		"--------------------------------------------------------------------------------",
+	fmt.Fprintf(
+		out, "--------------------------------------------------------------------------------",
 	)
 }
