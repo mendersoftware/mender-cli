@@ -25,17 +25,21 @@ def make_api_url(url, path):
 
 
 class Deployments:
-    def __init__(self, token, url='https://mender-api-gateway/api/management/v1/deployments'):
-        self.url=url
-        self.token=token
+    def __init__(
+        self, token, url="https://docker.mender.io/api/management/v1/deployments"
+    ):
+        self.url = url
+        self.token = token
 
     def get_artifacts(self):
-        auth = {'Authorization': 'Bearer {}'.format(self.token)}
-        return requests.get(make_api_url(self.url, "/artifacts"), verify=False, headers=auth)
+        auth = {"Authorization": "Bearer {}".format(self.token)}
+        return requests.get(
+            make_api_url(self.url, "/artifacts"), verify=False, headers=auth
+        )
 
 
 class DevicesDevauth:
-    def __init__(self, url="https://mender-api-gateway/api/devices/v1/authentication"):
+    def __init__(self, url="https://docker.mender.io/api/devices/v1/authentication"):
         self.url = url
 
     def auth_req(self, id_data, pubkey, privkey):
@@ -57,9 +61,7 @@ class DevicesDevauth:
 
 
 class ManagementDevauth:
-    def __init__(
-        self, token, url="https://mender-api-gateway/api/management/v2/devauth"
-    ):
+    def __init__(self, token, url="https://docker.mender.io/api/management/v2/devauth"):
         self.url = url
         self.token = token
 

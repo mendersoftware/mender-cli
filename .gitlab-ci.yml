@@ -18,6 +18,10 @@ variables:
   S3_BUCKET_PATH: "mender-cli"
   BUILD_DIR: build
   LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
+
+  TEST_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_PIPELINE_IID}"
+  MENDER_SERVER_DIR: "${CI_PROJECT_DIR}/mender-server"
+
   # release and changelog generators
   GITHUB_REPO_URL:
     description: "The Github Repo URL for release-please, in the format of 'owner/repo'"
@@ -92,50 +96,37 @@ test:smoketests:linux:
   script:
     - ./mender-cli.linux.amd64
 
-test_acceptance_build:tools:
-  stage: test_acceptance_build
-  dependencies:
-    - compile
-  script:
-    # make target env var
-    - export PROJECT_DIR="$CI_PROJECT_DIR/"
-    - cp mender-cli.linux.amd64 $CI_PROJECT_DIR/mender-cli
-    - make build-acceptance-tools
-    - make build-coverage
-  artifacts:
-    untracked: true
-    paths:
-      - mender-cli
-      - mender-artifact
-      - mender-cli-test
-
 test_acceptance_build:image:
   stage: test_acceptance_build
   image: docker
   services:
     - docker:20.10.21-dind
   needs: []
-  script:
-    - apk add --no-cache make
+  before_script:
+    - apk add --no-cache make git
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
-    - make build-acceptance-image
-    - docker save testing > $CI_PROJECT_DIR/acceptance_testing_image.tar
+    - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - git clone https://github.com/mendersoftware/mender-server ${MENDER_SERVER_DIR}
+    # NOTE: The following build command will push to Gitlab project registry.
+    #       See global variable TEST_IMAGE
+    - make build-acceptance BUILDFLAGS=--push
   artifacts:
-    expire_in: 2w
+    when: on_success
+    expire_in: "1w"
     paths:
-      - acceptance_testing_image.tar
+      - ${MENDER_SERVER_DIR}
 
 test_acceptance:run:
   stage: test_acceptance
-  image: tiangolo/docker-with-compose
-  dependencies:
-    - test_acceptance_build:tools
-    - test_acceptance_build:image
+  image: docker:28-cli
+  needs:
+    - job: test_acceptance_build:image
+      artifacts: true
   services:
-    - docker:20.10.21-dind
+    - docker:28-dind
   script:
     - apk add --no-cache git bash make
-    - docker load -i acceptance_testing_image.tar
     # make target env var
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
     - make run-acceptance
@@ -143,7 +134,7 @@ test_acceptance:run:
     # needs a one-off runner without preexisting /builds/Northern.tech/Mender/shared/integration folder
     - mender-qa-worker-generic-light
   artifacts:
-    expire_in: 2w
+    expire_in: 1w
     paths:
       - tests/coverage
 

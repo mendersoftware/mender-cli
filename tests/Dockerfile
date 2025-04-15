@@ -1,7 +1,6 @@
-FROM tiangolo/docker-with-compose
+FROM python:3.13-slim
 
-RUN apk add bash python3 openssl1.1-compat gcompat
-RUN pip3 install requests minio pytest
+RUN pip3 install requests pytest cryptography boto3 docker
 
 RUN mkdir -p /tests
-ENTRYPOINT ["bash", "/tests/run.sh"]
+ENTRYPOINT ["python3", "-m", "pytest", "tests"]
