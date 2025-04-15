@@ -141,6 +141,7 @@ func (c *Client) ListArtifacts(token string, detailLevel int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid artifact detail")
 	}
+	log.Err("warning: use of deprecated API for listing artifacts")
 
 	body, err := client.DoGetRequest(token, c.artifactsListURL, c.client)
 	if err != nil {
