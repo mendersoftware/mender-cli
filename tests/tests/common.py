@@ -14,35 +14,18 @@
 #    limitations under the License.
 from pathlib import Path
 import os
+import socket
 
 import pytest
 
 import docker
 
 USER_HOME = str(Path.home())
-DEFAULT_TOKEN_PATH = os.path.join(USER_HOME,'.cache', 'mender', 'authtoken')
+DEFAULT_TOKEN_PATH = os.path.join(USER_HOME, ".cache", "mender", "authtoken")
 
-@pytest.fixture(scope="class")
-def single_user():
-    r = docker.exec('mender-useradm', \
-                    docker.BASE_COMPOSE_FILES, \
-                    '/usr/bin/useradm', \
-                    'create-user', \
-                    '--username' , 'user@tenant.com',\
-                    '--password' , 'youcantguess')
-
-    assert r.returncode == 0, r.stderr
-    yield
-    clean_useradm_db()
-
-
-def clean_useradm_db():
-    r = docker.exec('mender-mongo', \
-                    docker.BASE_COMPOSE_FILES, \
-                    'mongosh', 'useradm', '--eval', 'db.dropDatabase()')
-
-    assert r.returncode == 0, r.stderr
 
 def expect_output(stream, *expected):
+    if isinstance(stream, list):
+        stream = "\n".join(stream)
     for e in expected:
         assert e in stream, f'expected string "{e}" not found in stream: {stream}'
