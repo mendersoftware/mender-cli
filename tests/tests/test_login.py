@@ -45,7 +45,7 @@ class TestLogin:
         assert r.returncode == 0, r.stderr
 
         self.__check_token_at(DEFAULT_TOKEN_PATH)
-        expect_output(r.stdout, "login successful")
+        expect_output(r.stderr, "login successful")
 
     @pytest.mark.parametrize("cleanup_token", ["/tests/authtoken"], indirect=True)
     def test_ok_custom_path(self, single_user, cleanup_token):
@@ -69,7 +69,7 @@ class TestLogin:
         assert r.returncode == 0, r.stderr
 
         self.__check_token_at(custom_path)
-        expect_output(r.stdout, "login successful")
+        expect_output(r.stderr, "login successful")
 
     @pytest.mark.parametrize("cleanup_token", [DEFAULT_TOKEN_PATH], indirect=True)
     def test_ok_verbose(self, single_user, cleanup_token):
@@ -91,7 +91,7 @@ class TestLogin:
 
         self.__check_token_at(DEFAULT_TOKEN_PATH)
         expect_output(
-            r.stdout, "creating directory", "saved token to", "login successful"
+            r.stderr, "creating directory", "saved token to", "login successful"
         )
 
     def test_error_wrong_creds(self, single_user):
