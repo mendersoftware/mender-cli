@@ -67,9 +67,13 @@ func NewClient(url string, skipVerify bool) *Client {
 	}
 }
 
-func (c *Client) ListDevices(token string, detailLevel int, raw bool) error {
+func (c *Client) ListDevices(token string, detailLevel int, raw bool, pageNumber int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid devices detail")
+	}
+
+	if pageNumber > 1 {
+		c.devicesListURL = fmt.Sprintf("%s?page=%d", c.devicesListURL, pageNumber)
 	}
 
 	body, err := client.DoGetRequest(token, c.devicesListURL, c.client)

@@ -33,14 +33,12 @@ var devicesListCmd = &cobra.Command{
 }
 
 const argRawMode = "raw"
+const argPageNumber = "page-number"
 
 func init() {
 	devicesListCmd.Flags().IntP(argDetailLevel, "d", 0, "devices list detail level [0..3]")
-	devicesListCmd.Flags().BoolP(
-		argRawMode,
-		"r",
-		false,
-		"devices list raw mode (json from mender server)")
+	devicesListCmd.Flags().BoolP(argRawMode, "r", false, "devices list raw mode (json from mender server)")
+	devicesListCmd.Flags().IntP(argPageNumber, "p", 1, "page number to query [1..x]")
 }
 
 type DevicesListCmd struct {
@@ -49,6 +47,7 @@ type DevicesListCmd struct {
 	token       string
 	detailLevel int
 	rawMode     bool
+	pageNumber  int
 }
 
 func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, error) {
@@ -72,6 +71,11 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, err
 	}
 
+	pageNumber, err := cmd.Flags().GetInt(argPageNumber)
+	if pageNumber < 1 {
+		return nil, errors.New("Invalid page number, must be >= 1")
+	}
+
 	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
@@ -83,11 +87,11 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
 		rawMode:     rawMode,
+		pageNumber:  pageNumber,
 	}, nil
 }
 
 func (c *DevicesListCmd) Run() error {
-
 	client := devices.NewClient(c.server, c.skipVerify)
-	return client.ListDevices(c.token, c.detailLevel, c.rawMode)
+	return client.ListDevices(c.token, c.detailLevel, c.rawMode, c.pageNumber)
 }
