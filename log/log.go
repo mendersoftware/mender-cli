@@ -15,41 +15,46 @@ package log
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 )
 
 var (
-	verbose = false
+	logOpts = slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}
+	logger = slog.New(
+		slog.NewTextHandler(os.Stderr, &logOpts),
+	)
 )
 
 func Setup(verb bool) {
-	verbose = verb
+	if verb {
+		logOpts.Level = slog.LevelDebug
+		logger = slog.New(slog.NewTextHandler(os.Stderr, &logOpts))
+	}
 }
 
 func Err(msg string) {
-	fmt.Fprintln(os.Stderr, msg)
+	logger.Error(msg)
 }
 
 func Errf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg, args...)
+	logger.Error(fmt.Sprintf(msg, args...))
 }
 
 func Verb(msg string) {
-	if verbose {
-		fmt.Fprintln(os.Stdout, "VERBOSE "+msg)
-	}
+	logger.Debug(msg)
 }
 
 func Verbf(msg string, args ...interface{}) {
-	if verbose {
-		fmt.Fprintf(os.Stdout, "VERBOSE "+msg, args...)
-	}
+	logger.Debug(fmt.Sprintf(msg, args...))
 }
 
 func Info(msg string) {
-	fmt.Fprintln(os.Stdout, msg)
+	logger.Info(msg)
 }
 
 func Infof(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stdout, msg, args...)
+	logger.Info(fmt.Sprintf(msg, args...))
 }

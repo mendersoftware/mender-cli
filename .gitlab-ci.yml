@@ -133,14 +133,13 @@ test_acceptance:run:
     # make target env var
     - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
     - make run-acceptance
-    - tar -cvf $CI_PROJECT_DIR/acceptance-coverage.tar -C ${SHARED_PATH} cover
   tags:
     # needs a one-off runner without preexisting /builds/Northern.tech/Mender/shared/integration folder
     - mender-qa-worker-generic-light
   artifacts:
     expire_in: 2w
     paths:
-      - acceptance-coverage.tar
+      - tests/coverage
 
 
 publish:acceptance:
@@ -149,7 +148,7 @@ publish:acceptance:
   dependencies:
     - test_acceptance:run
   before_script:
-    - apk add --no-cache git
+    - go tool covdata textfmt -i tests/coverage -o coverage.txt
     - go install github.com/mattn/goveralls@latest
     # Coveralls env variables:
     #  According to https://docs.coveralls.io/supported-ci-services
@@ -161,7 +160,6 @@ publish:acceptance:
     - export CI_BRANCH=${CI_COMMIT_BRANCH}
     - export CI_PR_NUMBER=${CI_COMMIT_BRANCH#pr_}
   script:
-    - tar -xvf acceptance-coverage.tar
     - goveralls
       -repotoken ${COVERALLS_TOKEN}
       -service gitlab-ci
@@ -169,7 +167,7 @@ publish:acceptance:
       -covermode set
       -flagname acceptance
       -parallel
-      -coverprofile $(find cover -type f | tr '\n' ',' | sed 's/,$//')
+      -coverprofile coverage.txt
 
 publish:s3:
   stage: publish

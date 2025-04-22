@@ -1,9 +1,9 @@
-FROM golang:1.21.5-alpine3.17 as builder
-RUN apk add --no-cache make git
-WORKDIR /go/src/github.com/mendersoftware/mender-cli
-ADD ./ .
-RUN make build
+FROM golang:1.24.2 as builder
+ARG BUILDFLAGS=
+WORKDIR /build
+RUN --mount=type=bind,source=.,dst=/build \
+  make build BUILDFLAGS="-o /mender-cli ${BUILDFLAGS}"
 
-FROM busybox
-COPY --from=builder /go/src/github.com/mendersoftware/mender-cli/mender-cli /
-ENTRYPOINT ["/mender-cli"]
+FROM busybox:1.36.1
+COPY --from=builder /mender-cli /usr/bin/
+ENTRYPOINT ["/usr/bin/mender-cli"]
