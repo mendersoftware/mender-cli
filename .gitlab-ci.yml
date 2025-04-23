@@ -50,6 +50,7 @@ variables:
       Run a job to install and test mender-cli
       with brew from upstream.
 
+  DOCKER_VERSION: "28.1"
 
 stages:
   - build
@@ -98,9 +99,9 @@ test:smoketests:linux:
 
 test_acceptance_build:image:
   stage: test_acceptance_build
-  image: docker
+  image: docker:${DOCKER_VERSION}-cli
   services:
-    - docker:20.10.21-dind
+    - docker:${DOCKER_VERSION}-dind
   needs: []
   before_script:
     - apk add --no-cache make git
@@ -119,12 +120,12 @@ test_acceptance_build:image:
 
 test_acceptance:run:
   stage: test_acceptance
-  image: docker:28-cli
+  image: docker:${DOCKER_VERSION}-cli
   needs:
     - job: test_acceptance_build:image
       artifacts: true
   services:
-    - docker:28-dind
+    - docker:${DOCKER_VERSION}-dind
   script:
     - apk add --no-cache git bash make
     # make target env var
