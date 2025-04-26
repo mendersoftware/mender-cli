@@ -78,7 +78,7 @@ class TestArtifactUpload:
                   valid_artifact_new)
 
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'upload successful')
+        expect_output(r.stderr, 'upload successful')
 
     @pytest.mark.usefixtures('clean_deployments_db', 'clean_mender_storage')
     def test_ok(self, logged_in_single_user, valid_artifact):
@@ -90,7 +90,7 @@ class TestArtifactUpload:
                   valid_artifact)
 
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'upload successful')
+        expect_output(r.stderr, 'upload successful')
 
         token = Path(DEFAULT_TOKEN_PATH).read_text()
 
@@ -133,7 +133,7 @@ class TestArtifactDelete:
             valid_artifact)
 
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'upload successful')
+        expect_output(r.stderr, 'upload successful')
         
         r = c.run('--server', 'https://mender-api-gateway', \
                   '--skip-verify', \
@@ -155,7 +155,7 @@ class TestArtifactDelete:
             'artifacts', 'delete',
             artifact_id)
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'delete successful')
+        expect_output(r.stderr, 'delete successful')
 
         token = Path(DEFAULT_TOKEN_PATH).read_text()
 
@@ -189,7 +189,7 @@ class TestArtifactDownload:
             valid_artifact)
 
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'upload successful')
+        expect_output(r.stderr, 'upload successful')
 
         r = c.run('--server', 'https://mender-api-gateway', \
                   '--skip-verify', \
@@ -211,7 +211,7 @@ class TestArtifactDownload:
             'artifacts', 'download',
             artifact_id)
         assert r.returncode==0, r.stderr
-        expect_output(r.stdout, 'download successful')
+        expect_output(r.stderr, 'download successful')
 
     def test_error_no_login(self):
         c = cli.MenderCliCoverage()

@@ -14,11 +14,11 @@
 package deployments
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
@@ -141,6 +141,7 @@ func (c *Client) ListArtifacts(token string, detailLevel int) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid artifact detail")
 	}
+	log.Err("warning: use of deprecated API for listing artifacts")
 
 	body, err := client.DoGetRequest(token, c.artifactsListURL, c.client)
 	if err != nil {
@@ -295,7 +296,9 @@ func (c *Client) DirectUpload(
 	if err != nil {
 		return errors.Wrap(err, "Cannot read artifact file stats")
 	}
-
+	if err = checkArtifactFormat(artifact); err != nil {
+		return err
+	}
 	var req *http.Request
 	if !noProgress {
 		// create progress bar
@@ -367,6 +370,9 @@ func (c *Client) UploadArtifact(
 		return errors.Wrap(err, "Cannot read artifact file stats")
 	}
 
+	if err = checkArtifactFormat(artifact); err != nil {
+		return err
+	}
 	// create pipe
 	pR, pW := io.Pipe()
 
@@ -465,7 +471,7 @@ func (c *Client) DeleteArtifact(
 	log.Verbf("response: \n%v\n", string(rspDump))
 
 	if rsp.StatusCode != http.StatusNoContent {
-		body, err := ioutil.ReadAll(rsp.Body)
+		body, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return errors.Wrap(err, "can't read request body")
 		}
@@ -677,6 +683,27 @@ func (c *Client) downloadFile(size int64, localFileName string, resp *http.Respo
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+func checkArtifactFormat(artifact *os.File) error {
+	tr := tar.NewReader(artifact)
+	versionH, err := tr.Next()
+	if err != nil {
+		return errors.Wrap(err, "error parsing artifact")
+	} else if versionH.Name != "version" {
+		return errors.New("Invalid artifact format")
+	}
+	v := struct {
+		Format string `json:"format"`
+	}{}
+	err = json.NewDecoder(tr).Decode(&v)
+	if err != nil || v.Format != "mender" {
+		return errors.New("Invalid artifact format")
+	}
+	_, err = artifact.Seek(0, io.SeekStart)
+	if err != nil || v.Format != "mender" {
+		return err
 	}
 	return nil
 }

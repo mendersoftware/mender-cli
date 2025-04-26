@@ -15,7 +15,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -107,7 +106,7 @@ func getAuthToken(cmd *cobra.Command) (string, error) {
 		}
 	}
 
-	token, err := ioutil.ReadFile(tokenPath)
+	token, err := os.ReadFile(tokenPath)
 	if err != nil {
 		return "", errors.Wrap(err, "Please Login first")
 	}

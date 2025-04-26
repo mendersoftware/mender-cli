@@ -22,6 +22,7 @@ COVERAGE_DIR = "/tests/cover"
 
 class Cli:
     """Simple wrapper for subprocess"""
+
     def __init__(self, path=MENDER_CLI):
         self.path = path
 
@@ -43,6 +44,7 @@ class Cli:
 
 class CliResult:
     """Wraps CompletedProcess, decodes output to strings"""
+
     def __init__(self, completed_process, stdout=None, stderr=None):
         self.completed_process = completed_process
 
@@ -67,12 +69,7 @@ class MenderCliCoverage(Cli):
         return coverfile.name
 
     def run(self, *argv):
-        args = [
-            self.path,
-            "-test.coverprofile=" + self._next_coverage_file(),
-            "-acceptance-tests",
-            "-test.run=TestMain",
-            "-cli-args=" + " ".join(list(argv)),
-        ]
-        completed = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        completed = subprocess.run(
+            [self.path] + list(argv), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         return CliResult(completed)

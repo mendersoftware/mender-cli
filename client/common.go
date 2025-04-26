@@ -17,7 +17,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -72,7 +71,7 @@ func DoGetRequest(token, urlPath string, client *http.Client) ([]byte, error) {
 
 	defer rsp.Body.Close()
 
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
 	}

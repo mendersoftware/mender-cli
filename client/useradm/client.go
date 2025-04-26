@@ -17,7 +17,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -81,7 +81,7 @@ func (c *Client) Login(user, pass string, token string) ([]byte, error) {
 	rspDump, _ := httputil.DumpResponse(rsp, true)
 	log.Verbf("response: \n%v\n", string(rspDump))
 
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read request body")
 	}

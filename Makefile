@@ -40,7 +40,7 @@ build-multiplatform:
 	     -o mender-cli.darwin.amd64
 
 build-coverage:
-	CGO_ENABLED=0 $(GO) test -c -o mender-cli-test \
+	CGO_ENABLED=0 $(GO) build -cover -o mender-cli-test \
 		-coverpkg $(shell echo $(PKGS) | tr  ' ' ',')
 
 install:
