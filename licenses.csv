@@ -2,24 +2,23 @@ github.com/VividCortex/ewma,MIT
 github.com/cheggaaa/pb/v3,BSD-3-Clause
 github.com/fatih/color,MIT
 github.com/fsnotify/fsnotify,BSD-3-Clause
+github.com/go-viper/mapstructure/v2,MIT
 github.com/google/uuid,BSD-3-Clause
 github.com/gorilla/websocket,BSD-2-Clause
-github.com/hashicorp/hcl,MPL-2.0
 github.com/howeyc/gopass,ISC
 github.com/klauspost/compress/flate,Apache-2.0
 github.com/klauspost/cpuid/v2,MIT
 github.com/klauspost/pgzip,MIT
-github.com/magiconair/properties,BSD-2-Clause
 github.com/mattn/go-colorable,MIT
 github.com/mattn/go-isatty,MIT
 github.com/mattn/go-runewidth,MIT
 github.com/minio/sha256-simd,Apache-2.0
-github.com/mitchellh/mapstructure,MIT
 github.com/pelletier/go-toml/v2,MIT
 github.com/pkg/errors,BSD-2-Clause
 github.com/remyoudompheng/go-liblzma,BSD-3-Clause
 github.com/rivo/uniseg,MIT
-github.com/sagikazarmark/slog-shim,BSD-3-Clause
+github.com/sagikazarmark/locafero,MIT
+github.com/sourcegraph/conc,MIT
 github.com/spf13/afero,Apache-2.0
 github.com/spf13/cast,MIT
 github.com/spf13/cobra,Apache-2.0
@@ -31,6 +30,5 @@ golang.org/x/crypto/ssh/terminal,BSD-3-Clause
 golang.org/x/sys/unix,BSD-3-Clause
 golang.org/x/term,BSD-3-Clause
 golang.org/x/text,BSD-3-Clause
-gopkg.in/ini.v1,Apache-2.0
 gopkg.in/yaml.v3,MIT
 
