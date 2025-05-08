@@ -91,6 +91,10 @@ func NewDevicesListCmd(cmd *cobra.Command, args []string) (*DevicesListCmd, erro
 		return nil, err
 	}
 
+	if page <= 0 || perPage <= 0 {
+		return nil, errors.New("page and per-page arguments must be larger than 0")
+	}
+
 	token, err := getAuthToken(cmd)
 	if err != nil {
 		return nil, err
