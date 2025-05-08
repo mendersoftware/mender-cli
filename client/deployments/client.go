@@ -22,6 +22,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -39,10 +40,6 @@ import (
 const (
 	httpErrorBoundary = 300
 )
-
-type artifactsList struct {
-	artifacts []artifactData
-}
 
 type artifactData struct {
 	ID                    string   `json:"id"`
@@ -78,7 +75,7 @@ type artifactData struct {
 
 const (
 	artifactUploadURL   = "/api/management/v1/deployments/artifacts"
-	artifactsListURL    = artifactUploadURL
+	artifactsListURL    = "/api/management/v1/deployments/artifacts/list"
 	artifactsDeleteURL  = artifactUploadURL
 	directUploadURL     = "/api/management/v1/deployments/artifacts/directupload"
 	transferCompleteURL = "/api/management/v1/deployments/artifacts/directupload/:id/complete"
@@ -137,26 +134,53 @@ func (c *Client) DirectDownloadLink(token string) (*UploadLink, error) {
 	return &link, nil
 }
 
-func (c *Client) ListArtifacts(token string, detailLevel int) error {
+func (c *Client) ListArtifacts(token string, detailLevel, perPage, page int, raw bool) error {
 	if detailLevel > 3 || detailLevel < 0 {
 		return fmt.Errorf("FAILURE: invalid artifact detail")
 	}
-	log.Err("warning: use of deprecated API for listing artifacts")
 
-	body, err := client.DoGetRequest(token, c.artifactsListURL, c.client)
+	req, err := http.NewRequest(http.MethodGet, c.artifactsListURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to prepare request: %w", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	q := url.Values{
+		"per_page": []string{strconv.Itoa(perPage)},
+		"page":     []string{strconv.Itoa(page)},
+	}
+	req.URL.RawQuery = q.Encode()
+
+	reqDump, err := httputil.DumpRequest(req, false)
 	if err != nil {
 		return err
 	}
+	log.Verbf("sending request: \n%s", string(reqDump))
 
-	var list artifactsList
-	err = json.Unmarshal(body, &list.artifacts)
+	rsp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
-	for _, v := range list.artifacts {
-		listArtifact(v, detailLevel)
+	defer rsp.Body.Close()
+	if rsp.StatusCode != 200 {
+		return fmt.Errorf("GET %s request failed with status %d",
+			req.URL.RequestURI(), rsp.StatusCode)
 	}
 
+	if raw {
+		_, err := io.Copy(os.Stdout, rsp.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response body: %w", err)
+		}
+	} else {
+		var list []artifactData
+		err = json.NewDecoder(rsp.Body).Decode(&list)
+		if err != nil {
+			return err
+		}
+		for _, v := range list {
+			listArtifact(v, detailLevel)
+		}
+	}
 	return nil
 }
 
