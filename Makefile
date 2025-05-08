@@ -13,6 +13,7 @@ VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git r
 
 GO_LDFLAGS = \
 	-ldflags "-X github.com/mendersoftware/mender-cli/cmd.Version=$(VERSION)"
+BUILDFLAGS ?=
 
 ifeq ($(V),1)
 BUILDV = -v
@@ -28,15 +29,15 @@ BUILDTAGS = -tags '$(TAGS)'
 endif
 
 build:
-	CGO_ENABLED=0 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	CGO_ENABLED=0 $(GO) build $(BUILDFLAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
 
 build-autocomplete-scripts: build
 	@./mender-cli --generate-autocomplete
 
 build-multiplatform:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS) \
 	     -o mender-cli.linux.amd64
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS) \
 	     -o mender-cli.darwin.amd64
 
 build-coverage:
@@ -44,7 +45,7 @@ build-coverage:
 		-coverpkg $(shell echo $(PKGS) | tr  ' ' ',')
 
 install:
-	CGO_ENABLED=0 $(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	CGO_ENABLED=0 $(GO) install $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS)
 
 install-autocomplete-scripts: build-autocomplete-scripts
 	@echo "Installing Bash auto-complete script into ${DESTDIR}${PREFIX}/etc/bash_completion.d/"
@@ -75,35 +76,11 @@ get-deps: get-go-tools get-build-deps
 test-unit:
 	$(GO) test $(BUILDV) $(PKGS)
 
-build-acceptance-tools:
-	# set PROJECT_DIR="$(pwd)" for local builds
-	@if [ -z ${PROJECT_DIR} ]; then\
-		echo "aborting: PROJECT_DIR not set";\
-	    exit 1;\
-	 fi
-	wget -q -O ${PROJECT_DIR}/mender-artifact https://downloads.mender.io/mender-artifact/master/linux/mender-artifact
-	chmod +x ${PROJECT_DIR}/mender-artifact
-
-build-acceptance-image:
-	docker build -t testing -f tests/Dockerfile .
-
-build-acceptance: build-acceptance-tools build-acceptance-image
+build-acceptance:
+	docker compose -f tests/docker-compose.yml build acceptance $(BUILDFLAGS)
 
 run-acceptance:
-	# set e.g. SHARED_PATH="$(pwd)/shared" for local builds
-	@if [ -z ${SHARED_PATH} ]; then\
-		echo "aborting: SHARED_PATH not set";\
-	    exit 1;\
-	 fi
-	mkdir -p ${SHARED_PATH}
-	cp -r mender-artifact mender-cli mender-cli-test tests/* ${SHARED_PATH}
-	git clone -b master https://github.com/mendersoftware/integration.git ${SHARED_PATH}/integration
-	# this is basically https://github.com/mendersoftware/integration/blob/master/tests/run.sh#L51
-	# to allow the tests to be run, as the composition is now generated during test image build
-	sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/80:80/d' -e '/443:443/d' -e '/ports:/d' ${SHARED_PATH}/integration/docker-compose.demo.yml > ${SHARED_PATH}/integration/docker-compose.testing.yml
-	sed -e 's/DOWNLOAD_SPEED/#DOWNLOAD_SPEED/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
-	sed -e 's/ALLOWED_HOSTS:\ .*/ALLOWED_HOSTS:\ _/' -i ${SHARED_PATH}/integration/docker-compose.testing.yml
-	TESTS_DIR=${SHARED_PATH} ${SHARED_PATH}/integration/extra/travis-testing/run-test-environment acceptance ${SHARED_PATH}/integration ${SHARED_PATH}/docker-compose.acceptance.yml ;
+	docker compose -f tests/docker-compose.yml run acceptance
 
 test-static:
 	echo "-- checking for dead code"
