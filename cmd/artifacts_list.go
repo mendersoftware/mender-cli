@@ -38,13 +38,22 @@ var artifactsListCmd = &cobra.Command{
 
 func init() {
 	artifactsListCmd.Flags().IntP(argDetailLevel, "d", 0, "artifacts list detail level [0..3]")
+	artifactsListCmd.Flags().IntP(argPerPage, "N", 20, "Number of results to display")
+	artifactsListCmd.Flags().IntP(argPage, "P", 1, "Page number to return")
+	artifactsListCmd.Flags().BoolP(
+		argRawMode,
+		"r",
+		false,
+		"artifacts list raw mode (json from mender server)")
 }
 
 type ArtifactsListCmd struct {
-	server      string
-	skipVerify  bool
-	token       string
-	detailLevel int
+	server        string
+	skipVerify    bool
+	token         string
+	detailLevel   int
+	rawMode       bool
+	page, perPage int
 }
 
 func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, error) {
@@ -52,6 +61,8 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 	if server == "" {
 		return nil, errors.New("No server")
 	}
+
+	flags := cmd.Flags()
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
 	if err != nil {
@@ -61,6 +72,25 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 	detailLevel, err := cmd.Flags().GetInt(argDetailLevel)
 	if err != nil {
 		return nil, err
+	}
+
+	rawMode, err := flags.GetBool(argRawMode)
+	if err != nil {
+		return nil, err
+	}
+
+	perPage, err := flags.GetInt(argPerPage)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := flags.GetInt(argPage)
+	if err != nil {
+		return nil, err
+	}
+
+	if page <= 0 || perPage <= 0 {
+		return nil, errors.New("page and per-page arguments must be larger than 0")
 	}
 
 	token, err := getAuthToken(cmd)
@@ -73,11 +103,14 @@ func NewArtifactsListCmd(cmd *cobra.Command, args []string) (*ArtifactsListCmd, 
 		token:       token,
 		skipVerify:  skipVerify,
 		detailLevel: detailLevel,
+		rawMode:     rawMode,
+		perPage:     perPage,
+		page:        page,
 	}, nil
 }
 
 func (c *ArtifactsListCmd) Run() error {
 
 	client := deployments.NewClient(c.server, c.skipVerify)
-	return client.ListArtifacts(c.token, c.detailLevel)
+	return client.ListArtifacts(c.token, c.detailLevel, c.perPage, c.page, c.rawMode)
 }
