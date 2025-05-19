@@ -40,6 +40,12 @@ variables:
   CHANGELOG_REMOTE_FILE:
     description: "The changelog file in the remote changelog repo"
     value: "31.mender-cli/docs.md"
+  INSTALL_BREW:
+    value: false
+    description: |
+      Run a job to install and test mender-cli
+      with brew from upstream.
+
 
 stages:
   - build
@@ -141,6 +147,20 @@ test_acceptance:run:
     paths:
       - tests/coverage
 
+test:install:brew:
+  stage: test
+  tags:
+    - mac-runner
+  script:
+    # Reinstall in case we already have mender-cli
+    - brew reinstall mender-cli
+    - brew test mender-cli
+  after_script:
+    # Uninstall because the mac-runner is
+    # not a container, so installations persist between jobs
+    - brew uninstall mender-cli
+  rules:
+    - if: $INSTALL_BREW == "true"
 
 publish:acceptance:
   stage: publish
