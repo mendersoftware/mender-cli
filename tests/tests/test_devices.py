@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 import cli
-from common import single_user, expect_output, DEFAULT_TOKEN_PATH
+from common import expect_output, DEFAULT_TOKEN_PATH
 import api
 import docker
 import crypto
@@ -32,7 +32,7 @@ def logged_in_single_user(single_user):
     r = c.run(
         "login",
         "--server",
-        "https://mender-api-gateway",
+        "https://docker.mender.io",
         "--skip-verify",
         "--username",
         "user@tenant.com",
@@ -45,21 +45,6 @@ def logged_in_single_user(single_user):
     os.remove(DEFAULT_TOKEN_PATH)
 
 
-@pytest.fixture(scope="function")
-def clean_devauth_db():
-    yield
-    r = docker.exec(
-        "mender-mongo",
-        docker.BASE_COMPOSE_FILES,
-        "mongosh",
-        "deviceauth",
-        "--eval",
-        "db.dropDatabase()",
-    )
-    assert r.returncode == 0, r.stderr
-
-
-@pytest.mark.usefixtures("clean_devauth_db")
 class TestDevicesList:
     def test_ok(self, logged_in_single_user):
         # Create a device
@@ -70,9 +55,9 @@ class TestDevicesList:
         assert r.status_code == 401
 
         # Device should be listed as pending
-        c = cli.MenderCliCoverage()
+        c = cli.Cli()
         r = c.run(
-            "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
+            "--server", "https://docker.mender.io", "--skip-verify", "devices", "list"
         )
         assert r.returncode == 0, r.stderr
         expect_output(r.stdout, "Status: pending")
@@ -89,17 +74,22 @@ class TestDevicesList:
         assert r.status_code == 204
 
         # Device should now be listed as accepted
-        c = cli.MenderCliCoverage()
+        c = cli.Cli()
         r = c.run(
-            "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list"
+            "--server", "https://docker.mender.io", "--skip-verify", "devices", "list"
         )
         assert r.returncode == 0, r.stderr
         expect_output(r.stdout, "Status: accepted")
 
         # Device should now be listed in raw mode
-        c = cli.MenderCliCoverage()
+        c = cli.Cli()
         r = c.run(
-            "--server", "https://mender-api-gateway", "--skip-verify", "devices", "list", "--raw"
+            "--server",
+            "https://docker.mender.io",
+            "--skip-verify",
+            "devices",
+            "list",
+            "--raw",
         )
         raw = json.loads(r.stdout, strict=False)
         assert r.returncode == 0, r.stderr
