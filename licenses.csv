@@ -6,7 +6,9 @@ github.com/go-viper/mapstructure/v2,MIT
 github.com/google/uuid,BSD-3-Clause
 github.com/gorilla/websocket,BSD-2-Clause
 github.com/howeyc/gopass,ISC
-github.com/klauspost/compress/flate,Apache-2.0
+github.com/klauspost/compress,Apache-2.0
+github.com/klauspost/compress/internal/snapref,BSD-3-Clause
+github.com/klauspost/compress/zstd/internal/xxhash,MIT
 github.com/klauspost/cpuid/v2,MIT
 github.com/klauspost/pgzip,MIT
 github.com/mattn/go-colorable,MIT
@@ -15,7 +17,6 @@ github.com/mattn/go-runewidth,MIT
 github.com/minio/sha256-simd,Apache-2.0
 github.com/pelletier/go-toml/v2,MIT
 github.com/pkg/errors,BSD-2-Clause
-github.com/remyoudompheng/go-liblzma,BSD-3-Clause
 github.com/rivo/uniseg,MIT
 github.com/sagikazarmark/locafero,MIT
 github.com/sourcegraph/conc,MIT
@@ -25,6 +26,7 @@ github.com/spf13/cobra,Apache-2.0
 github.com/spf13/pflag,BSD-3-Clause
 github.com/spf13/viper,MIT
 github.com/subosito/gotenv,MIT
+github.com/ulikunitz/xz,BSD-3-Clause
 github.com/vmihailenco/msgpack,BSD-2-Clause
 golang.org/x/crypto/ssh/terminal,BSD-3-Clause
 golang.org/x/sys/unix,BSD-3-Clause
