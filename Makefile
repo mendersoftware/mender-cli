@@ -25,7 +25,7 @@ TAGS += local
 endif
 
 ifneq ($(TAGS),)
-BUILDTAGS = -tags '$(TAGS)'
+BUILDTAGS = -tags 'nopkcs11 $(TAGS)'
 endif
 
 build:
