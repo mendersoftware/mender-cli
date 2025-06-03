@@ -26,6 +26,10 @@ func Setup(verb bool) {
 	verbose = verb
 }
 
+func IsVerbose() bool {
+	return verbose
+}
+
 func Err(msg string) {
 	fmt.Fprintln(os.Stderr, msg)
 }
