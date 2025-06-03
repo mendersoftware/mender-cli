@@ -32,6 +32,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/mendersoftware/mender-cli/client/deviceconnect"
+	"github.com/mendersoftware/mender-cli/client/inventory"
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 const (
@@ -54,7 +56,7 @@ var portForwardCmd = &cobra.Command{
 	Example: "  mender-cli port-forward DEVICE_ID 8000:8000\n" +
 		"  mender-cli port-forward DEVICE_ID udp/8000:8000\n" +
 		"  mender-cli port-forward DEVICE_ID tcp/8000:192.168.1.1:8000",
-	Args: cobra.MinimumNArgs(2),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewPortForwardCmd(c, args)
 		CheckErr(err)
@@ -71,6 +73,7 @@ var errRestart = errors.New("restart")
 
 func init() {
 	portForwardCmd.Flags().StringP(argBindHost, "", localhost, "binding host")
+	portForwardCmd.Flags().StringP(argSelect, "s", "", "Select device by key=value pair")
 }
 
 const (
@@ -87,17 +90,18 @@ type portMapping struct {
 
 // PortForwardCmd handles the port-forward command
 type PortForwardCmd struct {
-	server       string
-	token        string
-	skipVerify   bool
-	deviceID     string
-	sessionID    string
-	bindingHost  string
-	portMappings []portMapping
-	recvChans    map[string]chan *ws.ProtoMsg
-	running      bool
-	stop         chan struct{}
-	err          error
+	server         string
+	token          string
+	skipVerify     bool
+	deviceID       string
+	deviceSelector map[string]string
+	sessionID      string
+	bindingHost    string
+	portMappings   []portMapping
+	recvChans      map[string]chan *ws.ProtoMsg
+	running        bool
+	stop           chan struct{}
+	err            error
 }
 
 func getPortMappings(args []string) ([]portMapping, error) {
@@ -167,7 +171,7 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 		return nil, err
 	}
 
-	portMappings, err := getPortMappings(args[1:])
+	selectMap, err := getSelectMap(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -176,16 +180,34 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 	if err != nil {
 		return nil, err
 	}
+	deviceID := ""
+	var portMappings []portMapping
+	if len(selectMap) == 0 {
+		deviceID = args[0]
+		portMappings, err = getPortMappings(args[1:])
+
+	} else {
+		portMappings, err = getPortMappings(args[0:])
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if deviceID == "" && len(selectMap) == 0 {
+		return nil, errors.New("Please specify a device id or a key=value selector for a device")
+	}
 
 	return &PortForwardCmd{
-		server:       server,
-		token:        token,
-		skipVerify:   skipVerify,
-		deviceID:     args[0],
-		bindingHost:  bindingHost,
-		portMappings: portMappings,
-		recvChans:    make(map[string]chan *ws.ProtoMsg),
-		stop:         make(chan struct{}),
+		server:         server,
+		token:          token,
+		skipVerify:     skipVerify,
+		deviceSelector: selectMap,
+		deviceID:       deviceID,
+		bindingHost:    bindingHost,
+		portMappings:   portMappings,
+		recvChans:      make(map[string]chan *ws.ProtoMsg),
+		stop:           make(chan struct{}),
 	}, nil
 }
 
@@ -203,6 +225,17 @@ func (c *PortForwardCmd) run() error {
 	defer cancelContext()
 
 	client := deviceconnect.NewClient(c.server, c.token, c.skipVerify)
+
+	if c.deviceID == "" && len(c.deviceSelector) != 0 {
+		log.Verbf("No deviceID specified, using device selectors %s\n", c.deviceSelector)
+		client := inventory.NewClient(c.server, c.token, c.skipVerify)
+
+		c.deviceID = getDeviceIdBySelector(client, c.deviceSelector)
+	}
+
+	if c.deviceID == "" {
+		return errors.New("No deviceID specified nor resolved through select flag.")
+	}
 
 	// check if the device is connected
 	device, err := client.GetDevice(c.deviceID)
