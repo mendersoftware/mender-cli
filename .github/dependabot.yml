@@ -11,8 +11,6 @@ updates:
       golang-dependencies:
         patterns:
           - "*"
-    reviewers:
-      - "mendersoftware/backend-dependabot-reviewers"
   - commit-message:
       prefix: chore
     directory: /
@@ -20,5 +18,3 @@ updates:
     schedule:
       interval: monthly
       day: saturday
-    reviewers:
-      - "mendersoftware/backend-dependabot-reviewers"
