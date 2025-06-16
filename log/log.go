@@ -35,6 +35,10 @@ func Setup(verb bool) {
 	}
 }
 
+func IsVerbose() bool {
+	return verbose
+}
+
 func Err(msg string) {
 	logger.Error(msg)
 }
