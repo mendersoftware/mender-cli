@@ -78,7 +78,7 @@ test:smoketests:mac:
     - mender-mac-slave
 
 test:smoketests:linux:
-  image: debian:buster
+  image: debian:bookworm
   stage: test
   dependencies:
     - compile
@@ -173,7 +173,7 @@ publish:acceptance:
 
 publish:s3:
   stage: publish
-  image: debian:buster
+  image: debian:bookworm
   dependencies:
     - compile
   before_script:
