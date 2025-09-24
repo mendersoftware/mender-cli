@@ -140,7 +140,7 @@ test_acceptance:run:
   artifacts:
     expire_in: 1w
     paths:
-      - tests/coverage
+      - tests/acceptance/coverage
 
 test:install:brew:
   stage: test
@@ -163,7 +163,7 @@ publish:acceptance:
   dependencies:
     - test_acceptance:run
   before_script:
-    - go tool covdata textfmt -i tests/coverage -o coverage.txt
+    - go tool covdata textfmt -i tests/acceptance/coverage -o coverage.txt
     - go install github.com/mattn/goveralls@latest
     # Coveralls env variables:
     #  According to https://docs.coveralls.io/supported-ci-services

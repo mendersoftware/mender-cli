@@ -1,13 +1,13 @@
 name: acceptance-tests
 include:
   - path:
-    - ${MENDER_SERVER_DIR:-../../mender-server}/docker-compose.yml
+    - ${MENDER_SERVER_DIR:-../../../mender-server}/docker-compose.yml
     - docker-compose.acceptance.yml
 services:
     acceptance:
         image: ${TEST_IMAGE:-mender-cli:testing}
         build:
-          context: ..
+          context: ../..
           target: acceptance
           args: 
             BUILDFLAGS: -cover -covermode atomic

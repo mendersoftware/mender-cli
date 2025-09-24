@@ -79,10 +79,10 @@ test-unit:
 	$(GO) test $(BUILDV) $(PKGS)
 
 build-acceptance:
-	docker compose -f tests/docker-compose.yml build acceptance $(BUILDFLAGS)
+	docker compose -f tests/acceptance/docker-compose.yml build acceptance $(BUILDFLAGS)
 
 run-acceptance:
-	docker compose -f tests/docker-compose.yml run acceptance
+	docker compose -f tests/acceptance/docker-compose.yml run acceptance
 
 test-static:
 	echo "-- checking for dead code"
