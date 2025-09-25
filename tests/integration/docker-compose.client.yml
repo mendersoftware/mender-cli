@@ -1,0 +1,18 @@
+services:
+  #
+  # mender-client
+  #
+  client:
+    image: mendersoftware/mender-client-qemu:${CLIENT_VERSION}
+    stdin_open: true
+    tty: true
+    privileged: true
+    environment:
+      - SERVER_URL=https://gateway.docker.mender.io
+    networks:
+      - mender_default
+
+networks:
+  mender_default:
+    external: true
+    name: mender_default
