@@ -1,6 +1,17 @@
 # Copyright 2025 Northern.tech AS
 #
-#    All Rights Reserved
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
 
 import time
 import random
@@ -39,33 +50,6 @@ class Env:
         with docker_lock:
             output = subprocess.check_output(cmd)
         return output.decode().strip()
-
-
-def gateway_up():
-    with docker_lock:
-        subprocess.check_call(
-            [
-                "docker",
-                "compose",
-                "-p",
-                project_name_client,
-                "-f",
-                "docker-compose.gateway.yml",
-                "up",
-                "-d",
-            ]
-        )
-        gateway_ip = subprocess.check_output(
-            [
-                "docker",
-                "inspect",
-                "-f",
-                "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
-                f"{project_name_client}-gateway-1",
-            ],
-            text=True,
-        ).strip()
-    return MenderDevice(f"{gateway_ip}:8822")
 
 
 def clients_up(number_of_clients):

@@ -1,4 +1,4 @@
-# Copyright 2022 Northern.tech AS
+# Copyright 2025 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,33 +18,21 @@ import subprocess
 
 from tempfile import NamedTemporaryFile
 
-from ..common_setup import standard_setup_one_client_bootstrapped, enterprise_no_client
-from ..MenderAPI import authentication, get_container_manager, logger, DeviceAuthV2
-from .common_connect import prepare_env_for_connect, wait_for_connect
-from .common import md5sum
-from .mendertesting import MenderTesting
+from common_connect import wait_for_connect
+from helpers import md5sum, get_device_id
 
 
-class BaseTestFileTransferCLI(MenderTesting):
+class BaseTestFileTransferCLI:
     """Tests the file transfer functionality"""
 
-    def do_test_filetransfer_cli(self, auth):
-        # list of devices
-        devauth = DeviceAuthV2(auth)
-        devices = devauth.get_devices_status("accepted")
-        assert 1 == len(devices)
-
-        # device ID
-        devid = devices[0]["id"]
-        assert devid is not None
-
+    def do_test_filetransfer_cli(self, env, devid):
         # wait for the device to connect via websocket
-        wait_for_connect(auth, devid)
+        wait_for_connect(env, devid)
 
         # authenticate with mender-cli
-        server_url = "https://" + get_container_manager().get_mender_gateway()
-        username = auth.username
-        password = auth.password
+        server_url = "https://" + env.server.host
+        username = env.server.username
+        password = env.server.password
         p = subprocess.Popen(
             [
                 "mender-cli",
@@ -68,14 +56,11 @@ class BaseTestFileTransferCLI(MenderTesting):
         try:
             # create a 40MB random file
             f = NamedTemporaryFile(delete=False)
-            for i in range(40 * 1024):
+            for _ in range(40 * 1024):
                 f.write(os.urandom(1024))
             f.close()
 
-            logger.info("created a 40MB random file: " + f.name)
-
             # upload the file using mender-cli
-            logger.info("uploading the file to the device using mender-cli")
             p = subprocess.Popen(
                 [
                     "mender-cli",
@@ -94,7 +79,6 @@ class BaseTestFileTransferCLI(MenderTesting):
             assert exit_code == 0, (stdout, stderr)
 
             # download the file using mender-cli
-            logger.info("download the file from the device using mender-cli")
             p = subprocess.Popen(
                 [
                     "mender-cli",
@@ -113,13 +97,9 @@ class BaseTestFileTransferCLI(MenderTesting):
             assert exit_code == 0, (stdout, stderr)
 
             # assert the files are not corrupted
-            logger.info("checking the checksums of the uploaded and downloaded files")
             assert md5sum(f.name) == md5sum(f.name + ".download")
 
             # upload the file to a directory (fail)
-            logger.info(
-                "upload the file to a directory which doesn't exist (fail) using mender-cli"
-            )
             p = subprocess.Popen(
                 [
                     "mender-cli",
@@ -144,7 +124,6 @@ class BaseTestFileTransferCLI(MenderTesting):
                 os.unlink(f.name + ".download")
 
         # download a file which doesn't exist (fail)
-        logger.info("download a file which doesn't exist (fail) using mender-cli")
         p = subprocess.Popen(
             [
                 "mender-cli",
@@ -164,7 +143,6 @@ class BaseTestFileTransferCLI(MenderTesting):
         assert b"no such file or directory" in stderr, (stdout, stderr)
 
         # upload a file which doesn't exist (fail)
-        logger.info("upload a file which doesn't exist (fail) using mender-cli")
         p = subprocess.Popen(
             [
                 "mender-cli",
@@ -188,13 +166,9 @@ class TestFileTransferCLI(BaseTestFileTransferCLI):
     """Tests the file transfer functionality"""
 
     def test_filetransfer_cli(self, standard_setup_one_client_bootstrapped):
-        auth = authentication.Authentication()
-        self.do_test_filetransfer_cli(auth)
+        devid = get_device_id(
+            standard_setup_one_client_bootstrapped.device,
+            standard_setup_one_client_bootstrapped.server,
+        )
 
-
-class TestFileTransferCLIEnterprise(BaseTestFileTransferCLI):
-    """Tests the file transfer functionality"""
-
-    def test_filetransfer_cli(self, enterprise_no_client):
-        _, _, auth, _ = prepare_env_for_connect(enterprise_no_client)
-        self.do_test_filetransfer_cli(auth)
+        self.do_test_filetransfer_cli(standard_setup_one_client_bootstrapped, devid)

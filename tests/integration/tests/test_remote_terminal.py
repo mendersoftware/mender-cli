@@ -1,4 +1,4 @@
-# Copyright 2022 Northern.tech AS
+# Copyright 2025 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,26 +16,21 @@
 import subprocess
 import time
 
-from ..common_setup import standard_setup_one_client_bootstrapped, enterprise_no_client
-from .common_connect import prepare_env_for_connect
-from ..MenderAPI import authentication, devauth, get_container_manager, logger
-from .common_connect import wait_for_connect
-from .mendertesting import MenderTesting
-
-from flaky import flaky
+from common_connect import wait_for_connect
+from helpers import get_device_id
 
 
-class BaseTestRemoteTerminal(MenderTesting):
+class BaseTestRemoteTerminal:
     """Tests the remote terminal functionality"""
 
-    def do_test_remote_terminal(self, env, auth, devid):
+    def do_test_remote_terminal(self, env, devid):
         # wait for the device to connect via websocket
-        wait_for_connect(auth, devid)
+        wait_for_connect(env, devid)
 
         # authenticate with mender-cli
-        server_url = "https://" + get_container_manager().get_mender_gateway()
-        username = auth.username
-        password = auth.password
+        server_url = "https://" + env.server.host
+        username = env.server.username
+        password = env.server.password
         p = subprocess.Popen(
             [
                 "mender-cli",
@@ -56,7 +51,6 @@ class BaseTestRemoteTerminal(MenderTesting):
         assert exit_code == 0, (stdout, stderr)
 
         # connect to the remote termianl using mender-cli
-        logger.info("connect to the remote termianl using mender-cli")
         p = subprocess.Popen(
             ["mender-cli", "--skip-verify", "--server", server_url, "terminal", devid],
             stdin=subprocess.PIPE,
@@ -68,7 +62,6 @@ class BaseTestRemoteTerminal(MenderTesting):
         time.sleep(2)
 
         # run a command and evaluate the output
-        logger.info("run a command and evaluate the output")
         stdout, stderr = p.communicate(input=b"ls /etc/mender/\nexit\n", timeout=30)
         exit_code = p.wait(timeout=30)
 
@@ -77,21 +70,10 @@ class BaseTestRemoteTerminal(MenderTesting):
 
 
 class TestRemoteTerminalOpenSource(BaseTestRemoteTerminal):
-    def test_portforward(self, standard_setup_one_client_bootstrapped):
-        # list of devices
-        devices = devauth.get_devices_status("accepted")
-        assert 1 == len(devices)
-        # device ID
-        devid = devices[0]["id"]
-        assert devid is not None
-        #
-        auth = authentication.Authentication()
-        self.do_test_remote_terminal(
-            standard_setup_one_client_bootstrapped, auth, devid
+    def test_remote_terminal(self, standard_setup_one_client_bootstrapped):
+        devid = get_device_id(
+            standard_setup_one_client_bootstrapped.device,
+            standard_setup_one_client_bootstrapped.server,
         )
 
-
-class TestRemoteTerminalEnterprise(BaseTestRemoteTerminal):
-    def test_portforward(self, enterprise_no_client):
-        devid, _, auth, _ = prepare_env_for_connect(enterprise_no_client)
-        self.do_test_remote_terminal(enterprise_no_client, auth, devid)
+        self.do_test_remote_terminal(standard_setup_one_client_bootstrapped, devid)

@@ -1,4 +1,4 @@
-# Copyright 2022 Northern.tech AS
+# Copyright 2025 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,23 +16,17 @@
 import os
 import redo
 import subprocess
-import time
 
 from contextlib import contextmanager
 from multiprocessing import Process
 from tempfile import NamedTemporaryFile
 
 import filelock
-from filelock import FileLock
 
 from DNS import DnsRequest, SocketError
 
-from ..common_setup import standard_setup_one_client_bootstrapped, enterprise_no_client
-from .common_connect import prepare_env_for_connect
-from ..MenderAPI import authentication, devauth, get_container_manager, logger
-from .common_connect import wait_for_connect
-from .common import md5sum
-from .mendertesting import MenderTesting
+from common_connect import wait_for_connect
+from helpers import md5sum, get_device_id
 
 # Function must be defined outside of class so it can be pickled
 def port_forward(auth_token, server_url, dev_id, port_mapping, *port_mappings):
@@ -73,7 +67,6 @@ def port_forward_process(auth_token, server_url, dev_id, port_mapping, *port_map
 
 @redo.retriable(sleeptime=10, attempts=6)
 def dns_request(name, qtype, server, port):
-    logger.info(f"resolve mender.io ({qtype} record)")
     req = DnsRequest(name=name, qtype=qtype, server=server, port=port)
     try:
         response = req.req()
@@ -88,15 +81,15 @@ def run_scp(command):
     assert proc.returncode == 0, (proc.stdout, proc.stderr)
 
 
-class BaseTestPortForward(MenderTesting):
+class BaseTestPortForward:
     """Tests the port forward functionality"""
 
-    def do_test_portforward(self, env, auth, devid):
+    def do_test_portforward(self, env, devid):
         # wait for the device to connect via websocket
-        wait_for_connect(auth, devid)
+        wait_for_connect(env, devid)
 
-        server_url = "https://" + get_container_manager().get_mender_gateway()
-        auth_token = auth.get_auth_token()["Authorization"].split()[1]
+        server_url = "https://" + env.server.host
+        auth_token = env.server.auth_token
 
         # Acquire lock to avoid enterprise and open-source to bind the same port
         with filelock.FileLock(".test_portforward_lock"):
@@ -108,7 +101,7 @@ class BaseTestPortForward(MenderTesting):
                 devid,
                 f"{tcp_port}:22",
                 f"udp/{udp_port}:8.8.8.8:53",
-            ) as pfw:
+            ):
 
                 # verify the UDP port-forward querying the Google's DNS server
                 dns_request(
@@ -125,10 +118,7 @@ class BaseTestPortForward(MenderTesting):
                     f.write(os.urandom(1024))
                     f.close()
 
-                    logger.info("created a 1KB random file: " + f.name)
-
                     # upload the file using scp
-                    logger.info("uploading the file to the device using scp")
                     run_scp(
                         [
                             "scp",
@@ -145,7 +135,6 @@ class BaseTestPortForward(MenderTesting):
                     )
 
                     # download the file using scp
-                    logger.info("download the file from the device using scp")
                     run_scp(
                         [
                             "scp",
@@ -161,9 +150,6 @@ class BaseTestPortForward(MenderTesting):
                         ]
                     )
                     # assert the files are not corrupted
-                    logger.info(
-                        "checking the checksums of the uploaded and downloaded files"
-                    )
                     assert md5sum(f.name) == md5sum(f.name + ".download")
                 finally:
                     os.unlink(f.name)
@@ -173,18 +159,9 @@ class BaseTestPortForward(MenderTesting):
 
 class TestPortForwardOpenSource(BaseTestPortForward):
     def test_portforward(self, standard_setup_one_client_bootstrapped):
-        # list of devices
-        devices = devauth.get_devices_status("accepted")
-        assert 1 == len(devices)
-        # device ID
-        devid = devices[0]["id"]
-        assert devid is not None
-        #
-        auth = authentication.Authentication()
-        self.do_test_portforward(standard_setup_one_client_bootstrapped, auth, devid)
+        devid = get_device_id(
+            standard_setup_one_client_bootstrapped.device,
+            standard_setup_one_client_bootstrapped.server,
+        )
 
-
-class TestPortForwardEnterprise(BaseTestPortForward):
-    def test_portforward(self, enterprise_no_client):
-        devid, _, auth, _ = prepare_env_for_connect(enterprise_no_client)
-        self.do_test_portforward(enterprise_no_client, auth, devid)
+        self.do_test_portforward(standard_setup_one_client_bootstrapped, devid)
