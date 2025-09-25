@@ -23,7 +23,6 @@ variables:
   LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
 
   TEST_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_PIPELINE_IID}"
-  MENDER_SERVER_DIR: "${CI_PROJECT_DIR}/mender-server"
 
   # release and changelog generators
   GITHUB_REPO_URL:
@@ -107,6 +106,9 @@ test:smoketests:linux:
 
 test_acceptance_build:image:
   stage: test_acceptance_build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
   image: docker:${DOCKER_VERSION}-cli
   services:
     - docker:${DOCKER_VERSION}-dind
@@ -116,18 +118,15 @@ test_acceptance_build:image:
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
     - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - git clone https://github.com/mendersoftware/mender-server ${MENDER_SERVER_DIR}
     # NOTE: The following build command will push to Gitlab project registry.
     #       See global variable TEST_IMAGE
     - make build-acceptance BUILDFLAGS=--push
-  artifacts:
-    when: on_success
-    expire_in: "1w"
-    paths:
-      - ${MENDER_SERVER_DIR}
 
 test_acceptance:run:
   stage: test_acceptance
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
   image: docker:${DOCKER_VERSION}-cli
   needs:
     - job: test_acceptance_build:image
@@ -172,14 +171,12 @@ test:integration:
   needs:
     - compile
   before_script:
-    # TODO: move to submodule and unify with acceptance tests
-    - git clone https://github.com/mendersoftware/mender-server tests/integration/mender_server
     - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
     - apk add --update bash cmake curl dpkg e2fsprogs-extra g++ gcompat gcompat git iptables jq libffi-dev make openssh-client py3-pip python3-dev zstd screen openssl-dev openssl-libs-static
     # Workaround for "Failed building wheel for uamqp" error
     - CFLAGS="-Wno-error=incompatible-pointer-types" CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install uamqp --break-system-packages
-    - pip install --ignore-installed -r tests/integration/mender_server/backend/tests/requirements-integration.txt --break-system-packages
+    - pip install --ignore-installed -r tests/mender_server/backend/tests/requirements-integration.txt --break-system-packages
     - pip install -r tests/integration/requirements.txt --break-system-packages
     # Gitlab CI tends to set these DOCKER_ variables internally.
     # dind also creates the unix socket at /var/run/docker.sock

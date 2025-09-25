@@ -21,9 +21,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from mender_server.backend.tests.integration.testutils.common import create_user
-from mender_server.backend.tests.integration.testutils.api.client import ApiClient
-from mender_server.backend.tests.integration.testutils.api import (
+from testutils.common import create_user
+from testutils.api.client import ApiClient
+from testutils.api import (
     deployments,
     useradm,
     tenantadm,

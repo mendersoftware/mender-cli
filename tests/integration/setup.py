@@ -20,7 +20,7 @@ import subprocess
 
 from helpers import docker_lock
 
-from mender_server.backend.tests.integration.testutils.infra.device import MenderDevice
+from testutils.infra.device import MenderDevice
 
 logger = logging.getLogger(__name__)
 

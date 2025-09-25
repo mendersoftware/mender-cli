@@ -21,7 +21,7 @@ import logging
 import pytest
 
 sys.path += [
-    path.join(path.dirname(__file__), "mender_server/backend/tests/integration/")
+    path.join(path.dirname(__file__), "../mender_server/backend/tests/integration/")
 ]
 
 from server import Server
@@ -39,8 +39,6 @@ logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 logging.getLogger("redo").setLevel(logging.INFO)
 
-collect_ignore = ["mender_server"]
-
 
 def pytest_addoption(parser):
     logging.basicConfig(
@@ -51,13 +49,13 @@ def pytest_addoption(parser):
 
 def stop_open_source_server():
     helpers.docker_compose_stop(
-        project_name=project_name, files=["mender_server/docker-compose.yml"],
+        project_name=project_name, files=["../mender_server/docker-compose.yml"],
     )
 
 
 def start_open_source_server():
     helpers.docker_compose_start(
-        project_name=project_name, files=["mender_server/docker-compose.yml"],
+        project_name=project_name, files=["../mender_server/docker-compose.yml"],
     )
 
 

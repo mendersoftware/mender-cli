@@ -1,7 +1,7 @@
 name: acceptance-tests
 include:
   - path:
-    - ${MENDER_SERVER_DIR:-../../../mender-server}/docker-compose.yml
+    - ../mender_server/docker-compose.yml
     - docker-compose.acceptance.yml
 services:
     acceptance:
