@@ -1,4 +1,4 @@
-FROM golang:1.25.0 as builder
+FROM golang:1.25.1 as builder
 WORKDIR /build
 ARG BUILDFLAGS=
 RUN --mount=type=bind,source=.,dst=/build,ro \
