@@ -23,7 +23,6 @@ variables:
   LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
 
   TEST_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_PIPELINE_IID}"
-  MENDER_SERVER_DIR: "${CI_PROJECT_DIR}/mender-server"
 
   # release and changelog generators
   GITHUB_REPO_URL:
@@ -55,11 +54,16 @@ variables:
 
   DOCKER_VERSION: "28.1"
 
+  XDIST_WORKERS_INTEGRATION_TEST:
+    description: "Number of workers to spawn in pytest-xdist and use in the integration tests"
+    value: 4
+
 stages:
   - build
   - test
   - test_acceptance_build
   - test_acceptance
+  - test_integration
   - publish
   - changelog
 
@@ -102,6 +106,9 @@ test:smoketests:linux:
 
 test_acceptance_build:image:
   stage: test_acceptance_build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
   image: docker:${DOCKER_VERSION}-cli
   services:
     - docker:${DOCKER_VERSION}-dind
@@ -111,18 +118,15 @@ test_acceptance_build:image:
     - export PROJECT_DIR="$CI_PROJECT_DIR/"
     - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - git clone https://github.com/mendersoftware/mender-server ${MENDER_SERVER_DIR}
     # NOTE: The following build command will push to Gitlab project registry.
     #       See global variable TEST_IMAGE
     - make build-acceptance BUILDFLAGS=--push
-  artifacts:
-    when: on_success
-    expire_in: "1w"
-    paths:
-      - ${MENDER_SERVER_DIR}
 
 test_acceptance:run:
   stage: test_acceptance
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
   image: docker:${DOCKER_VERSION}-cli
   needs:
     - job: test_acceptance_build:image
@@ -140,7 +144,53 @@ test_acceptance:run:
   artifacts:
     expire_in: 1w
     paths:
-      - tests/coverage
+      - tests/acceptance/coverage
+
+.requires-docker: &requires-docker
+  - DOCKER_RETRY_SLEEP_S=2
+  - DOCKER_RUNNING=false
+  - for try in 4 3 2 1; do
+  -  docker ps && DOCKER_RUNNING=true
+  -  if [ "${DOCKER_RUNNING}" == "true" ]; then
+  -   break
+  -  fi
+  -  sleep "${DOCKER_RETRY_SLEEP_S}"
+  - done
+  - if [ "${DOCKER_RUNNING}" != "true" ]; then
+  -  exit 192
+  - fi
+
+test:integration:
+  stage: test_integration
+  tags:
+    - hetzner-amd-beefy
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
+  image: docker:${DOCKER_VERSION}
+  needs:
+    - compile
+  before_script:
+    - mkdir -p $HOME/.docker
+    - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
+    - apk add --update bash cmake curl dpkg e2fsprogs-extra g++ gcompat gcompat git iptables jq libffi-dev make openssh-client py3-pip python3-dev zstd screen openssl-dev openssl-libs-static
+    # Workaround for "Failed building wheel for uamqp" error
+    - CFLAGS="-Wno-error=incompatible-pointer-types" CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install uamqp --break-system-packages
+    - pip install --ignore-installed -r tests/mender_server/backend/tests/requirements-integration.txt --break-system-packages
+    - pip install -r tests/integration/requirements.txt --break-system-packages
+    # Gitlab CI tends to set these DOCKER_ variables internally.
+    # dind also creates the unix socket at /var/run/docker.sock
+    # This docker setup is based on `.gitlab-ci-full-integration-template.yml`
+    # from integration
+    - unset DOCKER_HOST DOCKER_TLS_VERIFY DOCKER_CERT_PATH
+    # Run dockerd and wait it to start
+    # https://github.com/krallin/tini#subreaping
+    - screen -d -m /usr/bin/env TINI_SUBREAPER=true dockerd-entrypoint.sh
+    - *requires-docker
+  script:
+    - mv mender-cli.linux.amd64 /usr/local/bin/mender-cli
+    - cd tests/integration
+    - ./run_tests.sh -n ${XDIST_WORKERS_INTEGRATION_TEST}
 
 test:install:brew:
   stage: test
@@ -163,7 +213,7 @@ publish:acceptance:
   dependencies:
     - test_acceptance:run
   before_script:
-    - go tool covdata textfmt -i tests/coverage -o coverage.txt
+    - go tool covdata textfmt -i tests/acceptance/coverage -o coverage.txt
     - go install github.com/mattn/goveralls@latest
     # Coveralls env variables:
     #  According to https://docs.coveralls.io/supported-ci-services

@@ -18,3 +18,9 @@ updates:
     schedule:
       interval: monthly
       day: saturday
+  - package-ecosystem: gitsubmodule
+    commit-message:
+      prefix: "chore"
+    directory: /
+    schedule:
+      interval: monthly

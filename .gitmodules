@@ -1,0 +1,3 @@
+[submodule "tests/mender_server"]
+	path = tests/mender_server
+	url = https://github.com/mendersoftware/mender-server
