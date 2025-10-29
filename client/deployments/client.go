@@ -61,7 +61,7 @@ type artifactData struct {
 			Size     int       `json:"size"`
 			Date     time.Time `json:"date"`
 		} `json:"files"`
-		MetaData []interface{} `json:"meta_data"`
+		MetaData map[string]interface{} `json:"meta_data"`
 	} `json:"updates"`
 	ArtifactProvides struct {
 		ArtifactName string `json:"artifact_name"`
