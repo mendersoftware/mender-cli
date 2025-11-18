@@ -1,4 +1,466 @@
 ---
+## 2.0.0 - 2025-11-11
+
+
+### Bug fixes
+
+
+- *(tests)* Use mongosh instead of mongo command
+ ([03ade99](https://github.com/mendersoftware/mender-cli/commit/03ade99fa8c16d7e1e35a219d6f18c3921aef652))  by @kjaskiewiczz
+
+
+  Legacy "mongo" shell has been removed in MongoDB 6.0
+
+- Check file format when uploading artifacts
+([MEN-7860](https://northerntech.atlassian.net/browse/MEN-7860)) ([238e860](https://github.com/mendersoftware/mender-cli/commit/238e8608c2cbebc0aa8733dd73dc016feda03356))  by @bahaa-ghazal
+
+
+
+
+### Features
+
+
+- Add support for pagination to `devices list` command
+([MEN-7794](https://northerntech.atlassian.net/browse/MEN-7794)) ([7162a7c](https://github.com/mendersoftware/mender-cli/commit/7162a7cb606903ede6e84a4ef1b7f15946eaabb6))  by @alfrunes
+
+
+  Two new flags `--per-page` and `--page` is added to list devices beyond
+  the first page of results.
+- Use consistent structured logging (slog) to stderr
+([MEN-8304](https://northerntech.atlassian.net/browse/MEN-8304)) ([a1c75d9](https://github.com/mendersoftware/mender-cli/commit/a1c75d9b3123c000f61841abe8df47b77021c98b))  by @alfrunes
+- Use paginated endpoint to list artifacts
+([MEN-8302](https://northerntech.atlassian.net/browse/MEN-8302)) ([3a59a66](https://github.com/mendersoftware/mender-cli/commit/3a59a6679fda21f4b141eb5e24e83da6b972863a))  by @danielskinstad
+  - **BREAKING**: `artifacts list` no longer returns all artifacts by
+default. It now uses a paginated API endpoint, so only one page of results
+is shown at a time, and it can be modified with `--page` and `--per-page`
+
+
+  Use the new paginated API endpoint to list artifacts and add support
+  for pagination to the `artifacts  list` command.
+
+
+
+
+### Security
+
+
+- Bump golang.org/x/crypto from 0.16.0 to 0.17.0
+ ([9bb6ed7](https://github.com/mendersoftware/mender-cli/commit/9bb6ed7149f571989ec3d009f8aff8e345d56e04))  by @dependabot[bot]
+
+
+  Bumps [golang.org/x/crypto](https://github.com/golang/crypto) from 0.16.0 to 0.17.0.
+  - [Commits](https://github.com/golang/crypto/compare/v0.16.0...v0.17.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang.org/x/crypto
+    dependency-type: indirect
+  ...
+- Bump the golang-dependencies group with 2 updates
+ ([780b00b](https://github.com/mendersoftware/mender-cli/commit/780b00b1aaf29e64bbd0d3e18428f756d683a24f))  by @dependabot[bot]
+
+
+  Bumps the golang-dependencies group with 2 updates: [github.com/google/uuid](https://github.com/google/uuid) and [github.com/spf13/viper](https://github.com/spf13/viper).
+  
+  
+  Updates `github.com/google/uuid` from 1.4.0 to 1.5.0
+  - [Release notes](https://github.com/google/uuid/releases)
+  - [Changelog](https://github.com/google/uuid/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/google/uuid/compare/v1.4.0...v1.5.0)
+  
+  Updates `github.com/spf13/viper` from 1.18.0 to 1.18.2
+  - [Release notes](https://github.com/spf13/viper/releases)
+  - [Commits](https://github.com/spf13/viper/compare/v1.18.0...v1.18.2)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/google/uuid
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: github.com/spf13/viper
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: golang-dependencies
+  ...
+- Bump the golang-dependencies group with 4 updates
+ ([a07412e](https://github.com/mendersoftware/mender-cli/commit/a07412ec27749047c6f818b3874350f01f914ce9))  by @dependabot[bot]
+
+
+  Bumps the golang-dependencies group with 4 updates: [github.com/cheggaaa/pb/v3](https://github.com/cheggaaa/pb), [github.com/google/uuid](https://github.com/google/uuid), [golang.org/x/sys](https://github.com/golang/sys) and [golang.org/x/term](https://github.com/golang/term).
+  
+  
+  Updates `github.com/cheggaaa/pb/v3` from 3.1.4 to 3.1.5
+  - [Commits](https://github.com/cheggaaa/pb/compare/v3.1.4...v3.1.5)
+  
+  Updates `github.com/google/uuid` from 1.5.0 to 1.6.0
+  - [Release notes](https://github.com/google/uuid/releases)
+  - [Changelog](https://github.com/google/uuid/blob/master/CHANGELOG.md)
+  - [Commits](https://github.com/google/uuid/compare/v1.5.0...v1.6.0)
+  
+  Updates `golang.org/x/sys` from 0.15.0 to 0.16.0
+  - [Commits](https://github.com/golang/sys/compare/v0.15.0...v0.16.0)
+  
+  Updates `golang.org/x/term` from 0.15.0 to 0.16.0
+  - [Commits](https://github.com/golang/term/compare/v0.15.0...v0.16.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/cheggaaa/pb/v3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: golang-dependencies
+  - dependency-name: github.com/google/uuid
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/sys
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/term
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  ...
+- Bump google.golang.org/protobuf from 1.31.0 to 1.33.0
+ ([0c648c7](https://github.com/mendersoftware/mender-cli/commit/0c648c71dc0649d653a29c8bea542ab4d8a41e0a))  by @dependabot[bot]
+
+
+  Bumps google.golang.org/protobuf from 1.31.0 to 1.33.0.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: google.golang.org/protobuf
+    dependency-type: indirect
+  ...
+- Bump golang.org/x/net from 0.19.0 to 0.23.0
+ ([a80befd](https://github.com/mendersoftware/mender-cli/commit/a80befdc4f927bcf52050a488141d96fe2c371eb))  by @dependabot[bot]
+
+
+  Bumps [golang.org/x/net](https://github.com/golang/net) from 0.19.0 to 0.23.0.
+  - [Commits](https://github.com/golang/net/compare/v0.19.0...v0.23.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang.org/x/net
+    dependency-type: indirect
+  ...
+- Bump the golang-dependencies group with 5 updates
+ ([1d437a0](https://github.com/mendersoftware/mender-cli/commit/1d437a053cb5de9ccda7c6778ec664007a7a75a5))  by @dependabot[bot]
+
+
+  Bumps the golang-dependencies group with 5 updates:
+  
+  | Package | From | To |
+  | --- | --- | --- |
+  | [github.com/gorilla/websocket](https://github.com/gorilla/websocket) | `1.5.1` | `1.5.3` |
+  | [github.com/spf13/cobra](https://github.com/spf13/cobra) | `1.8.0` | `1.8.1` |
+  | [github.com/spf13/viper](https://github.com/spf13/viper) | `1.18.2` | `1.19.0` |
+  | [golang.org/x/sys](https://github.com/golang/sys) | `0.20.0` | `0.21.0` |
+  | [golang.org/x/term](https://github.com/golang/term) | `0.20.0` | `0.21.0` |
+  
+  
+  Updates `github.com/gorilla/websocket` from 1.5.1 to 1.5.3
+  - [Release notes](https://github.com/gorilla/websocket/releases)
+  - [Commits](https://github.com/gorilla/websocket/compare/v1.5.1...v1.5.3)
+  
+  Updates `github.com/spf13/cobra` from 1.8.0 to 1.8.1
+  - [Release notes](https://github.com/spf13/cobra/releases)
+  - [Commits](https://github.com/spf13/cobra/compare/v1.8.0...v1.8.1)
+  
+  Updates `github.com/spf13/viper` from 1.18.2 to 1.19.0
+  - [Release notes](https://github.com/spf13/viper/releases)
+  - [Commits](https://github.com/spf13/viper/compare/v1.18.2...v1.19.0)
+  
+  Updates `golang.org/x/sys` from 0.20.0 to 0.21.0
+  - [Commits](https://github.com/golang/sys/compare/v0.20.0...v0.21.0)
+  
+  Updates `golang.org/x/term` from 0.20.0 to 0.21.0
+  - [Commits](https://github.com/golang/term/compare/v0.20.0...v0.21.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/gorilla/websocket
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: golang-dependencies
+  - dependency-name: github.com/spf13/cobra
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+    dependency-group: golang-dependencies
+  - dependency-name: github.com/spf13/viper
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/sys
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/term
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  ...
+- Bump the golang-dependencies group across 1 directory with 2 updates
+ ([dc6a734](https://github.com/mendersoftware/mender-cli/commit/dc6a734447233e74b226bdc6f904a595b73fb83c))  by @dependabot[bot]
+
+
+  Bumps the golang-dependencies group with 2 updates in the / directory: [golang.org/x/sys](https://github.com/golang/sys) and [golang.org/x/term](https://github.com/golang/term).
+  
+  
+  Updates `golang.org/x/sys` from 0.22.0 to 0.25.0
+  - [Commits](https://github.com/golang/sys/compare/v0.22.0...v0.25.0)
+  
+  Updates `golang.org/x/term` from 0.22.0 to 0.24.0
+  - [Commits](https://github.com/golang/term/compare/v0.22.0...v0.24.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang.org/x/sys
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/term
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  ...
+- Bump golang.org/x/crypto from 0.21.0 to 0.31.0
+ ([c3511ef](https://github.com/mendersoftware/mender-cli/commit/c3511ef24d5eace32ae9afdf33e4066f7033935a))  by @dependabot[bot]
+
+
+  Bumps [golang.org/x/crypto](https://github.com/golang/crypto) from 0.21.0 to 0.31.0.
+  - [Commits](https://github.com/golang/crypto/compare/v0.21.0...v0.31.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang.org/x/crypto
+    dependency-type: indirect
+  ...
+- Bump golang.org/x/crypto from 0.31.0 to 0.35.0
+ ([81a7613](https://github.com/mendersoftware/mender-cli/commit/81a761393a7fdeb4550e305bbab714241ca44813))  by @dependabot[bot]
+
+
+  Bumps [golang.org/x/crypto](https://github.com/golang/crypto) from 0.31.0 to 0.35.0.
+  - [Commits](https://github.com/golang/crypto/compare/v0.31.0...v0.35.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang.org/x/crypto
+    dependency-version: 0.35.0
+    dependency-type: indirect
+  ...
+- Bump busybox from 1.36.1 to 1.37.0
+ ([92c4f52](https://github.com/mendersoftware/mender-cli/commit/92c4f5269c9f7a4e0415da6ec1fea8d20a2b2963))  by @dependabot[bot]
+
+
+  Bumps busybox from 1.36.1 to 1.37.0.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: busybox
+    dependency-version: 1.37.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+  ...
+- Bump the golang-dependencies group with 3 updates
+ ([c33c148](https://github.com/mendersoftware/mender-cli/commit/c33c148ea51b4c192456fa875030ff5a84e615b2))  by @dependabot[bot]
+
+
+  Bumps the golang-dependencies group with 3 updates: [github.com/spf13/viper](https://github.com/spf13/viper), [golang.org/x/sys](https://github.com/golang/sys) and [golang.org/x/term](https://github.com/golang/term).
+  
+  
+  Updates `github.com/spf13/viper` from 1.19.0 to 1.20.1
+  - [Release notes](https://github.com/spf13/viper/releases)
+  - [Commits](https://github.com/spf13/viper/compare/v1.19.0...v1.20.1)
+  
+  Updates `golang.org/x/sys` from 0.31.0 to 0.32.0
+  - [Commits](https://github.com/golang/sys/compare/v0.31.0...v0.32.0)
+  
+  Updates `golang.org/x/term` from 0.30.0 to 0.31.0
+  - [Commits](https://github.com/golang/term/compare/v0.30.0...v0.31.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/spf13/viper
+    dependency-version: 1.20.1
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/sys
+    dependency-version: 0.32.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  - dependency-name: golang.org/x/term
+    dependency-version: 0.31.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+    dependency-group: golang-dependencies
+  ...
+- Bump golang from 1.24.2 to 1.24.3
+ ([21dce15](https://github.com/mendersoftware/mender-cli/commit/21dce159503f75dcd55555d85cbe74e74749e3d8))  by @dependabot[bot]
+
+
+  Bumps golang from 1.24.2 to 1.24.3.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.24.3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+  ...
+- Bump golang from 1.24.3 to 1.24.4
+ ([a5db4f2](https://github.com/mendersoftware/mender-cli/commit/a5db4f23a4ef424612901838bdad679cf3326e93))  by @dependabot[bot]
+
+
+  Bumps golang from 1.24.3 to 1.24.4.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.24.4
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+  ...
+- Bump github.com/go-viper/mapstructure/v2 from 2.2.1 to 2.3.0
+ ([5bf7678](https://github.com/mendersoftware/mender-cli/commit/5bf76786bc57815de2945cfa557848bf8f84c653))  by @dependabot[bot]
+
+
+  Bumps [github.com/go-viper/mapstructure/v2](https://github.com/go-viper/mapstructure) from 2.2.1 to 2.3.0.
+  - [Release notes](https://github.com/go-viper/mapstructure/releases)
+  - [Changelog](https://github.com/go-viper/mapstructure/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/go-viper/mapstructure/compare/v2.2.1...v2.3.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/go-viper/mapstructure/v2
+    dependency-version: 2.3.0
+    dependency-type: indirect
+  ...
+- Bump golang from 1.24.4 to 1.24.5
+ ([fb0eafb](https://github.com/mendersoftware/mender-cli/commit/fb0eafbe28da48f237b4bc431a7aa61fb04fbe40))  by @dependabot[bot]
+
+
+  Bumps golang from 1.24.4 to 1.24.5.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.24.5
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+  ...
+- Bump github.com/go-viper/mapstructure/v2 from 2.3.0 to 2.4.0
+ ([ee231ae](https://github.com/mendersoftware/mender-cli/commit/ee231ae8c4489128315029fcc95b7988f4b46d75))  by @dependabot[bot]
+
+
+  Bumps [github.com/go-viper/mapstructure/v2](https://github.com/go-viper/mapstructure) from 2.3.0 to 2.4.0.
+  - [Release notes](https://github.com/go-viper/mapstructure/releases)
+  - [Changelog](https://github.com/go-viper/mapstructure/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/go-viper/mapstructure/compare/v2.3.0...v2.4.0)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/go-viper/mapstructure/v2
+    dependency-version: 2.4.0
+    dependency-type: indirect
+  ...
+- Bump github.com/ulikunitz/xz from 0.5.12 to 0.5.14
+ ([1579e4c](https://github.com/mendersoftware/mender-cli/commit/1579e4c7e03806adc2676ee78ae66d4e24b30e38))  by @dependabot[bot]
+
+
+  Bumps [github.com/ulikunitz/xz](https://github.com/ulikunitz/xz) from 0.5.12 to 0.5.14.
+  - [Commits](https://github.com/ulikunitz/xz/compare/v0.5.12...v0.5.14)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: github.com/ulikunitz/xz
+    dependency-version: 0.5.14
+    dependency-type: indirect
+  ...
+- Bump golang from 1.24.5 to 1.25.0
+ ([8c7bd26](https://github.com/mendersoftware/mender-cli/commit/8c7bd268e2ef62a4b6323c3dd07cd9eddca86175))  by @dependabot[bot]
+
+
+  Bumps golang from 1.24.5 to 1.25.0.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.25.0
+    dependency-type: direct:production
+    update-type: version-update:semver-minor
+  ...
+- Bump golang from 1.25.0 to 1.25.1
+ ([34af25b](https://github.com/mendersoftware/mender-cli/commit/34af25be565c22f20e50a72eca7e3ac18126624f))  by @dependabot[bot]
+
+
+  Bumps golang from 1.25.0 to 1.25.1.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.25.1
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+  ...
+- Bump golang from 1.25.1 to 1.25.3
+ ([2e1cfe4](https://github.com/mendersoftware/mender-cli/commit/2e1cfe4ff7da4f4046839a15105743ada29d46a5))  by @dependabot[bot]
+
+
+  Bumps golang from 1.25.1 to 1.25.3.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: golang
+    dependency-version: 1.25.3
+    dependency-type: direct:production
+    update-type: version-update:semver-patch
+  ...
+- Bump tests/mender_server from `a0df4cb` to `cb41636`
+ ([c262bd1](https://github.com/mendersoftware/mender-cli/commit/c262bd17f0a1c3084b9ee94689924b88531ab5aa))  by @dependabot[bot]
+
+
+  Bumps [tests/mender_server](https://github.com/mendersoftware/mender-server) from `a0df4cb` to `cb41636`.
+  - [Release notes](https://github.com/mendersoftware/mender-server/releases)
+  - [Commits](https://github.com/mendersoftware/mender-server/compare/a0df4cb00305fbf3ef10cbe5ecb1c45c93b01853...cb41636922a9755426c1d41f22105954f0cd8c1e)
+  
+  ---
+  updated-dependencies:
+  - dependency-name: tests/mender_server
+    dependency-version: cb41636922a9755426c1d41f22105954f0cd8c1e
+    dependency-type: direct:production
+  ...
+- Bump python from 3.13-slim to 3.14-slim
+ ([953826c](https://github.com/mendersoftware/mender-cli/commit/953826c7a014666cc5646c2e4f3f3dc00a2b8ecf))  by @dependabot[bot]
+
+
+  Bumps python from 3.13-slim to 3.14-slim.
+  
+  ---
+  updated-dependencies:
+  - dependency-name: python
+    dependency-version: 3.14-slim
+    dependency-type: direct:production
+  ...
+
+
+
+
+### Refac
+
+
+- Move acceptance tests to `tests/acceptance`
+ ([cc53528](https://github.com/mendersoftware/mender-cli/commit/cc5352895c5e94b6001f0d76fc8e91e642c39205))  by @lluiscampos
+
+
+
+
+
+
 
 ## mender-cli 1.12.0
 
