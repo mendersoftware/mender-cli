@@ -22,9 +22,6 @@ include:
   - component: gitlab.com/Northern.tech/Mender/mendertesting/release-candidate@master
     inputs:
       github_repo: mendersoftware/mender-cli
-  - component: gitlab.com/Northern.tech/Mender/mendertesting/release-mender-docs@master
-    inputs:
-      component: mender-cli
   - component: gitlab.com/Northern.tech/Mender/mendertesting/release-dist-packages@master
     inputs:
       package: MENDER_CLI
