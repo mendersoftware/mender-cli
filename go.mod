@@ -1,6 +1,6 @@
 module github.com/mendersoftware/mender-cli
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.7
@@ -14,8 +14,8 @@ require (
 	github.com/spf13/pflag v1.0.9
 	github.com/spf13/viper v1.20.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/sys v0.35.0
-	golang.org/x/term v0.34.0
+	golang.org/x/sys v0.38.0
+	golang.org/x/term v0.37.0
 )
 
 require (
@@ -45,8 +45,8 @@ require (
 	github.com/ulikunitz/xz v0.5.14 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.35.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
