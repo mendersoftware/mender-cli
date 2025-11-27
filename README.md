@@ -28,7 +28,7 @@ To start using `mender-cli`, we recommend that you begin with the
 ## Downloading the binaries
 
 You can find the latest `mender-cli` binaries in the [Downloads page on Mender
-Docs](https://docs.mender.io/downloads#mender-cli).
+Docs](https://docs.mender.io/downloads/workstation-tools#mender-cli).
 
 ## Configuration file
 
