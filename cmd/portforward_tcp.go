@@ -22,7 +22,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -37,7 +36,6 @@ type TCPPortForwarder struct {
 	listen     net.Listener
 	remoteHost string
 	remotePort uint16
-	mutexAck   map[string]*sync.Mutex
 }
 
 func NewTCPPortForwarder(
@@ -55,7 +53,6 @@ func NewTCPPortForwarder(
 		listen:     listen,
 		remoteHost: remoteHost,
 		remotePort: remotePort,
-		mutexAck:   map[string]*sync.Mutex{},
 	}, nil
 }
 
@@ -110,10 +107,8 @@ func (p *TCPPortForwarder) handleRequest(
 ) {
 	defer conn.Close()
 
-	p.mutexAck[connectionID] = &sync.Mutex{}
-	defer func() {
-		delete(p.mutexAck, connectionID)
-	}()
+	ackChan := make(chan struct{})
+	defer func() { close(ackChan) }()
 
 	errChan := make(chan error)
 	dataChan := make(chan []byte)
@@ -195,9 +190,7 @@ func (p *TCPPortForwarder) handleRequest(
 					}
 				} else if m.Header.Proto == ws.ProtoTypePortForward &&
 					m.Header.MsgType == wspf.MessageTypePortForwardAck {
-					if m, ok := p.mutexAck[connectionID]; ok {
-						m.Unlock()
-					}
+					<-ackChan
 				}
 			case <-ctx.Done():
 				return
@@ -206,17 +199,11 @@ func (p *TCPPortForwarder) handleRequest(
 	}(connectionID)
 
 	// go routine to handle sent messages
-	for {
+	for err == nil {
 		select {
-		case err := <-errChan:
-			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
-			}
-			return
-		case data := <-dataChan:
-			// lock the ack mutex, we don't allow more than one in-flight message
-			p.mutexAck[connectionID].Lock()
+		case err = <-errChan:
 
+		case data := <-dataChan:
 			m := &ws.ProtoMsg{
 				Header: ws.ProtoHdr{
 					Proto:     ws.ProtoTypePortForward,
@@ -229,9 +216,22 @@ func (p *TCPPortForwarder) handleRequest(
 				Body: data,
 			}
 			msgChan <- m
+			// wait for the ack to be received before processing more data
+			select {
+			case ackChan <- struct{}{}:
+			case <-ctx.Done():
+				err = ctx.Err()
+
+			case err = <-errChan:
+
+			}
 		case <-ctx.Done():
-			return
+			err = ctx.Err()
 		}
+	}
+
+	if err != io.EOF {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
 	}
 }
 
