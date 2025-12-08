@@ -96,6 +96,69 @@ func (p *TCPPortForwarder) Run(
 		}
 	}
 }
+func (p *TCPPortForwarder) handleInboundMessages(
+	ctx context.Context,
+	conn net.Conn,
+	sessionID string,
+	connectionID string,
+	ackChan <-chan struct{},
+	msgChan chan<- *ws.ProtoMsg,
+	recvChan <-chan *ws.ProtoMsg) {
+	sendStopMessage := true
+	defer func() {
+		conn.Close()
+		if sendStopMessage {
+			m := &ws.ProtoMsg{
+				Header: ws.ProtoHdr{
+					Proto:     ws.ProtoTypePortForward,
+					MsgType:   wspf.MessageTypePortForwardStop,
+					SessionID: sessionID,
+					Properties: map[string]interface{}{
+						wspf.PropertyConnectionID: connectionID,
+					},
+				},
+			}
+			msgChan <- m
+		}
+	}()
+
+	for {
+		select {
+		case m := <-recvChan:
+			if m.Header.Proto == ws.ProtoTypePortForward &&
+				m.Header.MsgType == wspf.MessageTypePortForwardStop {
+				sendStopMessage = false
+				return
+			} else if m.Header.Proto == ws.ProtoTypePortForward &&
+				m.Header.MsgType == wspf.MessageTypePortForward {
+				_, err := conn.Write(m.Body)
+				if err != nil {
+					if errors.Unwrap(err) != net.ErrClosed {
+						fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
+					}
+				} else {
+					// send the ack
+					m := &ws.ProtoMsg{
+						Header: ws.ProtoHdr{
+							Proto:     ws.ProtoTypePortForward,
+							MsgType:   wspf.MessageTypePortForwardAck,
+							SessionID: sessionID,
+							Properties: map[string]interface{}{
+								wspf.PropertyConnectionID: connectionID,
+							},
+						},
+					}
+					msgChan <- m
+				}
+			} else if m.Header.Proto == ws.ProtoTypePortForward &&
+				m.Header.MsgType == wspf.MessageTypePortForwardAck {
+				<-ackChan
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
 
 func (p *TCPPortForwarder) handleRequest(
 	ctx context.Context,
@@ -105,7 +168,6 @@ func (p *TCPPortForwarder) handleRequest(
 	recvChan chan *ws.ProtoMsg,
 	msgChan chan *ws.ProtoMsg,
 ) {
-	defer conn.Close()
 
 	ackChan := make(chan struct{})
 	defer func() { close(ackChan) }()
@@ -137,66 +199,11 @@ func (p *TCPPortForwarder) handleRequest(
 	}
 	msgChan <- m
 
-	sendStopMessage := true
-	defer func() {
-		conn.Close()
-		if sendStopMessage {
-			m := &ws.ProtoMsg{
-				Header: ws.ProtoHdr{
-					Proto:     ws.ProtoTypePortForward,
-					MsgType:   wspf.MessageTypePortForwardStop,
-					SessionID: sessionID,
-					Properties: map[string]interface{}{
-						wspf.PropertyConnectionID: connectionID,
-					},
-				},
-			}
-			msgChan <- m
-		}
-	}()
-
 	// go routine to handle the network connection
 	go p.handleRequestConnection(dataChan, errChan, conn)
 
 	// go routine to handle received messages
-	go func(connectionID string) {
-		for {
-			select {
-			case m := <-recvChan:
-				if m.Header.Proto == ws.ProtoTypePortForward &&
-					m.Header.MsgType == wspf.MessageTypePortForwardStop {
-					sendStopMessage = false
-					return
-				} else if m.Header.Proto == ws.ProtoTypePortForward &&
-					m.Header.MsgType == wspf.MessageTypePortForward {
-					_, err := conn.Write(m.Body)
-					if err != nil {
-						if errors.Unwrap(err) != net.ErrClosed {
-							fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
-						}
-					} else {
-						// send the ack
-						m := &ws.ProtoMsg{
-							Header: ws.ProtoHdr{
-								Proto:     ws.ProtoTypePortForward,
-								MsgType:   wspf.MessageTypePortForwardAck,
-								SessionID: sessionID,
-								Properties: map[string]interface{}{
-									wspf.PropertyConnectionID: connectionID,
-								},
-							},
-						}
-						msgChan <- m
-					}
-				} else if m.Header.Proto == ws.ProtoTypePortForward &&
-					m.Header.MsgType == wspf.MessageTypePortForwardAck {
-					<-ackChan
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}(connectionID)
+	go p.handleInboundMessages(ctx, conn, sessionID, connectionID, ackChan, msgChan, recvChan)
 
 	// go routine to handle sent messages
 	for err == nil {
