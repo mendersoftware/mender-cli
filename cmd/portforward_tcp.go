@@ -71,6 +71,15 @@ func (p *TCPPortForwarder) Run(
 		for {
 			conn, err := p.listen.Accept()
 			if err != nil {
+				close(acceptedConnections)
+				fmt.Fprintf(os.Stderr,
+					"error accepting new connection on socket %s: %s\n",
+					p.listen.Addr(), err.Error(),
+				)
+				fmt.Fprintf(os.Stderr,
+					"closing listening socket %s\n",
+					p.listen.Addr(),
+				)
 				return
 			}
 			fmt.Printf(
@@ -85,7 +94,10 @@ func (p *TCPPortForwarder) Run(
 	// handle new connections
 	for {
 		select {
-		case conn := <-acceptedConnections:
+		case conn, open := <-acceptedConnections:
+			if !open {
+				return
+			}
 			connectionUUID, _ := uuid.NewUUID()
 			connectionID := connectionUUID.String()
 			recvChan := make(chan *ws.ProtoMsg, portForwardTCPChannelSize)
