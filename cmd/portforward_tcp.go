@@ -60,7 +60,7 @@ func (p *TCPPortForwarder) Run(
 	ctx context.Context,
 	sessionID string,
 	msgChan chan *ws.ProtoMsg,
-	recvChans map[string]chan *ws.ProtoMsg,
+	registerRecvChan func(string, chan<- *ws.ProtoMsg),
 ) {
 	// listen for new connections
 	defer p.listen.Close()
@@ -101,7 +101,7 @@ func (p *TCPPortForwarder) Run(
 			connectionUUID, _ := uuid.NewUUID()
 			connectionID := connectionUUID.String()
 			recvChan := make(chan *ws.ProtoMsg, portForwardTCPChannelSize)
-			recvChans[connectionID] = recvChan
+			registerRecvChan(connectionID, recvChan)
 			go p.handleRequest(ctx, conn, sessionID, connectionID, recvChan, msgChan)
 		case <-ctx.Done():
 			return
