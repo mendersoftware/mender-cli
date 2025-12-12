@@ -60,7 +60,7 @@ func (p *TCPPortForwarder) Run(
 	ctx context.Context,
 	sessionID string,
 	msgChan chan *ws.ProtoMsg,
-	recvChans map[string]chan *ws.ProtoMsg,
+	registerRecvChan func(string, chan<- *ws.ProtoMsg),
 ) {
 	// listen for new connections
 	defer p.listen.Close()
@@ -101,7 +101,7 @@ func (p *TCPPortForwarder) Run(
 			connectionUUID, _ := uuid.NewUUID()
 			connectionID := connectionUUID.String()
 			recvChan := make(chan *ws.ProtoMsg, portForwardTCPChannelSize)
-			recvChans[connectionID] = recvChan
+			registerRecvChan(connectionID, recvChan)
 			go p.handleRequest(ctx, conn, sessionID, connectionID, recvChan, msgChan)
 		case <-ctx.Done():
 			return
@@ -135,8 +135,15 @@ func (p *TCPPortForwarder) handleInboundMessages(
 	}()
 
 	for {
+		var (
+			m    *ws.ProtoMsg
+			open bool
+		)
 		select {
-		case m := <-recvChan:
+		case m, open = <-recvChan:
+			if !open {
+				return
+			}
 			if m.Header.Proto == ws.ProtoTypePortForward &&
 				m.Header.MsgType == wspf.MessageTypePortForwardStop {
 				sendStopMessage = false
@@ -145,12 +152,13 @@ func (p *TCPPortForwarder) handleInboundMessages(
 				m.Header.MsgType == wspf.MessageTypePortForward {
 				_, err := conn.Write(m.Body)
 				if err != nil {
-					if errors.Unwrap(err) != net.ErrClosed {
+					if !errors.Is(err, net.ErrClosed) {
 						fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
 					}
+					return
 				} else {
 					// send the ack
-					m := &ws.ProtoMsg{
+					m = &ws.ProtoMsg{
 						Header: ws.ProtoHdr{
 							Proto:     ws.ProtoTypePortForward,
 							MsgType:   wspf.MessageTypePortForwardAck,
@@ -164,7 +172,10 @@ func (p *TCPPortForwarder) handleInboundMessages(
 				}
 			} else if m.Header.Proto == ws.ProtoTypePortForward &&
 				m.Header.MsgType == wspf.MessageTypePortForwardAck {
-				<-ackChan
+				_, open = <-ackChan
+				if !open {
+					return
+				}
 			}
 		case <-ctx.Done():
 			return
