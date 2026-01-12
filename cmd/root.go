@@ -77,7 +77,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	lflags := rootCmd.LocalFlags()
-	lflags.ParseErrorsWhitelist.UnknownFlags = true
+	lflags.ParseErrorsAllowlist.UnknownFlags = true
 	err := lflags.Parse(os.Args)
 	if err != nil && !errors.Is(err, pflag.ErrHelp) {
 		log.Errf("Failed to parse flags: %s\n", err)
