@@ -105,7 +105,7 @@ test:smoketests:mac:
   script:
     - ./mender-cli.darwin.amd64
   tags:
-    - mender-mac-slave
+    - mac-arm-runner
 
 test:smoketests:linux:
   image: debian:bookworm
