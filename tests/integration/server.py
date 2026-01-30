@@ -17,6 +17,7 @@ import os
 import uuid
 import subprocess
 import redo
+from redo import retriable
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,14 +64,15 @@ class Server:
 
         self.num_accepted_devices = 0
 
+    @retriable(sleeptime=4, attempts=32, jitter=2)
     def get_auth_token(self):
+        logger.info("logging in as user: " + self.username + "")
         r = ApiClient(useradm.URL_MGMT, self.host).call(
             "POST", useradm.URL_LOGIN, auth=(self.username, self.password)
         )
-        assert r.status_code == 200
-        assert r.text is not None
-        assert r.text != ""
-
+        if r.status_code != 200:
+            raise ValueError("failed login rc=" + r.status_code)
+        self.auth_token = r.text
         return r.text
 
     def get_pending_devices(self):
@@ -230,6 +232,8 @@ class Server:
     def abort_deployment(self, deployment_id):
         set_status = f"/deployments/{deployment_id}/status"
         response = self.api_dev_deploy.with_auth(self.auth_token).call(
-            "PUT", set_status, body={"status": "aborted"},
+            "PUT",
+            set_status,
+            body={"status": "aborted"},
         )
         assert response.status_code == 204, f"{r.text} {r.status_code}"

@@ -28,6 +28,7 @@ from DNS import DnsRequest, SocketError
 from common_connect import wait_for_connect
 from helpers import md5sum, get_device_id
 
+
 # Function must be defined outside of class so it can be pickled
 def port_forward(auth_token, server_url, dev_id, port_mapping, *port_mappings):
     return subprocess.run(
