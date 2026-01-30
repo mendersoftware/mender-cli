@@ -20,7 +20,10 @@ from testutils.api.client import ApiClient
 
 
 def wait_for_connect(env, devid):
-    devconn = ApiClient(host=env.server.host, base_url=deviceconnect.URL_MGMT,)
+    devconn = ApiClient(
+        host=env.server.host,
+        base_url=deviceconnect.URL_MGMT,
+    )
 
     connected = 0
     for _ in redo.retrier(attempts=12, sleeptime=5):

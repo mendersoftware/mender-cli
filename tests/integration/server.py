@@ -71,7 +71,7 @@ class Server:
             "POST", useradm.URL_LOGIN, auth=(self.username, self.password)
         )
         if r.status_code != 200:
-            raise ValueError("failed login rc="+r.status_code)
+            raise ValueError("failed login rc=" + r.status_code)
         self.auth_token = r.text
         return r.text
 
@@ -232,6 +232,8 @@ class Server:
     def abort_deployment(self, deployment_id):
         set_status = f"/deployments/{deployment_id}/status"
         response = self.api_dev_deploy.with_auth(self.auth_token).call(
-            "PUT", set_status, body={"status": "aborted"},
+            "PUT",
+            set_status,
+            body={"status": "aborted"},
         )
         assert response.status_code == 204, f"{r.text} {r.status_code}"

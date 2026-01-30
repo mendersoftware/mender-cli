@@ -49,13 +49,15 @@ def pytest_addoption(parser):
 
 def stop_open_source_server():
     helpers.docker_compose_stop(
-        project_name=project_name, files=["../mender_server/docker-compose.yml"],
+        project_name=project_name,
+        files=["../mender_server/docker-compose.yml"],
     )
 
 
 def start_open_source_server():
     helpers.docker_compose_start(
-        project_name=project_name, files=["../mender_server/docker-compose.yml"],
+        project_name=project_name,
+        files=["../mender_server/docker-compose.yml"],
     )
 
 
@@ -80,7 +82,8 @@ def pytest_sessionfinish(session):
 def devices_down():
     yield
     helpers.docker_compose_stop(
-        project_name=project_name_client, files=["docker-compose.client.yml"],
+        project_name=project_name_client,
+        files=["docker-compose.client.yml"],
     )
 
 
