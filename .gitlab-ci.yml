@@ -203,6 +203,12 @@ test:integration:
     - mv mender-cli.linux.amd64 /usr/local/bin/mender-cli
     - cd tests/integration
     - ./run_tests.sh -n ${XDIST_WORKERS_INTEGRATION_TEST}
+  retry:
+    max: 2
+    exit_codes:
+      - 2
+      - 137
+      - 192
 
 test:install:brew:
   stage: test
