@@ -11,8 +11,6 @@ include:
   - component: gitlab.com/Northern.tech/Mender/mendertesting/brew-build@master
     inputs:
       formula: "m/mender-cli.rb"
-    rules:
-      - when: never # FIXME: QA-1350
 
   # Release CI/CD components
   - component: gitlab.com/Northern.tech/Mender/mendertesting/release-candidate@master
@@ -214,12 +212,13 @@ test:install:brew:
   stage: test
   tags:
     - mac-arm-runner
+  before_script:
+    - brew install openssl@3
   script:
     # Reinstall in case we already have mender-cli
     - brew reinstall mender-cli
     - brew test mender-cli
   rules:
-    - when: never # FIXME: QA-1350
     - if: $CI_COMMIT_BRANCH =~ "/^master|^v?[0-9]\.[0-9]\.[0-9]/"
       when: never
     - when: on_success
