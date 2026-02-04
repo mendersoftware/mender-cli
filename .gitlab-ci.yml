@@ -212,6 +212,8 @@ test:install:brew:
   stage: test
   tags:
     - mac-arm-runner
+  before_script:
+    - brew install openssl@3
   script:
     # Reinstall in case we already have mender-cli
     - brew reinstall mender-cli
