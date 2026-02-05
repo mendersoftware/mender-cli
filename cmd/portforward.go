@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -94,7 +95,8 @@ type PortForwardCmd struct {
 	sessionID    string
 	bindingHost  string
 	portMappings []portMapping
-	recvChans    map[string]chan *ws.ProtoMsg
+	recvChanMu   sync.RWMutex
+	recvChans    map[string]chan<- *ws.ProtoMsg
 	running      bool
 	stop         chan struct{}
 	err          error
@@ -184,7 +186,7 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 		deviceID:     args[0],
 		bindingHost:  bindingHost,
 		portMappings: portMappings,
-		recvChans:    make(map[string]chan *ws.ProtoMsg),
+		recvChans:    make(map[string]chan<- *ws.ProtoMsg),
 		stop:         make(chan struct{}),
 	}, nil
 }
@@ -196,6 +198,12 @@ func (c *PortForwardCmd) Run() error {
 			return err
 		}
 	}
+}
+
+func (c *PortForwardCmd) registerRecvChan(connectionID string, recvChan chan<- *ws.ProtoMsg) {
+	c.recvChanMu.Lock()
+	defer c.recvChanMu.Unlock()
+	c.recvChans[connectionID] = recvChan
 }
 
 func (c *PortForwardCmd) run() error {
@@ -239,14 +247,14 @@ func (c *PortForwardCmd) run() error {
 			if err != nil {
 				return err
 			}
-			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
+			go forwarder.Run(ctx, c.sessionID, msgChan, c.registerRecvChan)
 		case protocolUDP:
 			forwarder, err := NewUDPPortForwarder(c.bindingHost, portMapping.LocalPort,
 				portMapping.RemoteHost, portMapping.RemotePort)
 			if err != nil {
 				return err
 			}
-			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
+			go forwarder.Run(ctx, c.sessionID, msgChan, c.registerRecvChan)
 		default:
 			return errors.New("unknown protocol: " + portMapping.Protocol)
 		}
@@ -411,9 +419,11 @@ func (c *PortForwardCmd) processIncomingMessages(
 				m.Header.MsgType == wspf.MessageTypePortForwardStop) {
 			connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string)
 			if connectionID != "" {
+				c.recvChanMu.RLock()
 				if recvChan, ok := c.recvChans[connectionID]; ok {
 					recvChan <- m
 				}
+				c.recvChanMu.RUnlock()
 			}
 		}
 	}
