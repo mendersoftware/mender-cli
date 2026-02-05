@@ -192,7 +192,7 @@ func listArtifact(a artifactData, detailLevel int) {
 		fmt.Printf("Modfied: %s\n", a.Modified)
 		fmt.Printf("Size: %d\n", a.Size)
 		fmt.Printf("Description: %s\n", a.Description)
-		fmt.Println("Compatible device types:")
+		fmt.Println("Compatible types:")
 		for _, v := range a.DeviceTypesCompatible {
 			fmt.Printf("  %s\n", v)
 		}
