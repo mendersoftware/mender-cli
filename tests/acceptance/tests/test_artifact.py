@@ -19,7 +19,6 @@ from pathlib import Path
 import pytest
 
 import cli
-import artifact
 from common import expect_output, DEFAULT_TOKEN_PATH
 import api
 import docker
