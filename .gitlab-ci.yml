@@ -1,4 +1,8 @@
 include:
+  - project: Northern.tech/Mender/mendertesting
+    file:
+      - qa-common/runner.yml
+      - qa-common/retry.yml
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-lint.yml'
   - project: 'Northern.tech/Mender/mendertesting'
@@ -30,6 +34,10 @@ include:
       remote_changelog_file: "31.mender-cli/docs.md"
 
 image: golang:1.24
+
+default:
+  tags: !reference [.qa-common-default-runner, tags]
+  retry: !reference [.qa-common-default-retry, retry]
 
 variables:
   GITHUB_RELEASE_BINARY: mender-cli
@@ -64,6 +72,18 @@ variables:
     value: "31.mender-cli/docs.md"
 
   DOCKER_VERSION: "28.1"
+  DOCKER_HOST:
+    value: 'tcp://docker:2376'
+    description: "Required to run dind inside k8s runners with TLS"
+  DOCKER_TLS_CERTDIR:
+    value: '/certs'
+    description: "The cert dir inside the gitlab runner. Don't change this."
+  DOCKER_TLS_VERIFY:
+    value: 1
+    description: "Enable TLS verification for docker in dind"
+  DOCKER_CERT_PATH:
+    value: "$DOCKER_TLS_CERTDIR/client"
+    description: "Used for docker entrypoints. See https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4125"
 
   XDIST_WORKERS_INTEGRATION_TEST:
     description: "Number of workers to spawn in pytest-xdist and use in the integration tests"
@@ -230,6 +250,7 @@ publish:acceptance:
   dependencies:
     - test_acceptance:run
   before_script:
+    - !reference [.qa-common-network-go-retry, before_script]
     - go tool covdata textfmt -i tests/acceptance/coverage -o coverage.txt
     - go install github.com/mattn/goveralls@latest
     # Coveralls env variables:
@@ -257,6 +278,7 @@ publish:s3:
   dependencies:
     - compile
   before_script:
+    - !reference [.qa-common-network-apt-retry, before_script]
     - apt update && apt install -yyq awscli
   script:
     - echo "Publishing ${CI_COMMIT_REF_NAME} version for linux to S3"
