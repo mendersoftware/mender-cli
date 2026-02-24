@@ -15,6 +15,9 @@ include:
   - component: gitlab.com/Northern.tech/Mender/mendertesting/brew-build@master
     inputs:
       formula: "m/mender-cli.rb"
+  - project: "Northern.tech/Mender/mendertesting"
+    file: "qa-common/send-results-to-mantra.yml"
+    ref: "master"
 
   # Release CI/CD components
   - component: gitlab.com/Northern.tech/Mender/mendertesting/release-candidate@master
@@ -223,6 +226,9 @@ test:integration:
     - mv mender-cli.linux.amd64 /usr/local/bin/mender-cli
     - cd tests/integration
     - ./run_tests.sh -n ${XDIST_WORKERS_INTEGRATION_TEST}
+  after_script:
+    - export MANTRA_PROJECT_NAME="client_general"
+    - !reference [.mantra-push-results]
   retry:
     max: 2
     exit_codes:
