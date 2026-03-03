@@ -20,9 +20,7 @@ import xdist
 import logging
 import pytest
 
-sys.path += [
-    path.join(path.dirname(__file__), "../mender_server/backend/tests/integration/")
-]
+sys.path += [path.join(path.dirname(__file__), "../mender_server/backend/tests/")]
 
 from server import Server
 from setup import (
