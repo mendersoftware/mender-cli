@@ -119,7 +119,8 @@ test:smoketests:mac:
   stage: test
   dependencies:
     - compile
-  before_script: []
+  before_script:
+    - !reference [.qa-common-network-git-clone-retry, before_script]
   script:
     - ./mender-cli.darwin.amd64
   tags:
