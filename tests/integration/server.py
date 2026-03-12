@@ -36,17 +36,7 @@ from helpers import get_mac_address, docker_lock
 
 
 def get_server_host(container=f"{project_name}-traefik-1"):
-    with docker_lock:
-        return (
-            subprocess.check_output(
-                "docker inspect "
-                + container
-                + "  --format='{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}'",
-                shell=True,
-            )
-            .decode()
-            .strip()
-        )
+    return "docker.mender.io"
 
 
 class Server:
