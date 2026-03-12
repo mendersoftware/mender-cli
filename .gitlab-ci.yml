@@ -183,6 +183,7 @@ test:integration:
   before_script:
     - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
+    - echo "127.0.0.1 docker.mender.io" >> /etc/hosts
     - apk add --update bash cmake curl dpkg e2fsprogs-extra g++ gcompat gcompat git iptables jq libffi-dev make openssh-client py3-pip python3-dev zstd screen openssl-dev openssl-libs-static
     # Workaround for "Failed building wheel for uamqp" error
     - CFLAGS="-Wno-error=incompatible-pointer-types" CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install uamqp --break-system-packages
