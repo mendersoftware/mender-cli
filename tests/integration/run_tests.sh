@@ -17,4 +17,4 @@ set -e
 
 which mender-cli >/dev/null || { echo "ERROR: mender-cli not found in PATH"; exit 1; }
 
-python -m pytest -v $@
+python -m pytest --verbose --junitxml=results.xml $@
