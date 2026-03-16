@@ -34,10 +34,11 @@ import (
 const portForwardTCPChannelSize = 20
 
 type TCPPortForwarder struct {
-	listen     net.Listener
-	remoteHost string
-	remotePort uint16
-	mutexAck   map[string]*sync.Mutex
+	listen       net.Listener
+	remoteHost   string
+	remotePort   uint16
+	mutexAck     map[string]*sync.Mutex
+	mutexAckLock sync.RWMutex
 }
 
 func NewTCPPortForwarder(
@@ -51,6 +52,7 @@ func NewTCPPortForwarder(
 	if err != nil {
 		return nil, err
 	}
+
 	return &TCPPortForwarder{
 		listen:     listen,
 		remoteHost: remoteHost,
@@ -76,6 +78,7 @@ func (p *TCPPortForwarder) Run(
 			if err != nil {
 				return
 			}
+
 			fmt.Printf(
 				"Handling connection from %s to %s\n",
 				conn.RemoteAddr().String(),
@@ -110,9 +113,14 @@ func (p *TCPPortForwarder) handleRequest(
 ) {
 	defer conn.Close()
 
+	p.mutexAckLock.Lock()
 	p.mutexAck[connectionID] = &sync.Mutex{}
+	p.mutexAckLock.Unlock()
+
 	defer func() {
+		p.mutexAckLock.Lock()
 		delete(p.mutexAck, connectionID)
+		p.mutexAckLock.Unlock()
 	}()
 
 	errChan := make(chan error)
@@ -124,11 +132,13 @@ func (p *TCPPortForwarder) handleRequest(
 		RemoteHost: &p.remoteHost,
 		RemotePort: &p.remotePort,
 	}
+
 	body, err := msgpack.Marshal(portforwardNew)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err.Error())
 		panic(err)
 	}
+
 	m := &ws.ProtoMsg{
 		Header: ws.ProtoHdr{
 			Proto:     ws.ProtoTypePortForward,
@@ -140,9 +150,10 @@ func (p *TCPPortForwarder) handleRequest(
 		},
 		Body: body,
 	}
-	msgChan <- m
 
+	msgChan <- m
 	sendStopMessage := true
+
 	defer func() {
 		conn.Close()
 		if sendStopMessage {
@@ -195,9 +206,11 @@ func (p *TCPPortForwarder) handleRequest(
 					}
 				} else if m.Header.Proto == ws.ProtoTypePortForward &&
 					m.Header.MsgType == wspf.MessageTypePortForwardAck {
-					if m, ok := p.mutexAck[connectionID]; ok {
-						m.Unlock()
+					p.mutexAckLock.RLock()
+					if mutex, ok := p.mutexAck[connectionID]; ok {
+						mutex.Unlock()
 					}
+					p.mutexAckLock.RUnlock()
 				}
 			case <-ctx.Done():
 				return
@@ -214,21 +227,25 @@ func (p *TCPPortForwarder) handleRequest(
 			}
 			return
 		case data := <-dataChan:
-			// lock the ack mutex, we don't allow more than one in-flight message
-			p.mutexAck[connectionID].Lock()
+			p.mutexAckLock.RLock()
+			mutex, ok := p.mutexAck[connectionID]
+			p.mutexAckLock.RUnlock()
 
-			m := &ws.ProtoMsg{
-				Header: ws.ProtoHdr{
-					Proto:     ws.ProtoTypePortForward,
-					MsgType:   wspf.MessageTypePortForward,
-					SessionID: sessionID,
-					Properties: map[string]interface{}{
-						wspf.PropertyConnectionID: connectionID,
+			if ok {
+				mutex.Lock()
+				m := &ws.ProtoMsg{
+					Header: ws.ProtoHdr{
+						Proto:     ws.ProtoTypePortForward,
+						MsgType:   wspf.MessageTypePortForward,
+						SessionID: sessionID,
+						Properties: map[string]interface{}{
+							wspf.PropertyConnectionID: connectionID,
+						},
 					},
-				},
-				Body: data,
+					Body: data,
+				}
+				msgChan <- m
 			}
-			msgChan <- m
 		case <-ctx.Done():
 			return
 		}
@@ -241,13 +258,13 @@ func (p *TCPPortForwarder) handleRequestConnection(
 	conn net.Conn,
 ) {
 	data := make([]byte, readBuffLength)
-
 	for {
 		n, err := conn.Read(data)
 		if err != nil {
 			errChan <- err
 			break
 		}
+
 		if n > 0 {
 			tmp := make([]byte, n)
 			copy(tmp, data[:n])
