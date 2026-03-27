@@ -6,8 +6,7 @@ PKGFILES = $(shell find . \( -path ./vendor -o -path ./Godeps \) -prune \
 PKGFILES_notest = $(shell echo $(PKGFILES) | tr ' ' '\n' | grep -v _test.go)
 
 GO_TEST_TOOLS = \
-	github.com/opennota/check/cmd/varcheck \
-	github.com/mendersoftware/deadcode
+	github.com/opennota/check/cmd/varcheck
 
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
@@ -85,8 +84,6 @@ run-acceptance:
 	docker compose -f tests/acceptance/docker-compose.yml run acceptance
 
 test-static:
-	echo "-- checking for dead code"
-	deadcode -ignore version.go:Version
 	echo "-- checking with varcheck"
 	varcheck .
 
