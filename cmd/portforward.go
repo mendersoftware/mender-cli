@@ -21,8 +21,10 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mendersoftware/go-lib-micro/ws"
 	wspf "github.com/mendersoftware/go-lib-micro/ws/portforward"
 	"github.com/pkg/errors"
@@ -94,7 +96,8 @@ type PortForwardCmd struct {
 	sessionID    string
 	bindingHost  string
 	portMappings []portMapping
-	recvChans    map[string]chan *ws.ProtoMsg
+	recvChanMu   sync.RWMutex
+	recvChans    map[string]chan<- *ws.ProtoMsg
 	running      bool
 	stop         chan struct{}
 	err          error
@@ -184,7 +187,7 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 		deviceID:     args[0],
 		bindingHost:  bindingHost,
 		portMappings: portMappings,
-		recvChans:    make(map[string]chan *ws.ProtoMsg),
+		recvChans:    make(map[string]chan<- *ws.ProtoMsg),
 		stop:         make(chan struct{}),
 	}, nil
 }
@@ -196,6 +199,24 @@ func (c *PortForwardCmd) Run() error {
 			return err
 		}
 	}
+}
+
+func (c *PortForwardCmd) registerRecvChan(recvChan chan<- *ws.ProtoMsg) string {
+	c.recvChanMu.Lock()
+	defer c.recvChanMu.Unlock()
+	for range 3 {
+		connectionID := uuid.NewString()
+		if _, ok := c.recvChans[connectionID]; ok {
+			continue
+		} else {
+			c.recvChans[connectionID] = recvChan
+			return connectionID
+		}
+	}
+	panic(`Congratulations!
+You just encountered a tripple UUID v4 collision.
+Either your computer is exceptionally bad at coming up with random numbers,
+or you're just that one in a hundred million googols. 💎`)
 }
 
 func (c *PortForwardCmd) run() error {
@@ -239,14 +260,14 @@ func (c *PortForwardCmd) run() error {
 			if err != nil {
 				return err
 			}
-			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
+			go forwarder.Run(ctx, c.sessionID, msgChan, c.registerRecvChan)
 		case protocolUDP:
 			forwarder, err := NewUDPPortForwarder(c.bindingHost, portMapping.LocalPort,
 				portMapping.RemoteHost, portMapping.RemotePort)
 			if err != nil {
 				return err
 			}
-			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
+			go forwarder.Run(ctx, c.sessionID, msgChan, c.registerRecvChan)
 		default:
 			return errors.New("unknown protocol: " + portMapping.Protocol)
 		}
@@ -411,7 +432,10 @@ func (c *PortForwardCmd) processIncomingMessages(
 				m.Header.MsgType == wspf.MessageTypePortForwardStop) {
 			connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string)
 			if connectionID != "" {
-				if recvChan, ok := c.recvChans[connectionID]; ok {
+				c.recvChanMu.RLock()
+				recvChan, ok := c.recvChans[connectionID]
+				c.recvChanMu.RUnlock()
+				if ok {
 					recvChan <- m
 				}
 			}
