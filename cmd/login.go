@@ -20,10 +20,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/howeyc/gopass"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
 	"github.com/mendersoftware/mender-cli/client/useradm"
 	"github.com/mendersoftware/mender-cli/log"
@@ -146,7 +146,7 @@ func (c *LoginCmd) maybeGetPassword() error {
 	if c.password == "" {
 		fmt.Printf("Password: ")
 
-		p, err := gopass.GetPasswdMasked()
+		p, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
 			return err
 		}
