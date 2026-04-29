@@ -5,7 +5,6 @@ github.com/fsnotify/fsnotify,BSD-3-Clause
 github.com/go-viper/mapstructure/v2,MIT
 github.com/google/uuid,BSD-3-Clause
 github.com/gorilla/websocket,BSD-2-Clause
-github.com/howeyc/gopass,ISC
 github.com/klauspost/compress,Apache-2.0
 github.com/klauspost/compress/internal/snapref,BSD-3-Clause
 github.com/klauspost/compress/zstd/internal/xxhash,MIT
@@ -29,7 +28,6 @@ github.com/subosito/gotenv,MIT
 github.com/ulikunitz/xz,BSD-3-Clause
 github.com/vmihailenco/msgpack,BSD-2-Clause
 go.yaml.in/yaml/v3,MIT
-golang.org/x/crypto/ssh/terminal,BSD-3-Clause
 golang.org/x/sys/unix,BSD-3-Clause
 golang.org/x/term,BSD-3-Clause
 golang.org/x/text,BSD-3-Clause
