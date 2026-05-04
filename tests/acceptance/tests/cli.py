@@ -31,7 +31,11 @@ class Cli:
         """Returns a CompletedProcess wrapped in CliResult"""
         args = [self.path] + list(argv)
         p = subprocess.Popen(
-            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            args,
+            shell=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         stdout, stderr = p.communicate(input=password.encode() + b"\n")
         return CliResult(p, stdout=stdout, stderr=stderr)

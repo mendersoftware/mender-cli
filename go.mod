@@ -6,7 +6,6 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mendersoftware/go-lib-micro v0.0.0-20221025103319-e1f941fb3145
 	github.com/mendersoftware/mender-artifact v0.0.0-20250529094801-7264a90f1074
 	github.com/pkg/errors v0.9.1
@@ -44,7 +43,6 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/ulikunitz/xz v0.5.14 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
