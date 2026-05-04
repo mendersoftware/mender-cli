@@ -255,32 +255,26 @@ test:install:brew:
 
 publish:acceptance:
   stage: publish
-  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.20-alpine3.17
-  allow_failure: true # QA-925 - Coveralls servers are unreliable.
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.24-alpine
+  allow_failure: true
   dependencies:
     - test_acceptance:run
   before_script:
     - !reference [.qa-common-network-go-retry, before_script]
-    - go tool covdata textfmt -i tests/acceptance/coverage -o coverage.txt
-    - go install github.com/mattn/goveralls@latest
-    # Coveralls env variables:
-    #  According to https://docs.coveralls.io/supported-ci-services
-    #  we should set CI_NAME, CI_BUILD_NUMBER, etc. But according
-    #  to goveralls source code (https://github.com/mattn/goveralls)
-    #  many of these are not supported. Set CI_BRANCH, CI_PR_NUMBER,
-    #  and pass few others as command line arguments.
-    #  See also https://docs.coveralls.io/api-reference
-    - export CI_BRANCH=${CI_COMMIT_BRANCH}
-    - export CI_PR_NUMBER=${CI_COMMIT_BRANCH#pr_}
   script:
-    - goveralls
-      -repotoken ${COVERALLS_TOKEN}
-      -service gitlab-ci
-      -jobid $CI_PIPELINE_ID
-      -covermode set
-      -flagname acceptance
-      -parallel
-      -coverprofile coverage.txt
+    - go tool covdata textfmt -i tests/acceptance/coverage -o coverage.txt
+    - wget -q https://cli.codecov.io/latest/alpine/codecov
+    - wget -q https://cli.codecov.io/latest/alpine/codecov.SHA256SUM
+    - sha256sum -c codecov.SHA256SUM
+    - chmod +x codecov
+    - ./codecov upload-process
+      --fail-on-error
+      --git-service github
+      --slug mendersoftware/${CI_PROJECT_NAME}
+      --sha ${CI_COMMIT_SHA}
+      --pr $(echo "${CI_COMMIT_BRANCH}" | sed 's/^pr_//')
+      --file coverage.txt
+      --flag acceptance
 
 publish:s3:
   stage: publish
