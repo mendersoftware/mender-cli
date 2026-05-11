@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/mendersoftware/go-lib-micro/ws"
 	"github.com/mendersoftware/go-lib-micro/ws/portforward"
 	wspf "github.com/mendersoftware/go-lib-micro/ws/portforward"
@@ -73,15 +72,13 @@ func (p *UDPPortForwarder) Run(
 	ctx context.Context,
 	sessionID string,
 	msgChan chan *ws.ProtoMsg,
-	recvChans map[string]chan *ws.ProtoMsg,
+	registerRecvChan func(chan<- *ws.ProtoMsg) string,
 ) {
 	// listen for new connections
 	defer p.conn.Close()
 
-	connectionUUID, _ := uuid.NewUUID()
-	connectionID := connectionUUID.String()
 	recvChan := make(chan *ws.ProtoMsg, portForwardUDPChannelSize)
-	recvChans[connectionID] = recvChan
+	connectionID := registerRecvChan(recvChan)
 
 	protocol := portforward.PortForwardProtocol(wspf.PortForwardProtocolUDP)
 	portforwardNew := &wspf.PortForwardNew{
