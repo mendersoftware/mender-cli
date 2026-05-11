@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -51,9 +52,9 @@ var portForwardCmd = &cobra.Command{
 		"it possible to port-forward to third hosts running in the device's network.\n" +
 		"In this case, the specification will be LOCAL_PORT:REMOTE_HOST:REMOTE_PORT.\n\n" +
 		"You can specify multiple port mapping specifications.",
-	Example: "  mender-cli port-forward DEVICE_ID 8000:8000\n" +
-		"  mender-cli port-forward DEVICE_ID udp/8000:8000\n" +
-		"  mender-cli port-forward DEVICE_ID tcp/8000:192.168.1.1:8000",
+	Example: " mender-cli port-forward DEVICE_ID 8000:8000\n" +
+		" mender-cli port-forward DEVICE_ID udp/8000:8000\n" +
+		" mender-cli port-forward DEVICE_ID tcp/8000:192.168.1.1:8000",
 	Args: cobra.MinimumNArgs(2),
 	Run: func(c *cobra.Command, args []string) {
 		cmd, err := NewPortForwardCmd(c, args)
@@ -63,10 +64,10 @@ var portForwardCmd = &cobra.Command{
 }
 
 var portForwardMaxDuration = 24 * time.Hour
-
 var errPortForwardNotImplemented = errors.New(
 	"port forward not implemented or enabled on the device",
 )
+
 var errRestart = errors.New("restart")
 
 func init() {
@@ -87,17 +88,18 @@ type portMapping struct {
 
 // PortForwardCmd handles the port-forward command
 type PortForwardCmd struct {
-	server       string
-	token        string
-	skipVerify   bool
-	deviceID     string
-	sessionID    string
-	bindingHost  string
-	portMappings []portMapping
-	recvChans    map[string]chan *ws.ProtoMsg
-	running      bool
-	stop         chan struct{}
-	err          error
+	server        string
+	token         string
+	skipVerify    bool
+	deviceID      string
+	sessionID     string
+	bindingHost   string
+	portMappings  []portMapping
+	recvChans     map[string]chan *ws.ProtoMsg
+	recvChansLock sync.RWMutex
+	running       bool
+	stop          chan struct{}
+	err           error
 }
 
 func getPortMappings(args []string) ([]portMapping, error) {
@@ -106,6 +108,7 @@ func getPortMappings(args []string) ([]portMapping, error) {
 	for _, arg := range args {
 		remoteHost := localhost
 		protocol := wspf.PortForwardProtocolTCP
+
 		if strings.Contains(arg, "/") {
 			parts := strings.SplitN(arg, "/", 2)
 			if parts[0] == protocolTCP {
@@ -117,6 +120,7 @@ func getPortMappings(args []string) ([]portMapping, error) {
 			}
 			arg = parts[1]
 		}
+
 		var localPort, remotePort int
 		if strings.Contains(arg, ":") {
 			parts := strings.SplitN(arg, ":", 3)
@@ -124,10 +128,12 @@ func getPortMappings(args []string) ([]portMapping, error) {
 				remoteHost = parts[1]
 				parts = []string{parts[0], parts[2]}
 			}
+
 			localPort, err = strconv.Atoi(parts[0])
 			if err != nil || localPort < 0 || localPort > 65536 {
 				return nil, errors.New("invalid port number: " + parts[0])
 			}
+
 			remotePort, err = strconv.Atoi(parts[1])
 			if err != nil || remotePort < 0 || remotePort > 65536 {
 				return nil, errors.New("invalid port number: " + parts[1])
@@ -140,6 +146,7 @@ func getPortMappings(args []string) ([]portMapping, error) {
 			localPort = port
 			remotePort = port
 		}
+
 		portMappings = append(portMappings, portMapping{
 			Protocol:   protocol,
 			LocalPort:  uint16(localPort),
@@ -239,6 +246,7 @@ func (c *PortForwardCmd) run() error {
 			if err != nil {
 				return err
 			}
+
 			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
 		case protocolUDP:
 			forwarder, err := NewUDPPortForwarder(c.bindingHost, portMapping.LocalPort,
@@ -246,6 +254,7 @@ func (c *PortForwardCmd) run() error {
 			if err != nil {
 				return err
 			}
+
 			go forwarder.Run(ctx, c.sessionID, msgChan, c.recvChans)
 		default:
 			return errors.New("unknown protocol: " + portMapping.Protocol)
@@ -313,6 +322,7 @@ func (c *PortForwardCmd) handshake(client *deviceconnect.Client) error {
 	if err != nil {
 		return err
 	}
+
 	m := &ws.ProtoMsg{
 		Header: ws.ProtoHdr{
 			Proto:   ws.ProtoTypeControl,
@@ -320,6 +330,7 @@ func (c *PortForwardCmd) handshake(client *deviceconnect.Client) error {
 		},
 		Body: body,
 	}
+
 	err = client.WriteMessage(m)
 	if err != nil {
 		return err
@@ -329,6 +340,7 @@ func (c *PortForwardCmd) handshake(client *deviceconnect.Client) error {
 	if err != nil {
 		return err
 	}
+
 	if msg.Header.MsgType == ws.MessageTypeError {
 		erro := new(ws.Error)
 		_ = msgpack.Unmarshal(msg.Body, erro)
@@ -366,6 +378,7 @@ func (c *PortForwardCmd) closeSession(client *deviceconnect.Client) error {
 			MsgType: ws.MessageTypeClose,
 		},
 	}
+
 	err := client.WriteMessage(m)
 	if err != nil {
 		return err
@@ -411,7 +424,11 @@ func (c *PortForwardCmd) processIncomingMessages(
 				m.Header.MsgType == wspf.MessageTypePortForwardStop) {
 			connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string)
 			if connectionID != "" {
-				if recvChan, ok := c.recvChans[connectionID]; ok {
+				c.recvChansLock.RLock()
+				recvChan, ok := c.recvChans[connectionID]
+				c.recvChansLock.RUnlock()
+
+				if ok {
 					recvChan <- m
 				}
 			}
