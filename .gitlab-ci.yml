@@ -201,18 +201,15 @@ test:integration:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_SUBMODULE_DEPTH: 1
     CLIENT_VERSION: "latest"
-  image: docker:${DOCKER_VERSION}
+  image: registry.gitlab.com/northern.tech/mender/mender-test-containers/mender-cli-acceptance-testing:master
   needs:
     - compile
   before_script:
     - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
     - echo "127.0.0.1 docker.mender.io" >> /etc/hosts
-    # we need to upgrade installed packages so they don't diverge from freshly installed ones (e.g. expat vs. pyexpat)
-    - apk upgrade --no-cache
-    - apk add --no-cache bash cmake curl dpkg e2fsprogs-extra g++ gcompat git iptables jq libffi-dev make openssh-client py3-pip python3-dev zstd screen openssl-dev openssl-libs-static
-    # Workaround for "Failed building wheel for uamqp" error
-    - CFLAGS="-Wno-error=incompatible-pointer-types" CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install uamqp --break-system-packages
+    # System packages and the source-compiled uamqp are baked into the image (QA-1637);
+    # only the repo-local requirements are installed at runtime.
     - pip install --ignore-installed -r tests/mender_server/backend/tests/requirements-integration.txt --break-system-packages
     - pip install -r tests/integration/requirements.txt --break-system-packages
     # Gitlab CI tends to set these DOCKER_ variables internally.
