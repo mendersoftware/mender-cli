@@ -36,6 +36,8 @@ const (
 	argRootVerbose    = "verbose"
 	argRootGenerate   = "generate-autocomplete"
 	argRootVersion    = "version"
+
+	defaultServerURL = "https://hosted.mender.io"
 )
 
 func init() {
@@ -120,7 +122,7 @@ func init() {
 		StringP(
 			argRootServer,
 			"",
-			"https://hosted.mender.io",
+			defaultServerURL,
 			"root server URL, e.g. 'https://hosted.mender.io'",
 		)
 	_ = viper.BindPFlag(argRootServer, rootCmd.PersistentFlags().Lookup(argRootServer))

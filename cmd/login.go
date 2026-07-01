@@ -55,12 +55,13 @@ func init() {
 }
 
 type LoginCmd struct {
-	server     string
-	skipVerify bool
-	username   string
-	password   string
-	token      string
-	tokenPath  string
+	server        string
+	serverChanged bool
+	skipVerify    bool
+	username      string
+	password      string
+	token         string
+	tokenPath     string
 }
 
 func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
@@ -68,6 +69,7 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	if server == "" {
 		return nil, errors.New("No server, this should not happen")
 	}
+	serverChanged := cmd.Flags().Changed(argRootServer)
 
 	skipVerify, err := cmd.Flags().GetBool(argRootSkipVerify)
 	if err != nil {
@@ -95,12 +97,13 @@ func NewLoginCmd(cmd *cobra.Command, args []string) (*LoginCmd, error) {
 	}
 
 	return &LoginCmd{
-		server:     server,
-		username:   username,
-		password:   password,
-		token:      tfaToken,
-		tokenPath:  token,
-		skipVerify: skipVerify,
+		server:        server,
+		serverChanged: serverChanged,
+		username:      username,
+		password:      password,
+		token:         tfaToken,
+		tokenPath:     token,
+		skipVerify:    skipVerify,
 	}, nil
 }
 
@@ -124,6 +127,8 @@ func (c *LoginCmd) Run() error {
 	if err != nil {
 		return err
 	}
+
+	c.maybePersistServer()
 
 	return nil
 }
