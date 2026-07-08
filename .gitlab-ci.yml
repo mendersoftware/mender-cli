@@ -45,6 +45,7 @@ variables:
   GITHUB_RELEASE_BINARY: mender-cli
   S3_BUCKET_NAME: "mender"
   S3_BUCKET_PATH: "mender-cli"
+  AWS_S3_PUBLISH_ROLE_ARN: "arn:aws:iam::175683096866:role/nt-mender-cli-s3-publishing"
   BUILD_DIR: build
   LICENSE_HEADERS_IGNORE_FILES_REGEXP: ".*autocomplete.*"
 
@@ -273,14 +274,28 @@ publish:acceptance:
       --file coverage.txt
       --flag acceptance
 
+.aws-oidc-auth: &aws-oidc-auth
+  - >
+    export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s"
+    $(aws sts assume-role-with-web-identity
+    --role-arn ${AWS_S3_PUBLISH_ROLE_ARN}
+    --role-session-name "GitLabRunner-${CI_PROJECT_ID}-${CI_PIPELINE_ID}"
+    --web-identity-token ${AWS_OIDC_TOKEN}
+    --duration-seconds 900
+    --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]'
+    --output text))
+  - aws sts get-caller-identity
+
 publish:s3:
   stage: publish
-  image: debian:bookworm
+  image: registry.gitlab.com/northern.tech/mender/mender-test-containers/base-debian:master
   dependencies:
     - compile
+  id_tokens:
+    AWS_OIDC_TOKEN:
+      aud: https://gitlab.com
   before_script:
-    - !reference [.qa-common-network-apt-retry, before_script]
-    - apt update && apt install -yyq awscli
+    - *aws-oidc-auth
   script:
     - echo "Publishing ${CI_COMMIT_REF_NAME} version for linux to S3"
     - aws s3 cp $GITHUB_RELEASE_BINARY.linux.amd64
