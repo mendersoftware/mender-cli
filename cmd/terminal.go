@@ -424,7 +424,8 @@ func (c *TerminalCmd) runLoop(
 			err := client.WriteMessage(msg)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
-				break
+				c.err = errors.New("connection with the device lost")
+				c.running = false
 			}
 		case healthcheckInterval := <-c.healthcheck:
 			healthcheckTimeout = time.Now().Add(time.Duration(healthcheckInterval) * time.Second)
@@ -527,9 +528,9 @@ func (c *TerminalCmd) pipeStdout(
 		if err != nil {
 			if c.running {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			} else {
-				c.Stop()
+				c.err = errors.New("connection with the device lost")
 			}
+			c.Stop()
 			break
 		}
 		if m.Header.Proto == ws.ProtoTypeShell &&
