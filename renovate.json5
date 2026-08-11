@@ -1,0 +1,84 @@
+// renovate.json5 - Mender dependency update configuration for mender-cli
+// See Documentation/dependency-updates.md in mender-qa for the process.
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "extends": [
+    "config:recommended",
+    ":gitSignOff",
+    ":rebaseStalePrs"
+  ],
+
+  // CODEOWNERS assigns backend for everything here.
+  "reviewersFromCodeOwners": true,
+
+  // fix(deps): <desc>, per renovate.json5.sample in mender-qa.
+  "semanticCommits": "enabled",
+  "semanticCommitType": "fix",
+  "semanticCommitScope": "deps",
+
+  // Fallback window for weeks with no merges; the renovate CI job is the primary trigger.
+  "schedule": ["after 10pm on Monday", "before 6am on Tuesday"],
+
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5,
+
+  // Only master. 1.9.x through 1.12.x are still on the remote but all have been
+  // dormant since 2023 at the latest, and Dependabot never targeted them either.
+  "baseBranchPatterns": ["master"],
+
+  // Security PRs bypass the schedule and automerge when CI is green.
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "automerge": true,
+    "automergeType": "pr",
+    "labels": ["security"]
+  },
+
+  // DOCKER_VERSION is a plain .gitlab-ci.yml variable here, not a value: block.
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/.gitlab-ci.yml/"],
+      "matchStrings": [
+        "DOCKER_VERSION:\\s*[\"']?(?<currentValue>[\\d\\.]+)[\"']?"
+      ],
+      "depNameTemplate": "docker",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
+
+  "packageRules": [
+    // config:recommended pulls in :semanticPrefixFixDepsChoreOthers, which forces
+    // semanticCommitType back to "chore" for any dep whose manager does not tag it
+    // with an npm/pip style depType - that is every docker dep here. Must stay BEFORE
+    // the gitlabci rule: rules apply in order and the last match wins.
+    {
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "fix"
+    },
+
+    // CI file updates get ci: instead of fix(deps):
+    {
+      "matchManagers": ["gitlabci", "gitlabci-include"],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": ""
+    },
+
+    // Go: one PR for all modules, matching Dependabot's golang-dependencies group.
+    {
+      "matchManagers": ["gomod"],
+      "groupName": "golang-dependencies",
+      "groupSlug": "golang-dependencies"
+    },
+
+    // Renovate disables git-submodules by default, but Dependabot was updating
+    // tests/mender_server monthly, so keep that going.
+    {
+      "matchManagers": ["git-submodules"],
+      "enabled": true
+    }
+  ]
+}
