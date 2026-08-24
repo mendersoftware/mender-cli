@@ -77,7 +77,7 @@ variables:
     description: "The changelog file in the remote changelog repo"
     value: "31.mender-cli/docs.md"
 
-  DOCKER_VERSION: "28.1"
+  DOCKER_VERSION: "28.5"
   DOCKER_HOST:
     value: 'tcp://docker:2376'
     description: "Required to run dind inside k8s runners with TLS"
