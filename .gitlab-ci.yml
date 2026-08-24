@@ -38,7 +38,7 @@ include:
     inputs:
       remote_changelog_file: "31.mender-cli/docs.md"
 
-image: golang:1.24
+image: golang:1.27
 
 default:
   tags: !reference [.qa-common-default-runner, tags]
@@ -256,7 +256,7 @@ test:install:brew:
 
 publish:acceptance:
   stage: publish
-  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.24-alpine
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:1.27-alpine
   allow_failure: true
   dependencies:
     - test_acceptance:run
