@@ -133,7 +133,7 @@ test:smoketests:mac:
     - mac-arm-runner
 
 test:smoketests:linux:
-  image: debian:bookworm
+  image: debian:trixie
   stage: test
   dependencies:
     - compile
