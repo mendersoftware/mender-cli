@@ -1,4 +1,49 @@
 ---
+## 2.1.0 - 2026-09-02
+
+
+### New features
+
+- Implement port-forwarding protocol v2 ([MEN-5902](https://northerntech.atlassian.net/browse/MEN-5902)) ([a10882f](https://github.com/mendersoftware/mender-cli/commit/a10882f55a86c9b294487b7a95b27a356c336cd1)) by @alfrunes
+
+### Improvements
+
+- Lower cyclometic complexity of TCPPortforwarder ([11c91e7](https://github.com/mendersoftware/mender-cli/commit/11c91e7cc8457dc451be0f6ce40f0a3055ec5f2f)) by @alfrunes
+
+### Bug fixes
+
+- Update golang docker tag ([72fd61e](https://github.com/mendersoftware/mender-cli/commit/72fd61eafb742b96ec0ece507deaaf2bb8de83f7)) by @mender-test-bot
+- *(deps)* Update docker docker tag to v28.5 ([1034676](https://github.com/mendersoftware/mender-cli/commit/10346765f6837045d170adfb6f465dc830a2c13d)) by @mender-test-bot
+- *(deps)* Update docker docker tag to v29 ([da4acd2](https://github.com/mendersoftware/mender-cli/commit/da4acd290c3c0f54d3fcf1750f6dee7aba1270e4)) by @mender-test-bot
+
+### Dependency updates
+
+- Bump tests/mender_server from `6f6268a` to `e7f2391` ([498bf98](https://github.com/mendersoftware/mender-cli/commit/498bf98491061a610dc005158c420a7a2fe7eb6d)) by @dependabot[bot]
+- Bump golang from 1.25.4 to 1.25.5 ([156812e](https://github.com/mendersoftware/mender-cli/commit/156812e5b6b6af6a4d75cf6ab134aee54dd6b612)) by @dependabot[bot]
+- Bump the golang-dependencies group across 1 directory with 5 updates ([8a79583](https://github.com/mendersoftware/mender-cli/commit/8a79583e945977f8d713f6a98a72efa6ca236925)) by @dependabot[bot]
+- Bump golang from 1.25.5 to 1.25.6 ([da72fb7](https://github.com/mendersoftware/mender-cli/commit/da72fb7b065ad838e65455220ff8672b4f153050)) by @dependabot[bot]
+- Bump the golang-dependencies group with 2 updates ([014fbcf](https://github.com/mendersoftware/mender-cli/commit/014fbcf292f63054232911bb8e491127492c33df)) by @dependabot[bot]
+- Bump golang from 1.25.6 to 1.26.0 ([d18d9f3](https://github.com/mendersoftware/mender-cli/commit/d18d9f3f1e25f77b92f742448f66802f291d6d6e)) by @dependabot[bot]
+- Bump tests/mender_server from `e7f2391` to `8b44798` ([6d7fe8e](https://github.com/mendersoftware/mender-cli/commit/6d7fe8eb0276a6fac48a9770aec9b3be69f7084c)) by @dependabot[bot]
+- Bump golang from 1.26.0 to 1.26.1 ([d4898f7](https://github.com/mendersoftware/mender-cli/commit/d4898f7e836f29dfa0716705dc6054deab46ed54)) by @dependabot[bot]
+- Bump tests/mender_server from `55603bd` to `9dcb9a7` ([19872b9](https://github.com/mendersoftware/mender-cli/commit/19872b94b0dcc0032b8bc3e60644f08a31a29895)) by @dependabot[bot]
+- Bump golang from 1.26.1 to 1.26.2 ([ab7637d](https://github.com/mendersoftware/mender-cli/commit/ab7637d45394ddc27b1b44cc72cb037246ae647c)) by @dependabot[bot]
+- Bump tests/mender_server from `9dcb9a7` to `152f6d5` ([86f79e0](https://github.com/mendersoftware/mender-cli/commit/86f79e02f433d71b79560f59983733e6954de521)) by @dependabot[bot]
+- Bump golang from 1.26.2 to 1.26.4 ([42ced9d](https://github.com/mendersoftware/mender-cli/commit/42ced9d214c955656ac5903241d0c584deebc15c)) by @dependabot[bot]
+- Bump busybox from 1.37.0 to 1.38.0 ([6575bfd](https://github.com/mendersoftware/mender-cli/commit/6575bfd0fdd8bc475fa259de23432d1338e769e4)) by @dependabot[bot]
+- Bump tests/mender_server from `152f6d5` to `b57b5a0` ([00076c4](https://github.com/mendersoftware/mender-cli/commit/00076c4b8719e782c69bd31eeaeefa99ec9a72f5)) by @dependabot[bot]
+- Bump tests/mender_server from `b57b5a0` to `ae3a82a` ([060ae8d](https://github.com/mendersoftware/mender-cli/commit/060ae8d542bf95c920525386420b8041f41dcc09)) by @dependabot[bot]
+- Bump golang from 1.26.4 to 1.26.5 ([e0d4e96](https://github.com/mendersoftware/mender-cli/commit/e0d4e96ad90e5149dcabdaaf7bac3ed808234942)) by @dependabot[bot]
+- Bump tests/mender_server from `ae3a82a` to `5bf994a` ([476c5e8](https://github.com/mendersoftware/mender-cli/commit/476c5e8491d7132f937b9844468b40bc616adacd)) by @dependabot[bot]
+
+---
+### All tickets resolved in this release
+
+| Ticket |
+|---|
+| [MEN-5902](https://northerntech.atlassian.net/browse/MEN-5902) |
+
+
 ## 2.0.0 - 2025-11-11
 
 
