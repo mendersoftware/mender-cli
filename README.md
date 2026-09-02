@@ -53,6 +53,53 @@ Example configuration file:
 
 !!! Note: It is possible to override all configuration file parameters on the command line.
 
+## Using a Personal Access Token (PAT)
+
+Instead of running `mender-cli login` with a username and password, you can
+persist a Personal Access Token (PAT) — generated in the Mender UI under your
+user account — so every subsequent command authenticates with it. The token is
+saved to a platform-specific location; you never need to know exactly where.
+
+Set the token (interactive, masked prompt):
+
+```console
+mender-cli token set
+```
+
+Or pipe it in from a secret manager (no shell-history leak):
+
+```console
+op read "op://Personal/Mender PAT/credential" | mender-cli token set
+```
+
+Inspect the stored token. By default the JWT header and payload are rendered
+as a human-readable table with friendly claim labels and RFC3339 timestamps
+for the standard date claims (`exp`, `iat`, `nbf`, `auth_time`); the
+signature segment is intentionally omitted:
+
+```console
+mender-cli token show
+```
+
+Use `--json` to emit the decoded header and payload as JSON, or `--raw` to
+print the token verbatim (useful for piping to clipboard tools or
+`Authorization: Bearer` headers):
+
+```console
+mender-cli token show --json
+mender-cli token show --raw
+```
+
+Print the storage path, or remove the stored token:
+
+```console
+mender-cli token path
+mender-cli token clear
+```
+
+After `token set`, subsequent commands (e.g. `mender-cli artifacts list`) use
+the saved token automatically — no extra flags required.
+
 ## Autocompletion
 
 Autocompletion can be enabled for the `mender-cli` tool through one of two ways.

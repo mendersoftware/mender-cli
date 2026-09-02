@@ -1,4 +1,23 @@
 ---
+## Unreleased
+
+
+### Features
+
+
+- New `token` command group for managing the locally stored authentication
+  token without needing to know the platform-specific storage location:
+  `token set` (persist a Personal Access Token from a masked prompt or stdin,
+  with a server-side validation warning and JWT expiry hint on success),
+  `token show` (by default renders the decoded JWT header and payload as a
+  human-readable table with friendly claim labels and RFC3339 timestamps for
+  the standard date claims; `--json` emits the decoded header and payload as
+  JSON; `--raw` dumps the token verbatim), `token path` (print the default
+  storage path), and `token clear` (delete the stored token; requires `--yes`
+  in non-interactive contexts).
+
+
+---
 ## 2.0.0 - 2025-11-11
 
 
