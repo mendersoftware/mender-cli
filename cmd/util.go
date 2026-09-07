@@ -23,6 +23,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/mendersoftware/mender-cli/log"
 )
 
 func CheckErr(e error) {
@@ -78,6 +80,20 @@ func getDefaultAuthTokenPath() (string, error) {
 	migrateAuthToken(oldtoken, token)
 
 	return token, nil
+}
+
+// writeAuthToken persists the given token bytes to path with 0600 permissions,
+// creating any missing parent directories with 0700.
+func writeAuthToken(path string, token []byte) error {
+	dir := filepath.Dir(path)
+	log.Verb("creating directory: " + dir)
+	if err := os.MkdirAll(dir, os.ModeDir|0700); err != nil {
+		return errors.Wrapf(err, "failed to create directory %s", dir)
+	}
+	if err := os.WriteFile(path, token, 0600); err != nil {
+		return errors.Wrapf(err, "failed to create file %s", path)
+	}
+	return nil
 }
 
 func getAuthToken(cmd *cobra.Command) (string, error) {

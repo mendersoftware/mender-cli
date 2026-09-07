@@ -30,6 +30,7 @@ import (
 
 const (
 	loginUrl = "/api/management/v1/useradm/auth/login"
+	meUrl    = "/api/management/v1/useradm/users/me"
 	timeout  = 10 * time.Second
 )
 
@@ -91,4 +92,49 @@ func (c *Client) Login(user, pass string, token string) ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+// VerifyError is returned by Verify when the server explicitly rejects the
+// token (HTTP 401/403), as opposed to a transport-level failure.
+type VerifyError struct {
+	StatusCode int
+}
+
+func (e *VerifyError) Error() string {
+	return fmt.Sprintf("token rejected by server (status %d)", e.StatusCode)
+}
+
+// Verify checks that the given token is accepted by the configured server by
+// calling GET /useradm/users/me. It returns nil on HTTP 200, a *VerifyError on
+// 401/403, and a generic error for any other transport or status failure.
+func (c *Client) Verify(token string) error {
+	req, err := http.NewRequest(http.MethodGet, client.JoinURL(c.url, meUrl), nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to create verify request")
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	reqDump, _ := httputil.DumpRequest(req, false)
+	log.Verbf("sending request: \n%v", string(reqDump))
+
+	rsp, err := c.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return errors.Wrap(err, "GET /useradm/users/me request failed")
+	}
+	defer rsp.Body.Close()
+
+	rspDump, _ := httputil.DumpResponse(rsp, true)
+	log.Verbf("response: \n%v\n", string(rspDump))
+
+	switch rsp.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return &VerifyError{StatusCode: rsp.StatusCode}
+	default:
+		return fmt.Errorf("verify failed with status %d", rsp.StatusCode)
+	}
 }

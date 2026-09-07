@@ -138,5 +138,6 @@ func init() {
 	rootCmd.AddCommand(terminalCmd)
 	rootCmd.AddCommand(portForwardCmd)
 	rootCmd.AddCommand(fileTransferCmd)
+	rootCmd.AddCommand(tokenCmd)
 	validateConfiguration()
 }
