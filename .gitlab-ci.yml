@@ -112,11 +112,11 @@ compile:
   script:
     - make build-multiplatform
     - cp mender-cli.linux.amd64 $CI_PROJECT_DIR/
-    - cp mender-cli.darwin.amd64 $CI_PROJECT_DIR/
+    - cp mender-cli.darwin.arm64 $CI_PROJECT_DIR/
   artifacts:
     paths:
       - mender-cli.linux.amd64
-      - mender-cli.darwin.amd64
+      - mender-cli.darwin.arm64
 
 test:smoketests:mac:
   stage: test
@@ -125,7 +125,7 @@ test:smoketests:mac:
   before_script:
     - !reference [.qa-common-network-git-clone-retry, before_script]
   script:
-    - ./mender-cli.darwin.amd64
+    - ./mender-cli.darwin.arm64
   tags:
     - mac-arm-runner
 
@@ -303,7 +303,7 @@ publish:s3:
     - aws s3api put-object-acl --acl public-read --bucket $S3_BUCKET_NAME
         --key $S3_BUCKET_PATH/${CI_COMMIT_REF_NAME}/linux/mender-cli
     - echo "Publishing ${CI_COMMIT_REF_NAME} version for darwin to S3"
-    - aws s3 cp $GITHUB_RELEASE_BINARY.darwin.amd64
+    - aws s3 cp $GITHUB_RELEASE_BINARY.darwin.arm64
         s3://$S3_BUCKET_NAME/$S3_BUCKET_PATH/${CI_COMMIT_REF_NAME}/darwin/mender-cli
     - aws s3api put-object-acl --acl public-read --bucket $S3_BUCKET_NAME
         --key $S3_BUCKET_PATH/${CI_COMMIT_REF_NAME}/darwin/mender-cli

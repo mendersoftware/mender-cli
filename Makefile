@@ -38,8 +38,8 @@ build-autocomplete-scripts: build
 build-multiplatform:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS) \
 	     -o mender-cli.linux.amd64
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS) \
-	     -o mender-cli.darwin.amd64
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) build $(BUILDTAGS) $(GO_LDFLAGS) $(BUILDV) $(BUILDFLAGS) \
+	     -o mender-cli.darwin.arm64
 
 build-coverage:
 	CGO_ENABLED=0 $(GO) build -cover -o mender-cli-test \
