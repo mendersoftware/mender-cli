@@ -6,6 +6,8 @@ include:
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-golang-lint.yml'
   - component: gitlab.com/Northern.tech/Mender/mendertesting/golang-unittests-v2-codecov@master
+    inputs:
+      go_version: "1.27"
   - component: gitlab.com/Northern.tech/Mender/mendertesting/commit-lint@master
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-license.yml'
