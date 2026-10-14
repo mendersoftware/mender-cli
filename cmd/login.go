@@ -17,7 +17,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -158,18 +157,8 @@ func (c *LoginCmd) maybeGetPassword() error {
 }
 
 func (c *LoginCmd) saveToken(t []byte) error {
-	dir := filepath.Dir(c.tokenPath)
-	log.Verbf("creating directory: %v\n", dir)
-
-	err := os.MkdirAll(dir, os.ModeDir|0700)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create directory %s", dir)
-
-	}
-
-	err = os.WriteFile(c.tokenPath, t, 0600)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create file %s", c.tokenPath)
+	if err := writeAuthToken(c.tokenPath, t); err != nil {
+		return err
 	}
 
 	log.Verb("saved token to: " + c.tokenPath)
