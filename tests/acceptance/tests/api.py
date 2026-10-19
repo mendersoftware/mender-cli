@@ -82,3 +82,30 @@ class ManagementDevauth:
             headers=auth,
             json=body,
         )
+
+    def preauthorize(self, identity_data, pubkey):
+        body = {
+            "identity_data": identity_data,
+            "pubkey": pubkey,
+        }
+        auth = {"Authorization": "Bearer {}".format(self.token)}
+        return requests.post(
+            make_api_url(self.url, "/devices"),
+            verify=False,
+            headers=auth,
+            json=body,
+        )
+
+
+class DevicesInventory:
+    def __init__(self, url="https://docker.mender.io/api/devices/v1/inventory"):
+        self.url = url
+
+    def patch_attributes(self, device_token, attributes):
+        auth = {"Authorization": "Bearer {}".format(device_token)}
+        return requests.patch(
+            make_api_url(self.url, "/device/attributes"),
+            verify=False,
+            headers=auth,
+            json=attributes,
+        )
