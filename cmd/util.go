@@ -25,8 +25,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type exitError struct {
+	err   error
+	code  int
+	label string
+}
+
+func (e *exitError) Error() string {
+	return e.err.Error()
+}
+
 func CheckErr(e error) {
 	if e != nil {
+		var exitErr *exitError
+		if errors.As(e, &exitErr) {
+			fmt.Fprintf(os.Stderr, "%s: %s\n", exitErr.label, exitErr.Error())
+			os.Exit(exitErr.code)
+		}
 		fmt.Fprintf(os.Stderr, "FAILURE: %s\n", e.Error())
 		os.Exit(1)
 	}
