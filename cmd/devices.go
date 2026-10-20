@@ -20,9 +20,10 @@ import (
 var devicesCmd = &cobra.Command{
 	Use:       "devices",
 	Short:     "Operations on mender devices.",
-	ValidArgs: []string{"list"},
+	ValidArgs: []string{"list", "inventory"},
 }
 
 func init() {
 	devicesCmd.AddCommand(devicesListCmd)
+	devicesCmd.AddCommand(devicesInventoryCmd)
 }
