@@ -197,7 +197,7 @@ test_acceptance:run:
 test:integration:
   stage: test_integration
   tags:
-    - hetzner-amd-beefy
+    - k8s
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_SUBMODULE_DEPTH: 1
