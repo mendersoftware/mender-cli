@@ -76,7 +76,7 @@ func (p *UDPPortForwarder) Run(
 	ctx context.Context,
 	sessionID string,
 	msgChan chan *ws.ProtoMsg,
-	recvChans map[string]chan *ws.ProtoMsg,
+	recvChans *connectionChannels,
 ) {
 	// listen for new connections
 	defer p.conn.Close()
@@ -84,7 +84,8 @@ func (p *UDPPortForwarder) Run(
 	connectionUUID, _ := uuid.NewUUID()
 	connectionID := connectionUUID.String()
 	recvChan := make(chan *ws.ProtoMsg, portForwardUDPChannelSize)
-	recvChans[connectionID] = recvChan
+	recvChans.store(connectionID, recvChan)
+	defer recvChans.delete(connectionID)
 
 	protocol := portforward.PortForwardProtocol(wspf.PortForwardProtocolUDP)
 	portforwardNew := &wspf.PortForwardNew{
