@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mendersoftware/go-lib-micro/ws"
@@ -87,6 +88,34 @@ type portMapping struct {
 	RemotePort uint16
 }
 
+type connectionChannels struct {
+	mu    sync.RWMutex
+	chans map[string]chan *ws.ProtoMsg
+}
+
+func newConnectionChannels() *connectionChannels {
+	return &connectionChannels{chans: make(map[string]chan *ws.ProtoMsg)}
+}
+
+func (c *connectionChannels) store(id string, ch chan *ws.ProtoMsg) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.chans[id] = ch
+}
+
+func (c *connectionChannels) load(id string) (chan *ws.ProtoMsg, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	ch, ok := c.chans[id]
+	return ch, ok
+}
+
+func (c *connectionChannels) delete(id string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.chans, id)
+}
+
 // PortForwardCmd handles the port-forward command
 type PortForwardCmd struct {
 	proto        ws.ProtoType
@@ -97,7 +126,7 @@ type PortForwardCmd struct {
 	sessionID    string
 	bindingHost  string
 	portMappings []portMapping
-	recvChans    map[string]chan *ws.ProtoMsg
+	recvChans    *connectionChannels
 	running      bool
 	stop         chan struct{}
 	err          error
@@ -187,7 +216,7 @@ func NewPortForwardCmd(cmd *cobra.Command, args []string) (*PortForwardCmd, erro
 		deviceID:     args[0],
 		bindingHost:  bindingHost,
 		portMappings: portMappings,
-		recvChans:    make(map[string]chan *ws.ProtoMsg),
+		recvChans:    newConnectionChannels(),
 		stop:         make(chan struct{}),
 	}, nil
 }
@@ -431,7 +460,7 @@ func (c *PortForwardCmd) processIncomingMessages(
 				wspf.MessageTypePortForwardNew:
 				connectionID, _ := m.Header.Properties[wspf.PropertyConnectionID].(string)
 				if connectionID != "" {
-					if recvChan, ok := c.recvChans[connectionID]; ok {
+					if recvChan, ok := c.recvChans.load(connectionID); ok {
 						recvChan <- m
 					}
 				}
