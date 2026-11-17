@@ -11,9 +11,9 @@
   // CODEOWNERS assigns backend for everything here.
   "reviewersFromCodeOwners": true,
 
-  // fix(deps): <desc>, per renovate.json5.sample in mender-qa.
+  // chore(deps): <desc>, per renovate.json5.sample in mender-qa.
   "semanticCommits": "enabled",
-  "semanticCommitType": "fix",
+  "semanticCommitType": "chore",
   "semanticCommitScope": "deps",
 
   // Only rebase open PRs when they actually conflict. Rebasing every time the
@@ -51,14 +51,6 @@
   ],
 
   "packageRules": [
-    // config:recommended pulls in :semanticPrefixFixDepsChoreOthers, which forces
-    // semanticCommitType back to "chore" for any dep whose manager does not tag it
-    // with an npm/pip style depType - that is every docker dep here. Must stay BEFORE
-    // the gitlabci rule: rules apply in order and the last match wins.
-    {
-      "matchPackageNames": ["*"],
-      "semanticCommitType": "fix"
-    },
 
     // CI file updates get ci: instead of fix(deps):
     {
@@ -70,8 +62,22 @@
     // Go: one PR for all modules, matching Dependabot's golang-dependencies group.
     {
       "matchManagers": ["gomod"],
+      "matchFileNames": ["go.mod"],
       "groupName": "golang-dependencies",
-      "groupSlug": "golang-dependencies"
+      "groupSlug": "golang-dependencies",
+      "semanticCommitType": "fix"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "Container images (development)",
+      "groupSlug": "container-images-dev",
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchFileNames": ["Dockerfile"],
+      "groupName": "Container images",
+      "groupSlug": "container-images",
+      "semanticCommitType": "fix"
     },
 
     // Renovate disables git-submodules by default, but Dependabot was updating
