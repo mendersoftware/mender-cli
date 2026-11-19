@@ -39,7 +39,6 @@ type TCPPortForwarder struct {
 	listen     net.Listener
 	remoteHost string
 	remotePort uint16
-	mutexAck   map[string]*sync.Mutex
 	proto      ws.ProtoType
 }
 
@@ -59,7 +58,6 @@ func NewTCPPortForwarder(
 		listen:     listen,
 		remoteHost: remoteHost,
 		remotePort: remotePort,
-		mutexAck:   map[string]*sync.Mutex{},
 		proto:      proto,
 	}, nil
 }
@@ -68,7 +66,7 @@ func (p *TCPPortForwarder) Run(
 	ctx context.Context,
 	sessionID string,
 	msgChan chan *ws.ProtoMsg,
-	recvChans map[string]chan *ws.ProtoMsg,
+	recvChans *connectionChannels,
 ) {
 	// listen for new connections
 	defer p.listen.Close()
@@ -97,8 +95,8 @@ func (p *TCPPortForwarder) Run(
 			connectionUUID, _ := uuid.NewUUID()
 			connectionID := connectionUUID.String()
 			recvChan := make(chan *ws.ProtoMsg, portForwardTCPChannelSize)
-			recvChans[connectionID] = recvChan
-			go p.handleRequest(ctx, conn, sessionID, connectionID, recvChan, msgChan)
+			recvChans.store(connectionID, recvChan)
+			go p.handleRequest(ctx, conn, sessionID, connectionID, recvChan, recvChans, msgChan)
 		case <-ctx.Done():
 			return
 		}
@@ -113,6 +111,7 @@ func (p *TCPPortForwarder) handleDeviceMessages(
 	recvChan <-chan *ws.ProtoMsg,
 	errChan chan<- error,
 	conn net.Conn,
+	ackMutex *sync.Mutex,
 	sessionID, connectionID string,
 ) {
 	started := false
@@ -153,9 +152,7 @@ func (p *TCPPortForwarder) handleDeviceMessages(
 
 			case wspf.MessageTypePortForwardAck:
 				if p.proto == ws.ProtoTypePortForward {
-					if m, ok := p.mutexAck[connectionID]; ok {
-						m.Unlock()
-					}
+					ackMutex.Unlock()
 					break
 				}
 				fallthrough
@@ -175,14 +172,13 @@ func (p *TCPPortForwarder) handleRequest(
 	sessionID string,
 	connectionID string,
 	recvChan chan *ws.ProtoMsg,
+	recvChans *connectionChannels,
 	msgChan chan *ws.ProtoMsg,
 ) {
 	defer conn.Close()
 
-	p.mutexAck[connectionID] = &sync.Mutex{}
-	defer func() {
-		delete(p.mutexAck, connectionID)
-	}()
+	defer recvChans.delete(connectionID)
+	ackMutex := &sync.Mutex{}
 
 	errChan := make(chan error)
 	dataChan := make(chan []byte)
@@ -231,7 +227,7 @@ func (p *TCPPortForwarder) handleRequest(
 
 	go p.handleDeviceMessages(
 		ctx, msgChan, dataChan,
-		recvChan, errChan, conn,
+		recvChan, errChan, conn, ackMutex,
 		sessionID, connectionID,
 	)
 
@@ -246,7 +242,7 @@ func (p *TCPPortForwarder) handleRequest(
 		case data := <-dataChan:
 			if p.proto == ws.ProtoTypePortForward {
 				// lock the ack mutex, we don't allow more than one in-flight message
-				p.mutexAck[connectionID].Lock()
+				ackMutex.Lock()
 			}
 
 			m := &ws.ProtoMsg{
