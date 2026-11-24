@@ -14,7 +14,6 @@
 package deviceconnect
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -25,6 +24,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -256,36 +256,53 @@ func NewDeviceConnectError(errCode int, r io.Reader) *DeviceConnectError {
 }
 
 func (c *Client) Upload(sourcePath string, deviceSpec *DeviceSpec) error {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
 	file, err := os.Open(sourcePath)
 	if err != nil {
 		return err
 	}
-	fi, err := os.Stat(sourcePath)
+	defer file.Close()
+
+	fi, err := file.Stat()
 	if err != nil {
 		return err
 	}
-	log.Verbf("Uploading the file to %s\n", deviceSpec.DevicePath)
-	if err = writer.WriteField("path", deviceSpec.DevicePath); err != nil {
-		return err
-	}
-	part, err := writer.CreateFormFile("file", sourcePath)
-	if err != nil {
-		return err
-	}
-	if _, err = io.Copy(part, file); err != nil {
-		return err
-	}
-	if err = writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode())); err != nil {
-		return err
-	}
-	if err = writer.Close(); err != nil {
-		return err
-	}
+
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+
+	go func() {
+		defer pw.Close()
+
+		if err := writer.WriteField("path", deviceSpec.DevicePath); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+
+		part, err := writer.CreateFormFile("file", filepath.Base(sourcePath))
+		if err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+
+		if _, err := io.Copy(part, file); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+
+		if err := writer.WriteField("mode", fmt.Sprintf("%o", fi.Mode())); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+
+		if err := writer.Close(); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+	}()
+
 	req, err := http.NewRequest(http.MethodPut,
 		c.url+fileUploadURL+"devices/"+deviceSpec.DeviceID+"/upload",
-		body)
+		pr)
 	if err != nil {
 		return err
 	}
@@ -343,8 +360,10 @@ func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
 	}
 	defer resp.Body.Close()
 
-	rspDump, _ := httputil.DumpResponse(resp, true)
-	log.Verbf("Response: \n%v\n", string(rspDump))
+	if log.IsVerbose() {
+		rspDump, _ := httputil.DumpResponse(resp, true)
+		log.Verbf("Response: \n%v\n", string(rspDump))
+	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
