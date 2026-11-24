@@ -368,8 +368,6 @@ func (c *Client) Download(deviceSpec *DeviceSpec, sourcePath string) error {
 
 func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
 	path := resp.Header.Get("X-MEN-FILE-PATH")
-	uid := resp.Header.Get("X-MEN-FILE-UID")
-	gid := resp.Header.Get("X-MEN-FILE-GID")
 	mode := resp.Header.Get("X-MEN-FILE-MODE")
 	if mode == "" {
 		return errors.New("Missing X-MEN-FILE-MODE header")
@@ -407,21 +405,6 @@ func (c *Client) downloadFile(localFileName string, resp *http.Response) error {
 		return errors.New(
 			"The downloaded file does not match the expected length in 'X-MEN-FILE-SIZE'",
 		)
-	}
-	// Set the proper permissions and {G,U}ID's if present
-	if uid != "" && gid != "" {
-		uidi, err := strconv.Atoi(uid)
-		if err != nil {
-			return err
-		}
-		gidi, err := strconv.Atoi(gid)
-		if err != nil {
-			return err
-		}
-		err = os.Chown(file.Name(), uidi, gidi)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
