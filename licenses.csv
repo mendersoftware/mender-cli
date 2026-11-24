@@ -1,5 +1,6 @@
 github.com/VividCortex/ewma,MIT
 github.com/cheggaaa/pb/v3,BSD-3-Clause
+github.com/clipperhouse/uax29/v2,MIT
 github.com/fatih/color,MIT
 github.com/fsnotify/fsnotify,BSD-3-Clause
 github.com/go-viper/mapstructure/v2,MIT
@@ -16,7 +17,6 @@ github.com/mattn/go-runewidth,MIT
 github.com/minio/sha256-simd,Apache-2.0
 github.com/pelletier/go-toml/v2,MIT
 github.com/pkg/errors,BSD-2-Clause
-github.com/rivo/uniseg,MIT
 github.com/sagikazarmark/locafero,MIT
 github.com/sourcegraph/conc,MIT
 github.com/spf13/afero,Apache-2.0
